@@ -32,7 +32,9 @@ o agente correspondente antes de implementar.
 Antes de implementar qualquer task, consulte a documentação de contexto em
 [docs/context/context-sync.md](docs/context/context-sync.md) e, em
 particular, [docs/context/notion.md](docs/context/notion.md) para o fluxo de
-consulta ao Notion (Task Tracker do CarShop).
+consulta ao Notion (Task Tracker do CarShop). Quando relevante, consulte
+também [docs/context/obsidian.md](docs/context/obsidian.md) para o contexto
+de conhecimento pessoal (arquitetura, ADRs, estudos) mantido no Obsidian.
 
 Resumo das regras principais (detalhes completos em `docs/context/notion.md`):
 

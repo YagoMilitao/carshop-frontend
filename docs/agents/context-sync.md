@@ -10,6 +10,10 @@ repositório consistentes e atualizados. Segue as
   garantir que o contexto do Notion foi consultado antes da implementação,
   conforme [docs/context/context-sync.md](../context/context-sync.md) e
   [docs/context/notion.md](../context/notion.md).
+- Quando relevante, consultar a base de conhecimento do Obsidian conforme
+  [docs/context/obsidian.md](../context/obsidian.md), respeitando a
+  precedência de fontes ali definida (código > decisões aprovadas > task do
+  Notion > notas de estudo do Obsidian).
 - Manter `AGENTS.md` e `docs/agents/*.md` atualizados quando a estrutura de
   agentes, responsabilidades ou regras compartilhadas mudarem.
 - Garantir que documentação do repositório (`AGENTS.md`, `docs/`) não
