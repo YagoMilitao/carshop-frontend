@@ -1,7 +1,31 @@
 # AGENTS.md
 
 Instruções para agentes (Claude Code e outros) trabalhando neste repositório
-(CarShop Frontend).
+(CarShop Frontend). Este arquivo é um índice curto — o detalhe de cada área
+fica em `docs/agents/`.
+
+## Agentes especializados
+
+Para evitar que um único agente acumule responsabilidades e perca contexto,
+o trabalho neste repositório é dividido entre agentes especializados. Todos
+seguem as [regras compartilhadas](docs/agents/shared-rules.md) (TypeScript
+estrito, sem `any`/`@ts-ignore`/casts inseguros, comentários só quando a
+decisão não é óbvia, contexto do Notion consultado antes de implementar).
+
+- [Arquitetura de Frontend](docs/agents/frontend-architect.md) — estrutura
+  de pastas, roteamento, estado, decisões estruturais.
+- [UI e Estilização](docs/agents/ui-tailwind.md) — componentes visuais,
+  CSS/Tailwind, responsividade.
+- [Integração com API e Autenticação](docs/agents/api-integration.md) —
+  chamadas ao backend, login/sessão, variáveis de ambiente.
+- [Qualidade e Acessibilidade](docs/agents/quality.md) — lint, tipos,
+  testes, acessibilidade.
+- [Contexto e Documentação](docs/agents/context-sync.md) — identificação da
+  task atual, consulta ao Notion, manutenção desta documentação.
+
+Cada documento define responsabilidades, limites, entradas, saídas e um
+checklist próprio. Ao identificar de qual área uma task faz parte, consulte
+o agente correspondente antes de implementar.
 
 ## Contexto de planejamento (Notion)
 
