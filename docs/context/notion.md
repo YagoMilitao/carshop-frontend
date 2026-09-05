@@ -60,7 +60,16 @@ Notion antes de implementar qualquer task do CarShop Frontend.
 ## Regras de escrita no Notion
 
 - O agente **não deve alterar o Task Tracker automaticamente** como efeito
-  colateral de uma implementação.
+  colateral de uma implementação, com a única exceção explícita abaixo
+  (transição para `Review`).
+- **Exceção: transição automática para `Review`.** Quando o `reviewer`
+  concluir a revisão de uma task com veredito de aprovação (sem pontos
+  bloqueantes), o status dessa task no Task Tracker deve ser atualizado
+  automaticamente para `Review`, sem precisar perguntar ao usuário a cada
+  vez. Isso reflete uma instrução permanente do usuário (não é uma decisão
+  automática de "task concluída" — `Review` apenas sinaliza que a
+  implementação está pronta para revisão humana/merge, não que a task está
+  finalizada).
 - Mudanças de escopo (nova nota técnica, ajuste de descrição, mudança de
   Sprint/Priority/Component, etc.) só devem ser refletidas no Notion quando:
   - o usuário pedir explicitamente; ou
@@ -68,9 +77,10 @@ Notion antes de implementar qualquer task do CarShop Frontend.
     implementado (ex.: o escopo mudou durante a implementação e o Notion
     ficaria desatualizado/enganoso se não for ajustado) — e mesmo nesse caso,
     o agente deve confirmar com o usuário antes de escrever no Notion.
-- **Nunca marcar uma task como `Done`** (ou qualquer outro status) sem
-  validação explícita da implementação pelo usuário. O agente não decide
-  sozinho que uma task está concluída.
+- **Nunca marcar uma task como `Done`** sem validação explícita da
+  implementação pelo usuário. O agente não decide sozinho que uma task está
+  concluída — `Done` permanece fora da exceção acima e sempre exige
+  confirmação explícita.
 - **Nunca inventar tasks** no Task Tracker. Uma nova task só é criada a
   pedido explícito do usuário.
 
