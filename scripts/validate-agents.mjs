@@ -41,6 +41,33 @@ const requiredRules = [
   "spec-security",
 ];
 
+const hasRequiredFrontmatter = (content) => {
+  const lines = content.split(/\r?\n/);
+  if (lines[0] !== "---") {
+    return false;
+  }
+
+  let hasName = false;
+  let hasDescription = false;
+
+  for (const line of lines.slice(1)) {
+    if (line === "---") {
+      return hasName && hasDescription;
+    }
+
+    const separatorIndex = line.indexOf(":");
+    if (separatorIndex === -1 || line.slice(separatorIndex + 1).trim() === "") {
+      continue;
+    }
+
+    const field = line.slice(0, separatorIndex).trim();
+    hasName ||= field === "name";
+    hasDescription ||= field === "description";
+  }
+
+  return false;
+};
+
 const errors = [];
 
 if (!existsSync(path.join(rootDir, "CLAUDE.md"))) {
@@ -54,7 +81,7 @@ for (const agent of requiredAgents) {
     continue;
   }
   const content = readFileSync(filePath, "utf8");
-  if (!/^---\n[\s\S]*?name:\s*\S+[\s\S]*?description:\s*\S+[\s\S]*?---/.test(content)) {
+  if (!hasRequiredFrontmatter(content)) {
     errors.push(
       `Agente .claude/agents/${agent}.md sem frontmatter válido (name/description).`,
     );
