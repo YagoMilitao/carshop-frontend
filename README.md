@@ -195,12 +195,20 @@ export default defineConfig([
 SPA do projeto CarShop (tapeçaria automotiva). Exibe trabalhos, detalhes e comentários. Inclui área admin (futuro) para gerenciar trabalhos e uploads.
 
 ## Stack
+
+Arquitetura oficial-alvo (ver `CLAUDE.md` e `docs/rules/`): Next.js (App
+Router) + React + TypeScript estrito, TailwindCSS, Shadcn/UI, TanStack
+Query, Axios, React Hook Form, Zod, Framer Motion, React Icons e área admin
+com JWT.
+
+Estado real atual do código neste repositório:
 - React + TypeScript
 - Vite
 - React Router
-- (Futuro) Tailwind
-- (Futuro) React Query
-- (Futuro) Área admin com JWT
+
+A migração de código da stack atual para a arquitetura oficial-alvo ainda
+não ocorreu — não assumir nenhuma dependência da stack alvo como instalada
+sem conferir `package.json`.
 
 ---
 

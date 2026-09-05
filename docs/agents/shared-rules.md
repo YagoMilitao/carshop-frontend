@@ -7,9 +7,22 @@ agente em `docs/agents/` assume estas regras como base e só documenta o que
 
 ## Stack e convenções técnicas
 
-- Stack atual: React + TypeScript + Vite + React Router (ver `README.md`).
-  Tailwind está planejado mas ainda não adotado — não assumir Tailwind até
-  que a dependência esteja de fato instalada no `package.json`.
+- Arquitetura oficial-alvo: Next.js (App Router) + React + TypeScript
+  estrito, com stack complementar TailwindCSS, Shadcn/UI, TanStack Query,
+  Axios, React Hook Form, Zod, Framer Motion, React Icons e uma stack de
+  testes oficialmente configurada. Detalhe por área em
+  [docs/rules/](../rules/).
+- Estado real atual do repositório: React + TypeScript + Vite + React Router
+  (ver `README.md`, `package.json`). A migração de código para a arquitetura
+  alvo não está implícita nesta task — **sempre confira `package.json`**
+  antes de assumir qualquer dependência da stack alvo como instalada.
+  Ausência de dependência é um bloqueio/dependência a comunicar ao usuário,
+  nunca um motivo para escrever código fictício.
+- React Router e Vite deixam de ser orientação ativa para decisões novas de
+  roteamento/build — ver [docs/rules/routing.md](../rules/routing.md) e
+  [docs/rules/nextjs.md](../rules/nextjs.md). Nenhum agente migra o app de
+  Vite para Next.js, nem propõe migrar o backend Express para Next Route
+  Handlers, sem uma task/decisão arquitetural explícita.
 - TypeScript em modo estrito: nunca usar `any`, `@ts-ignore`/`@ts-expect-error`
   para silenciar erros de tipo, ou casts inseguros (`as unknown as X`,
   `as X` sem garantia real de que o valor é `X`). Preferir tipos explícitos,

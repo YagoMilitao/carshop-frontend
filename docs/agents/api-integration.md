@@ -6,7 +6,13 @@ fluxo de autenticação. Segue as [regras compartilhadas](./shared-rules.md).
 ## Responsabilidades
 
 - Chamadas HTTP ao backend (definição de serviços/clients de API,
-  tratamento de respostas e erros de rede).
+  tratamento de respostas e erros de rede). **Axios** é o client HTTP
+  oficial-alvo para chamadas client-side quando apropriado (não obrigatório
+  para toda chamada server-side) — ver
+  [docs/rules/api.md](../rules/api.md). Server state interativo no cliente
+  usa TanStack Query quando há necessidade real (ver
+  [docs/rules/state-query.md](../rules/state-query.md)). Só usar essas libs
+  quando de fato instaladas no `package.json`.
 - Fluxo de autenticação no frontend: login, armazenamento de sessão/token,
   refresh e logout, incluindo proteção de rotas autenticadas em conjunto
   com o roteamento definido pelo [frontend-architect](./frontend-architect.md).

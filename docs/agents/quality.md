@@ -11,8 +11,12 @@ CarShop. Segue as [regras compartilhadas](./shared-rules.md).
 - Acessibilidade (a11y): elementos semânticos, atributos ARIA quando
   necessário, navegação por teclado e contraste adequado nos componentes
   entregues por [ui-tailwind.md](./ui-tailwind.md).
-- Testes automatizados, quando existirem no projeto: garantir que cobrem o
-  DoD da task e que passam antes de considerar a task pronta para revisão.
+- Testes automatizados, usando a stack de testes oficialmente configurada no
+  `package.json` (ver [docs/rules/testing.md](../rules/testing.md)): garantir
+  que cobrem o DoD da task, buscando ≥80% de cobertura em código
+  novo/alterado quando aplicável, e que passam antes de considerar a task
+  pronta para revisão. Ausência de stack de testes instalada é um bloqueio a
+  comunicar, não motivo para inventar um framework.
 - Revisão de qualidade geral do que outros agentes produzem antes de a task
   ser considerada concluída (sem reescrever decisões de arquitetura, UI ou
   integração — apenas sinalizar problemas de qualidade encontrados).

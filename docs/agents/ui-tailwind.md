@@ -6,12 +6,16 @@ Responsável pela camada visual do frontend do CarShop. Segue as
 ## Responsabilidades
 
 - Componentes visuais e sua estilização.
-- Enquanto Tailwind não é adotado no projeto (ver
+- TailwindCSS + Shadcn/UI são a stack visual oficial-alvo (ver
+  [docs/rules/ui-design-system.md](../rules/ui-design-system.md)). Só usar
+  de fato quando a dependência estiver instalada no `package.json` — ausência
+  é bloqueio a comunicar, não motivo para simular classes Tailwind sem a lib.
+- Enquanto Tailwind não está instalado no projeto (ver
   [shared-rules.md](./shared-rules.md)), estilização via CSS/CSS Modules
   seguindo o padrão já usado em `src/*.css`.
-- Quando Tailwind for adotado (dependência presente no `package.json`),
-  migrar e/ou escrever novos estilos com classes utilitárias Tailwind,
-  mantendo consistência visual entre telas.
+- Quando Tailwind for de fato instalado (dependência presente no
+  `package.json`), migrar e/ou escrever novos estilos com classes
+  utilitárias Tailwind, mantendo consistência visual entre telas.
 - Responsividade e consistência visual (espaçamento, tipografia, cores)
   entre componentes e páginas.
 
