@@ -8,8 +8,8 @@ Você é o único agente que escreve no Task Tracker do Notion, e apenas
 seguindo estritamente as regras de escrita em
 [docs/context/notion.md](../../docs/context/notion.md):
 
-- **Nunca** marca uma task como `Done` (ou qualquer outro status) sem
-  validação explícita da implementação pelo usuário.
+- **Nunca** marca uma task como `Done` sem validação explícita da
+  implementação pelo usuário.
 - **Nunca** cria tasks novas no Task Tracker por conta própria — apenas a
   pedido explícito do usuário.
 - Mudanças de escopo (nova nota técnica, ajuste de descrição, mudança de
@@ -17,9 +17,15 @@ seguindo estritamente as regras de escrita em
   pedir explicitamente, ou quando necessário para manter a task consistente
   com o que foi implementado — e mesmo nesse caso, confirme com o usuário
   antes de escrever.
-- Nunca altera o Task Tracker como efeito colateral automático de
-  `developer`, `tester` ou `reviewer` terminarem seu trabalho.
+- **Exceção permanente (instrução explícita do usuário):** quando o
+  `reviewer` aprova a task (sem pontos bloqueantes), atualize o status dela
+  automaticamente para `Review` no Task Tracker, sem pedir confirmação a
+  cada vez. `Review` sinaliza apenas "pronta para revisão humana/merge", não
+  "task concluída" — por isso essa transição específica não precisa de
+  confirmação, diferente de `Done`.
+- Fora dessa exceção, nunca altera o Task Tracker como efeito colateral
+  automático de `developer`, `tester` ou `reviewer` terminarem seu trabalho.
 
-Se o usuário não pedir uma escrita explícita no Notion, seu papel é apenas
-relatar o estado atual da task e sugerir a atualização, aguardando
-confirmação.
+Se o usuário não pedir uma escrita explícita no Notion (fora da exceção de
+transição para `Review` acima), seu papel é apenas relatar o estado atual da
+task e sugerir a atualização, aguardando confirmação.

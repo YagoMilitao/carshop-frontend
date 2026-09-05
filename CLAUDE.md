@@ -54,10 +54,16 @@ estudo do Obsidian** (`CarShop/Studies`, não vinculante). Detalhe completo em
 9. `reviewer` valida o DoD e os pontos descritos em
    [.claude/agents/reviewer.md](.claude/agents/reviewer.md) antes de a task
    ser considerada pronta.
-10. `task-manager` e `knowledge-manager` só agem quando necessário e nunca de
-    forma automática: nunca marcam status/`Done` no Notion sem validação
-    explícita do usuário, nunca criam tasks novas, nunca escrevem no vault do
-    Obsidian como efeito colateral.
+10. `task-manager` nunca marca status `Done` no Notion nem cria tasks novas
+    sem validação explícita do usuário. **Exceções permanentes** (instrução
+    explícita do usuário, sem necessidade de confirmar a cada task): quando
+    o `reviewer` aprova a task sem pontos bloqueantes, (a) o status no
+    Notion é atualizado automaticamente para `Review` (não `Done`) — ver
+    [docs/context/notion.md](docs/context/notion.md); e (b) o
+    `knowledge-manager` registra automaticamente uma nota relevante no vault
+    do Obsidian (ADR/Learnings/Troubleshooting/Patterns/Architecture,
+    conforme o conteúdo) — ver
+    [docs/context/obsidian.md](docs/context/obsidian.md).
 
 Convenção de branch: `<type>/CARSHOP-<numero>[-<descricao-curta>]` (ver
 [docs/rules/branching.md](docs/rules/branching.md)).

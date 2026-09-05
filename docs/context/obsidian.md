@@ -1,8 +1,7 @@
 # Contexto de Conhecimento no Obsidian
 
-Este documento define como os agentes deste repositório devem consultar (e
-nunca escrever automaticamente) a base de conhecimento pessoal do CarShop
-mantida em Obsidian.
+Este documento define como os agentes deste repositório devem consultar e
+escrever na base de conhecimento pessoal do CarShop mantida em Obsidian.
 
 ## Natureza da integração
 
@@ -56,9 +55,28 @@ não devem guiar implementação sozinhas.
 
 ## Regras de escrita
 
-- Agentes **não devem escrever ou editar arquivos do vault** como efeito
-  colateral de uma implementação. Qualquer nova nota, ADR ou estudo só deve
-  ser criado a pedido explícito do usuário.
+- **Escrita automática (instrução explícita e permanente do usuário):**
+  sempre que uma task do CarShop for concluída/aprovada (o `reviewer` aprova
+  sem pontos bloqueantes), o `knowledge-manager` registra automaticamente
+  uma nota no vault, sem precisar pedir confirmação a cada vez. Escolha a
+  subpasta pelo tipo de conteúdo:
+  - `CarShop/ADR` — quando a task envolveu uma decisão arquitetural real
+    (troca de framework/lib, mudança estrutural, trade-off relevante).
+    Seguir o formato existente (`ADR-XXX-titulo-curto.md`: Status, Context,
+    Decision, Alternatives Considered, Trade-offs, Consequences, Related
+    Tasks, Related Code). Verificar o próximo número livre antes de criar.
+  - `CarShop/Learnings` — aprendizado geral que não é uma decisão
+    arquitetural isolada (ex.: gap de cobertura, lição sobre o processo).
+  - `CarShop/Troubleshooting` — problema concreto encontrado e resolvido
+    durante a task (sintoma, causa raiz, correção).
+  - `CarShop/Patterns` — padrão de código reutilizável que emergiu da task.
+  - `CarShop/Architecture` — atualização de um documento de arquitetura já
+    vigente (não uma decisão pontual nova).
+  Nem toda task exige nota em todas as subpastas — escrever apenas o que for
+  genuinamente relevante; uma task TRIVIAL pode não gerar nenhuma nota.
+- Fora dessa exceção, agentes não devem escrever ou editar arquivos do vault
+  como efeito colateral não solicitado (ex.: no meio da implementação, antes
+  da aprovação do `reviewer`).
 - **Nunca armazenar segredos, tokens, senhas ou conteúdo de `.env`** no
   vault, em nenhuma nota.
 - Caminhos locais do vault (ou de uma pasta sincronizada dentro deste
@@ -69,10 +87,12 @@ não devem guiar implementação sozinhas.
 ## Resumo rápido (checklist do agente)
 
 - [ ] Confirmado se há vault/pasta sincronizada disponível no ambiente antes
-      de tentar ler
+      de tentar ler ou escrever
 - [ ] Precedência respeitada: código > decisões aprovadas > task do Notion >
       notas de estudo do Obsidian
-- [ ] Nenhuma escrita no vault sem pedido explícito do usuário
+- [ ] Ao final de uma task aprovada pelo `reviewer`, nota registrada
+      automaticamente na subpasta certa do vault (ADR/Learnings/
+      Troubleshooting/Patterns/Architecture), quando genuinamente relevante
 - [ ] Nenhum segredo, token, senha ou `.env` referenciado ou copiado para o
       vault
 - [ ] Caminhos locais do vault no `.gitignore`, quando aplicável
