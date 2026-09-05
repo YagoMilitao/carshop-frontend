@@ -2,7 +2,12 @@
 
 Instruções para agentes (Claude Code e outros) trabalhando neste repositório
 (CarShop Frontend). Este arquivo é um índice curto — o detalhe de cada área
-fica em `docs/agents/`.
+fica em `docs/agents/`, `docs/rules/` e `.claude/agents/`.
+
+Ver [CLAUDE.md](CLAUDE.md) para a arquitetura oficial-alvo (Next.js App
+Router + stack complementar), o fluxo de execução de uma task `CARSHOP-XX`
+com os subagentes nativos em [.claude/agents/](.claude/agents/), e as regras
+por área em [docs/rules/](docs/rules/).
 
 ## Agentes especializados
 
@@ -10,7 +15,11 @@ Para evitar que um único agente acumule responsabilidades e perca contexto,
 o trabalho neste repositório é dividido entre agentes especializados. Todos
 seguem as [regras compartilhadas](docs/agents/shared-rules.md) (TypeScript
 estrito, sem `any`/`@ts-ignore`/casts inseguros, comentários só quando a
-decisão não é óbvia, contexto do Notion consultado antes de implementar).
+decisão não é óbvia, contexto do Notion consultado antes de implementar) e,
+para o fluxo completo de uma task, os subagentes de
+[.claude/agents/](.claude/agents/) (task-reader, spec-writer,
+knowledge-reader, architect, plan-writer, developer, tester, reviewer,
+task-manager, knowledge-manager).
 
 - [Arquitetura de Frontend](docs/agents/frontend-architect.md) — estrutura
   de pastas, roteamento, estado, decisões estruturais.

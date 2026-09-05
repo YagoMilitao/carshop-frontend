@@ -7,7 +7,13 @@ CarShop. Segue as [regras compartilhadas](./shared-rules.md).
 
 - Organização de pastas e arquivos em `src/` (páginas, componentes,
   hooks, serviços, tipos, etc.).
-- Roteamento com React Router: definição de rotas, layouts e navegação.
+- Roteamento: App Router do Next.js é o padrão oficial-alvo para decisões
+  novas de roteamento (ver [docs/rules/routing.md](../rules/routing.md) e
+  [docs/rules/nextjs.md](../rules/nextjs.md)); decide também Server vs
+  Client Components (ver [docs/rules/rendering.md](../rules/rendering.md)).
+  Enquanto o app real ainda roda em Vite + React Router, qualquer rota nova
+  no código existente segue esse padrão até a migração ocorrer como task
+  explícita.
 - Decisões de gerenciamento de estado (estado local vs. contexto vs. outra
   solução), tomadas apenas quando a task exigir.
 - Padrões estruturais de componentes (composição, separação
@@ -29,7 +35,8 @@ CarShop. Segue as [regras compartilhadas](./shared-rules.md).
 - Descrição, DoD e Notas Técnicas da task no Notion (via
   [notion.md](../context/notion.md)).
 - Estrutura atual de `src/` e configuração existente (`vite.config.ts`,
-  `tsconfig*.json`).
+  `tsconfig*.json`) — reflete o estado real do repositório, não a
+  arquitetura oficial-alvo (ver [docs/rules/architecture.md](../rules/architecture.md)).
 
 ## Saídas
 
