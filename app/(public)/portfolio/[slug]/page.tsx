@@ -26,7 +26,7 @@ export async function generateMetadata({
 
 export default async function ProjectDetailsPage({
   params,
-}: ProjectDetailsPageProps) {
+}: Readonly<ProjectDetailsPageProps>) {
   const { slug } = await params
 
   return (
