@@ -25,6 +25,16 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     include: ['**/*.test.{ts,tsx}'],
     exclude: ['node_modules', '.next'],
+    // Defaults de env para o schema Zod fail-fast de `lib/env/client.ts`
+    // (ex.: Server Components como `app/layout.tsx` importam `clientEnv`
+    // no top-level). Testes que exercitam o próprio schema (`client.test.ts`,
+    // `server.test.ts`, `http.test.ts`) sobrescrevem/removem essas
+    // variáveis pontualmente por teste, restaurando este default no
+    // `afterEach`.
+    env: {
+      NEXT_PUBLIC_API_URL: 'http://localhost:3333',
+      NEXT_PUBLIC_SITE_URL: 'http://localhost:3000',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
