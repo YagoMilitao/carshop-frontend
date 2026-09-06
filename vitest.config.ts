@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
@@ -5,8 +6,19 @@ import react from '@vitejs/plugin-react'
 // Não depende de vite.config.ts (removido na migração Vite → Next.js,
 // ver specs/CARSHOP-113/plan.md) — usamos apenas o plugin do Vitest
 // necessário para JSX/TSX + React 19 em ambiente de testes.
+// O alias `@/*` espelha o `paths` do tsconfig.json (necessário pelo
+// Shadcn/UI e demais imports absolutos), já que o Vitest não lê
+// automaticamente os `paths` do TypeScript.
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('.', import.meta.url)),
+      'next/font/google': fileURLToPath(
+        new URL('./test/mocks/next-font-google.ts', import.meta.url),
+      ),
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,
@@ -16,8 +28,13 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
-      include: ['app/**/*.{ts,tsx}', 'lib/**/*.{ts,tsx}'],
-      exclude: ['app/**/*.test.{ts,tsx}', 'lib/**/*.test.{ts,tsx}', '**/*.d.ts'],
+      include: ['app/**/*.{ts,tsx}', 'lib/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}'],
+      exclude: [
+        'app/**/*.test.{ts,tsx}',
+        'lib/**/*.test.{ts,tsx}',
+        'components/**/*.test.{ts,tsx}',
+        '**/*.d.ts',
+      ],
     },
   },
 })
