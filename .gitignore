@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Variáveis de ambiente reais (nunca versionar; .env.example continua
+# rastreado como referência de configuração)
+.env
+.env*.local
+
 # Next.js
 .next
 out

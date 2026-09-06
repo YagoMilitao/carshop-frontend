@@ -34,13 +34,29 @@ npm install
 
 ### 2) Configurar variáveis de ambiente
 
-Copie `.env.example` para `.env` e ajuste os valores conforme seu ambiente
-(apenas variáveis `NEXT_PUBLIC_*` são expostas ao cliente; nunca commitar
-valores reais de `.env`):
+Copie `.env.example` para `.env` e ajuste os valores conforme seu ambiente:
 
 ```bash
 cp .env.example .env
 ```
+
+Convenção de variáveis (Next.js):
+
+- Prefixo `NEXT_PUBLIC_` (ex.: `NEXT_PUBLIC_API_URL`): exposta ao bundle do
+  navegador (client-side). Nunca deve conter segredos/credenciais.
+- Sem prefixo `NEXT_PUBLIC_` (ex.: `OBSIDIAN_VAULT_ID`): server-only, nunca
+  vai para o bundle cliente.
+
+O acesso a variáveis de ambiente em código deve sempre passar por
+`lib/env/client.ts` (`clientEnv`, para uso client-side) ou
+`lib/env/server.ts` (`serverEnv`, para Server Components, Route Handlers e
+services). Nenhum outro arquivo do projeto deve ler
+`process.env.NEXT_PUBLIC_API_URL` diretamente — os módulos de `lib/env/`
+validam a presença/formato das variáveis via Zod e falham de forma
+previsível (erro claro em build/runtime) quando ausentes ou inválidas.
+
+`.env` real nunca é commitado (está no `.gitignore`); apenas `.env.example`
+é versionado.
 
 ### 3) Rodar em modo desenvolvimento
 

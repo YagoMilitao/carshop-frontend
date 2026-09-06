@@ -13,4 +13,9 @@
   Handlers sem necessidade explícita (ver
   [docs/rules/nextjs.md](./nextjs.md)).
 - Variáveis de ambiente de API ficam em `.env.example`, nunca com valores
-  reais commitados.
+  reais commitados. Variáveis expostas ao bundle do navegador usam o
+  prefixo `NEXT_PUBLIC_` (ex.: `NEXT_PUBLIC_API_URL`) e nunca contêm
+  segredos/credenciais; variáveis server-only não usam esse prefixo.
+  `lib/env/client.ts` (`clientEnv`) e `lib/env/server.ts` (`serverEnv`) são
+  o único ponto de leitura/validação de env do projeto — nenhum outro
+  arquivo deve ler `process.env.NEXT_PUBLIC_API_URL` diretamente.
