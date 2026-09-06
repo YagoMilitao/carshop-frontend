@@ -24,14 +24,22 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 vi.mock('server-only', () => ({}))
 
 describe('lib/env/server', () => {
-  const originalValue = process.env.NEXT_PUBLIC_API_URL
+  const originalApiUrl = process.env.NEXT_PUBLIC_API_URL
+  const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL
 
   afterEach(() => {
-    if (originalValue === undefined) {
+    if (originalApiUrl === undefined) {
       delete process.env.NEXT_PUBLIC_API_URL
     } else {
-      process.env.NEXT_PUBLIC_API_URL = originalValue
+      process.env.NEXT_PUBLIC_API_URL = originalApiUrl
     }
+
+    if (originalSiteUrl === undefined) {
+      delete process.env.NEXT_PUBLIC_SITE_URL
+    } else {
+      process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl
+    }
+
     vi.resetModules()
   })
 
@@ -43,6 +51,7 @@ describe('lib/env/server', () => {
 
   it('serverEnv.apiUrl reflete o valor de NEXT_PUBLIC_API_URL', async () => {
     process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3333'
+    process.env.NEXT_PUBLIC_SITE_URL = 'http://localhost:3000'
     vi.resetModules()
 
     const { serverEnv } = await import('./server')
@@ -52,6 +61,7 @@ describe('lib/env/server', () => {
 
   it('serverEnv expõe apenas o campo apiUrl (nenhuma var server-only hoje)', async () => {
     process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3333'
+    process.env.NEXT_PUBLIC_SITE_URL = 'http://localhost:3000'
     vi.resetModules()
 
     const { serverEnv } = await import('./server')

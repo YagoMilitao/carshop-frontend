@@ -14,3 +14,39 @@
   necessidade real de interatividade client-side.
 - Cache e estratégia de revalidação (quando o App Router estiver em uso) são
   responsabilidade do `architect`/`developer` e revisadas pelo `reviewer`.
+
+## Estratégia por página (CARSHOP-114)
+
+Decisão do `architect` para o estado atual do repositório (`app/`), a ser
+revisada quando as páginas passarem a consumir dados reais da API:
+
+| Página | Rendering hoje | Server/Client | Cache/revalidation |
+|---|---|---|---|
+| Home (`app/(public)/page.tsx`) | Estático (SSG implícito, sem `fetch`) | Server Component | Sem revalidação — conteúdo puramente estático até existir dado dinâmico |
+| About (`app/(public)/about/page.tsx`) | Estático | Server Component | Idem |
+| Services (`app/(public)/services/page.tsx`) | Estático | Server Component | Idem |
+| Portfolio — listagem (`app/(public)/portfolio/page.tsx`) | Estático nesta task | Server Component | Candidato a ISR (`revalidate` em segundos/minutos) quando a listagem passar a vir da API de projetos — não implementado enquanto não há dado real |
+| Project Details (`app/(public)/portfolio/[slug]/page.tsx`) | Estático (stub), sem `generateStaticParams` | Server Component (`generateMetadata` assíncrono já preparado) | Quando a API existir: `generateStaticParams` para os slugs publicados + ISR (`revalidate`) para refletir atualizações de projeto sem rebuild completo |
+| Contact (`app/(public)/contact/page.tsx`) | Estático (wrapper) | Server Component; o formulário futuro deve ser um Client Component isolado na menor boundary (não a página inteira) | N/A até existir formulário |
+| Admin (`app/(admin)/admin/**`) | Dinâmico, nunca tratado como conteúdo público cacheável | Decisão de Server/Client por feature, fora do escopo desta task | **Nunca cacheado como página pública**: `robots: { index: false, follow: false }` na própria rota (defesa em profundidade) + `disallow: ['/admin', '/admin/']` em `app/robots.ts`; nenhuma resposta autenticada/sensível deve reutilizar cache de rota pública |
+
+Critério geral: a escolha estático/dinâmico/ISR é por característica do
+dado exibido (conteúdo público sem mudança frequente → estático; conteúdo
+público dependente de API com atualização periódica → ISR; conteúdo
+autenticado/sensível → sempre dinâmico e nunca cacheado como público), não
+uma regra única aplicada a todo o app.
+
+## SEO técnico (CARSHOP-114)
+
+- `app/layout.tsx` define a fundação de metadata (`title` com `template`,
+  `description`, `metadataBase` a partir de `NEXT_PUBLIC_SITE_URL`,
+  `openGraph` base) herdada por todas as rotas; páginas filhas sobrescrevem
+  apenas os campos necessários (`title`, `description`, `openGraph.title`,
+  `openGraph.description`).
+- `alternates.canonical` é definido nas páginas públicas estáticas
+  (About/Services/Portfolio/Contact) e, em Project Details, derivado do
+  `slug` recebido em `generateMetadata` — nunca um valor fixo de exemplo.
+- `app/robots.ts` e `app/sitemap.ts` (Next.js Metadata Files API) são a
+  fonte de verdade de crawling; `/admin` é sempre excluído de ambos.
+  Entradas de `portfolio/[slug]` no sitemap ficam como `TODO` explícito até
+  existir a API de projetos para listar slugs reais.

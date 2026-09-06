@@ -3,13 +3,23 @@ import type { ReactNode } from 'react'
 import './globals.css'
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { clientEnv } from "@/lib/env/client";
 import { Providers } from "./providers";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: 'CarShop',
-  description: 'CarShop — tapeçaria automotiva',
+  metadataBase: new URL(clientEnv.NEXT_PUBLIC_SITE_URL),
+  title: {
+    default: 'CarShop',
+    template: '%s | CarShop',
+  },
+  description: 'CarShop — automotive upholstery services.',
+  openGraph: {
+    siteName: 'CarShop',
+    locale: 'en_US',
+    type: 'website',
+  },
 }
 
 export default function RootLayout({
@@ -18,7 +28,7 @@ export default function RootLayout({
   children: ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className={cn("font-sans", geist.variable)}>
+    <html lang="en-US" className={cn("font-sans", geist.variable)}>
       <body>
         <Providers>{children}</Providers>
       </body>
