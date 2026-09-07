@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { clientEnv } from '@/lib/env/client'
+import { getWorks } from '@/lib/api/works'
 
 const staticRoutes: Array<{
   path: string
@@ -12,14 +13,26 @@ const staticRoutes: Array<{
   { path: '/contact', changeFrequency: 'monthly' },
 ]
 
-// TODO: incluir entradas de `/portfolio/[slug]` quando a API de projetos
-// existir e permitir listar os slugs reais publicados.
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date()
 
-  return staticRoutes.map(({ path, changeFrequency }) => ({
+  const staticEntries = staticRoutes.map(({ path, changeFrequency }) => ({
     url: new URL(path, clientEnv.NEXT_PUBLIC_SITE_URL).toString(),
     lastModified,
     changeFrequency,
   }))
+
+  const works = await getWorks()
+
+  const workEntries = works
+    .filter((work) => work.status === 'published')
+    .map((work) => ({
+      url: new URL(
+        `/portfolio/${work.slug}`,
+        clientEnv.NEXT_PUBLIC_SITE_URL,
+      ).toString(),
+      lastModified: new Date(work.updatedAt),
+    }))
+
+  return [...staticEntries, ...workEntries]
 }

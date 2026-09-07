@@ -15,18 +15,18 @@
 - Cache e estratégia de revalidação (quando o App Router estiver em uso) são
   responsabilidade do `architect`/`developer` e revisadas pelo `reviewer`.
 
-## Estratégia por página (CARSHOP-114)
+## Estratégia por página (CARSHOP-114 / CARSHOP-116)
 
-Decisão do `architect` para o estado atual do repositório (`app/`), a ser
-revisada quando as páginas passarem a consumir dados reais da API:
+Decisão do `architect`, atualizada na `CARSHOP-116` para refletir o estado
+real pós-integração com a API de `Work`s:
 
 | Página | Rendering hoje | Server/Client | Cache/revalidation |
 |---|---|---|---|
 | Home (`app/(public)/page.tsx`) | Estático (SSG implícito, sem `fetch`) | Server Component | Sem revalidação — conteúdo puramente estático até existir dado dinâmico |
 | About (`app/(public)/about/page.tsx`) | Estático | Server Component | Idem |
 | Services (`app/(public)/services/page.tsx`) | Estático | Server Component | Idem |
-| Portfolio — listagem (`app/(public)/portfolio/page.tsx`) | Estático nesta task | Server Component | Candidato a ISR (`revalidate` em segundos/minutos) quando a listagem passar a vir da API de projetos — não implementado enquanto não há dado real |
-| Project Details (`app/(public)/portfolio/[slug]/page.tsx`) | Estático (stub), sem `generateStaticParams` | Server Component (`generateMetadata` assíncrono já preparado) | Quando a API existir: `generateStaticParams` para os slugs publicados + ISR (`revalidate`) para refletir atualizações de projeto sem rebuild completo |
+| Portfolio — listagem (`app/(public)/portfolio/page.tsx`) | ISR — busca real via `getWorks()` (`lib/api/works.ts`, `GET /works`) | Server Component | `revalidate: WORKS_REVALIDATE_SECONDS` (3600s/1h) + `tags: ['works']` no `fetch` nativo do Next |
+| Project Details (`app/(public)/portfolio/[slug]/page.tsx`) | ISR — `generateStaticParams()` via `getWorks()`; corpo/`generateMetadata` via `getWorkBySlug(slug)`, com `notFound()` quando o slug não existe | Server Component (`generateMetadata` assíncrono) | Mesma fonte/cache de `getWorks()` (`revalidate` 3600s, `tags: ['works']`); detalhe por slug é mitigado buscando `GET /works` (lista completa) e filtrando no servidor, já que o backend não expõe `GET /works/:slug` público — decisão confirmada, sem endpoint dedicado |
 | Contact (`app/(public)/contact/page.tsx`) | Estático (wrapper) | Server Component; o formulário futuro deve ser um Client Component isolado na menor boundary (não a página inteira) | N/A até existir formulário |
 | Admin (`app/(admin)/admin/**`) | Dinâmico, nunca tratado como conteúdo público cacheável | Decisão de Server/Client por feature, fora do escopo desta task | **Nunca cacheado como página pública**: `robots: { index: false, follow: false }` na própria rota (defesa em profundidade) + `disallow: ['/admin', '/admin/']` em `app/robots.ts`; nenhuma resposta autenticada/sensível deve reutilizar cache de rota pública |
 
@@ -48,5 +48,6 @@ uma regra única aplicada a todo o app.
   `slug` recebido em `generateMetadata` — nunca um valor fixo de exemplo.
 - `app/robots.ts` e `app/sitemap.ts` (Next.js Metadata Files API) são a
   fonte de verdade de crawling; `/admin` é sempre excluído de ambos.
-  Entradas de `portfolio/[slug]` no sitemap ficam como `TODO` explícito até
-  existir a API de projetos para listar slugs reais.
+  `app/sitemap.ts` inclui, além das rotas estáticas, uma entrada por `Work`
+  publicado real (`/portfolio/[slug]`, `lastModified` a partir de
+  `work.updatedAt`), obtidas via `getWorks()` (`lib/api/works.ts`).
