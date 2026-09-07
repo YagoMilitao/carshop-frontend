@@ -1,9 +1,9 @@
-# Regra: Responsividade
+# Rule: Responsiveness
 
-- Componentes e telas tocados por uma task que envolve múltiplos tamanhos de
-  tela devem funcionar em mobile, tablet e desktop.
-- Usar as utilidades responsivas do Tailwind (breakpoints) quando a
-  dependência estiver instalada; enquanto isso não ocorre, seguir o padrão
-  responsivo já usado no CSS existente.
-- Testar visualmente (quando possível rodar a app) o golden path e pontos de
-  quebra de layout antes de reportar a task como concluída.
+- Components and screens touched by a task that involves multiple screen
+  sizes must work on mobile, tablet, and desktop.
+- Use Tailwind's responsive utilities (breakpoints) once the dependency is
+  installed; until then, follow the responsive pattern already used in the
+  existing CSS.
+- Visually test (running the app when possible) the golden path and layout
+  breakpoints before reporting the task as complete.

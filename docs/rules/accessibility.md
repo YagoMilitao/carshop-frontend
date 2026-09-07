@@ -1,11 +1,11 @@
-# Regra: Acessibilidade
+# Rule: Accessibility
 
-- Elementos semânticos por padrão; atributos ARIA apenas quando o HTML
-  semântico não é suficiente para expressar o papel/estado do componente.
-- Navegação por teclado funcional em todo componente interativo (foco
-  visível, ordem de tabulação coerente).
-- Contraste de cor adequado nos componentes visuais entregues.
-- Formulários associam labels aos campos e expõem mensagens de erro de forma
-  acessível (ver [docs/rules/forms.md](./forms.md)).
-- `reviewer` valida acessibilidade básica nos componentes tocados pela task
-  antes de considerá-la pronta.
+- Semantic elements by default; ARIA attributes only when semantic HTML
+  is not enough to express the component's role/state.
+- Functional keyboard navigation on every interactive component (visible
+  focus, coherent tab order).
+- Adequate color contrast on delivered visual components.
+- Forms associate labels with fields and expose error messages
+  accessibly (see [docs/rules/forms.md](./forms.md)).
+- `reviewer` validates basic accessibility on the components touched by
+  the task before considering it done.

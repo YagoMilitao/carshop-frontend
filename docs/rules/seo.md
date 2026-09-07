@@ -1,10 +1,10 @@
-# Regra: SEO e Metadata
+# Rule: SEO and Metadata
 
-- Quando o App Router estiver em uso, metadata (title, description, Open
-  Graph, etc.) usa a API de metadata do Next.js por rota/página, não tags
-  manuais duplicadas.
-- Conteúdo público prioriza Server Components/renderização do Next quando
-  apropriado, favorecendo indexação (ver
+- When the App Router is in use, metadata (title, description, Open Graph,
+  etc.) uses Next.js's metadata API per route/page, not manually duplicated
+  tags.
+- Public content prioritizes Server Components/Next.js rendering when
+  appropriate, favoring indexing (see
   [docs/rules/rendering.md](./rendering.md)).
-- `reviewer` valida metadata/SEO nas páginas públicas tocadas pela task,
-  quando aplicável.
+- `reviewer` validates metadata/SEO on public pages touched by the task,
+  when applicable.

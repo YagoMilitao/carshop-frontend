@@ -1,11 +1,11 @@
-# Regra: TypeScript
+# Rule: TypeScript
 
-- Modo estrito sempre. Nunca usar `any`.
-- Nunca usar `@ts-ignore`/`@ts-expect-error` para silenciar erros de tipo.
-- Nunca usar casts inseguros (`as unknown as X`, `as X` sem garantia real de
-  que o valor é `X`).
-- Preferir tipos explícitos, narrowing e generics a gambiarras de tipagem.
-- Tipos de request/response de API são definidos explicitamente (ver
-  [docs/rules/api.md](./api.md)), nunca inferidos como `any` implícito.
-- `npm run lint` e a checagem de tipos (`tsc -b`, parte de `npm run build`)
-  devem passar sem erros nem supressões antes de considerar a task pronta.
+- Strict mode always. Never use `any`.
+- Never use `@ts-ignore`/`@ts-expect-error` to silence type errors.
+- Never use unsafe casts (`as unknown as X`, `as X` without real assurance
+  that the value is `X`).
+- Prefer explicit types, narrowing, and generics over typing hacks.
+- API request/response types are defined explicitly (see
+  [docs/rules/api.md](./api.md)), never inferred as implicit `any`.
+- `npm run lint` and type checking (`tsc -b`, part of `npm run build`) must
+  pass without errors or suppressions before considering the task done.

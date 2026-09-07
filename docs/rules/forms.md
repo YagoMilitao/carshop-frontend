@@ -1,11 +1,11 @@
-# Regra: Formulários
+# Rule: Forms
 
-- **React Hook Form + Zod** são a stack oficial-alvo para formulários:
-  RHF para estado/registro dos campos, Zod para schema de validação.
-- Mensagens de erro de validação são claras e associadas ao campo
-  correspondente (acessibilidade — ver
+- **React Hook Form + Zod** are the target-official stack for forms: RHF
+  for field state/registration, Zod for validation schema.
+- Validation error messages are clear and associated with the
+  corresponding field (accessibility — see
   [docs/rules/accessibility.md](./accessibility.md)).
-- Schemas Zod são a fonte de tipos do formulário (`z.infer`) quando possível,
-  evitando duplicar tipos manualmente.
-- Só usar RHF/Zod depois que as dependências estiverem de fato instaladas no
-  `package.json`; ausência é bloqueio, não motivo para código fictício.
+- Zod schemas are the form's source of types (`z.infer`) when possible,
+  avoiding manually duplicating types.
+- Only use RHF/Zod once the dependencies are actually installed in
+  `package.json`; absence is a blocker, not a reason for fictitious code.
