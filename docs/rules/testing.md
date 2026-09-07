@@ -1,12 +1,11 @@
-# Regra: Testes
+# Rule: Testing
 
-- `tester` usa a stack de testes oficialmente configurada no `package.json`
-  — verificar o que está de fato instalado antes de escrever testes.
-- Se não houver stack de testes instalada, isso é um bloqueio/dependência a
-  sinalizar ao usuário, não um motivo para inventar um framework ou simular
-  resultados de teste.
-- Meta: ≥80% de cobertura em código novo/alterado, quando aplicável (ex.:
-  quando a stack de testes e a métrica de cobertura estiverem configuradas).
-- Testes cobrem o DoD da task, incluindo caminhos de erro relevantes (não
-  apenas o caminho feliz).
-- Testes devem passar antes de a task ser considerada pronta para revisão.
+- `tester` uses the testing stack officially configured in `package.json`
+  — check what is actually installed before writing tests.
+- If no testing stack is installed, this is a blocker/dependency to flag to
+  the user, not a reason to invent a framework or fake test results.
+- Goal: ≥80% coverage on new/changed code, when applicable (e.g., when the
+  testing stack and coverage metric are configured).
+- Tests cover the task's DoD, including relevant error paths (not just the
+  happy path).
+- Tests must pass before the task is considered ready for review.

@@ -1,12 +1,14 @@
-# Regra: React
+# Rule: React
 
-- React é a biblioteca de UI em todas as camadas (Server e Client
-  Components, quando o App Router estiver em uso).
-- Componentes seguem composição e separação container/apresentação apenas
-  quando fizer sentido para a task — não introduzir abstração antecipada.
-- Hooks seguem as regras padrão do React (não condicionais, não em loops);
-  lint (`eslint-plugin-react-hooks`) deve passar sem supressões.
-- Preferir componentes pequenos e coesos a componentes que acumulam múltiplas
-  responsabilidades; extrair apenas quando há reuso real ou a task exige.
-- Nomenclatura e organização de arquivos seguem o padrão já usado em `src/`
-  — não criar uma convenção paralela sem necessidade.
+- React is the UI library at every layer (Server and Client Components,
+  when the App Router is in use).
+- Components follow composition and container/presentation separation
+  only when it makes sense for the task — do not introduce premature
+  abstraction.
+- Hooks follow standard React rules (no conditionals, no loops); lint
+  (`eslint-plugin-react-hooks`) must pass without suppressions.
+- Prefer small, cohesive components over components that accumulate
+  multiple responsibilities; extract only when there is real reuse or
+  the task requires it.
+- File naming and organization follow the pattern already used in
+  `src/` — do not create a parallel convention without need.

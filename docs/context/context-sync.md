@@ -1,26 +1,24 @@
-# Sincronização de Contexto dos Agentes
+# Agent Context Synchronization
 
-Este documento descreve de onde os agentes que trabalham neste repositório
-devem obter contexto antes de iniciar uma task, e como manter esse contexto
-consistente entre repositório e ferramentas externas de planejamento.
+This document describes where agents working in this repository should get
+context from before starting a task, and how to keep that context
+consistent between the repository and external planning tools.
 
-## Fontes de contexto
+## Context sources
 
-- **Código e histórico deste repositório**: arquitetura, convenções e estado
-  atual da implementação. Fonte de verdade do código.
-- **Notion (CarShop / Task Tracker)**: Sprint, prioridade, descrição, DoD e
-  notas técnicas de cada task. Fonte de verdade de planejamento. Ver
-  [notion.md](./notion.md) para o fluxo completo de consulta e as regras de
-  escrita.
+- **This repository's code and history**: architecture, conventions, and
+  current implementation state. Source of truth for code.
+- **Notion (CarShop / Task Tracker)**: Sprint, priority, description, DoD,
+  and technical notes for each task. Source of truth for planning. See
+  [notion.md](./notion.md) for the full lookup flow and writing rules.
 
-## Regra geral
+## General rule
 
-Antes de implementar qualquer task, o agente deve identificar a task atual e
-consultar o Task Tracker no Notion conforme [notion.md](./notion.md). Não
-implementar com base apenas em suposições sobre escopo/DoD quando essas
-informações estão disponíveis no Notion.
+Before implementing any task, the agent must identify the current task and
+consult the Task Tracker in Notion as described in [notion.md](./notion.md).
+Do not implement based solely on assumptions about scope/DoD when that
+information is available in Notion.
 
-Alterações no Notion (escopo, notas técnicas, status) seguem estritamente as
-regras de escrita descritas em [notion.md](./notion.md): nunca automáticas,
-nunca para marcar `Done` sem validação do usuário, nunca para criar tasks não
-solicitadas.
+Changes to Notion (scope, technical notes, status) strictly follow the
+writing rules described in [notion.md](./notion.md): never automatic, never
+to mark `Done` without user validation, never to create unrequested tasks.

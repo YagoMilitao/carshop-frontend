@@ -1,98 +1,101 @@
-# Contexto de Conhecimento no Obsidian
+# Knowledge Context in Obsidian
 
-Este documento define como os agentes deste repositório devem consultar e
-escrever na base de conhecimento pessoal do CarShop mantida em Obsidian.
+This document defines how agents in this repository should read from and
+write to the CarShop personal knowledge base maintained in Obsidian.
 
-## Natureza da integração
+## Nature of the integration
 
-- O Obsidian **não** é acessado via API proprietária. O vault é composto por
-  arquivos Markdown locais — a integração é feita lendo esses arquivos
-  diretamente do sistema de arquivos ou de uma pasta sincronizada com o
-  workspace, quando disponível no ambiente.
-- Se nenhum vault ou pasta sincronizada estiver disponível no ambiente atual,
-  o agente deve avisar o usuário explicitamente e seguir sem consultar o
-  Obsidian, em vez de assumir ou inventar conteúdo do vault.
+- Obsidian is **not** accessed via a proprietary API. The vault is made up
+  of local Markdown files — the integration is done by reading those files
+  directly from the file system, or from a folder synced with the
+  workspace, when available in the environment.
+- If no vault or synced folder is available in the current environment, the
+  agent must explicitly warn the user and proceed without consulting
+  Obsidian, instead of assuming or inventing vault content.
 
-## Estrutura do vault
+## Vault structure
 
-Dentro do vault pessoal, o conhecimento do CarShop deve ficar isolado em uma
-pasta dedicada, com a seguinte convenção de subpastas:
+Within the personal vault, CarShop knowledge must be isolated in a
+dedicated folder, with the following subfolder convention:
 
-- `CarShop/Architecture` — decisões e diagramas de arquitetura vigentes.
-- `CarShop/ADRs` — Architecture Decision Records (uma decisão por arquivo,
-  com contexto, alternativas consideradas e consequência).
-- `CarShop/Studies` — notas de estudo, comparações de bibliotecas, POCs e
-  aprendizados que ainda não viraram decisão.
-- `CarShop/Decisions` — decisões de produto/processo que não são
-  estritamente arquiteturais (ex.: convenções de branch, fluxo de review).
+- `CarShop/Architecture` — current architecture decisions and diagrams.
+- `CarShop/ADRs` — Architecture Decision Records (one decision per file,
+  with context, alternatives considered, and consequences).
+- `CarShop/Studies` — study notes, library comparisons, POCs, and learnings
+  that have not yet become a decision.
+- `CarShop/Decisions` — product/process decisions that are not strictly
+  architectural (e.g., branch conventions, review flow).
 
-## Precedência de fontes
+## Source precedence
 
-Ao reconciliar informação conflitante entre fontes, os agentes devem seguir
-esta ordem (da mais autoritativa para a menos autoritativa):
+When reconciling conflicting information between sources, agents must
+follow this order (from most to least authoritative):
 
-1. **Código atual** do repositório — é a fonte de verdade do que está de
-   fato implementado.
-2. **Decisões arquiteturais aprovadas** (`CarShop/Architecture`,
-   `CarShop/ADRs` no Obsidian).
-3. **Task atual do Notion** (Task Tracker) — ver
+1. **Current code** in the repository — the source of truth for what is
+   actually implemented.
+2. **Approved architecture decisions** (`CarShop/Architecture`,
+   `CarShop/ADRs` in Obsidian).
+3. **Current task in Notion** (Task Tracker) — see
    [docs/context/notion.md](./notion.md).
-4. **Notas de estudo do Obsidian** (`CarShop/Studies`) — material
-   exploratório, não vinculante até virar ADR ou decisão.
+4. **Obsidian study notes** (`CarShop/Studies`) — exploratory material,
+   non-binding until it becomes an ADR or a decision.
 
-Ou seja: o Obsidian complementa o Notion e o repositório, mas nunca os
-substitui — notas de estudo em particular são a fonte menos autoritativa e
-não devem guiar implementação sozinhas.
+In other words: Obsidian complements Notion and the repository, but never
+replaces them — study notes in particular are the least authoritative
+source and must not guide implementation on their own.
 
-## Regras de leitura
+## Reading rules
 
-- Ler o vault é opcional e só deve ocorrer quando a task em questão
-  claramente se beneficia de contexto histórico/arquitetural (ex.: dúvida
-  sobre uma decisão já tomada, ADR relevante para a área tocada).
-- Nunca duplicar conteúdo do vault nos arquivos do repositório
-  (`AGENTS.md`, `docs/`, etc.) — apenas referenciar o caminho/nome da nota
-  quando relevante, como já é feito para o Notion.
+- Reading the vault is optional and should only happen when the task at
+  hand clearly benefits from historical/architectural context (e.g., a
+  question about a decision already made, an ADR relevant to the area being
+  touched).
+- Never duplicate vault content in repository files (`AGENTS.md`, `docs/`,
+  etc.) — only reference the note's path/name when relevant, as is already
+  done for Notion.
 
-## Regras de escrita
+## Writing rules
 
-- **Escrita automática (instrução explícita e permanente do usuário):**
-  sempre que uma task do CarShop for concluída/aprovada (o `reviewer` aprova
-  sem pontos bloqueantes), o `knowledge-manager` registra automaticamente
-  uma nota no vault, sem precisar pedir confirmação a cada vez. Escolha a
-  subpasta pelo tipo de conteúdo:
-  - `CarShop/ADR` — quando a task envolveu uma decisão arquitetural real
-    (troca de framework/lib, mudança estrutural, trade-off relevante).
-    Seguir o formato existente (`ADR-XXX-titulo-curto.md`: Status, Context,
+- **Automatic writing (explicit and permanent user instruction):** whenever
+  a CarShop task is completed/approved (the `reviewer` approves it with no
+  blocking points), the `knowledge-manager` automatically records a note in
+  the vault, without needing to ask for confirmation each time. Choose the
+  subfolder based on the type of content:
+  - `CarShop/ADR` — when the task involved a real architectural decision
+    (framework/library swap, structural change, relevant trade-off). Follow
+    the existing format (`ADR-XXX-short-title.md`: Status, Context,
     Decision, Alternatives Considered, Trade-offs, Consequences, Related
-    Tasks, Related Code). Verificar o próximo número livre antes de criar.
-  - `CarShop/Learnings` — aprendizado geral que não é uma decisão
-    arquitetural isolada (ex.: gap de cobertura, lição sobre o processo).
-  - `CarShop/Troubleshooting` — problema concreto encontrado e resolvido
-    durante a task (sintoma, causa raiz, correção).
-  - `CarShop/Patterns` — padrão de código reutilizável que emergiu da task.
-  - `CarShop/Architecture` — atualização de um documento de arquitetura já
-    vigente (não uma decisão pontual nova).
-  Nem toda task exige nota em todas as subpastas — escrever apenas o que for
-  genuinamente relevante; uma task TRIVIAL pode não gerar nenhuma nota.
-- Fora dessa exceção, agentes não devem escrever ou editar arquivos do vault
-  como efeito colateral não solicitado (ex.: no meio da implementação, antes
-  da aprovação do `reviewer`).
-- **Nunca armazenar segredos, tokens, senhas ou conteúdo de `.env`** no
-  vault, em nenhuma nota.
-- Caminhos locais do vault (ou de uma pasta sincronizada dentro deste
-  repositório) devem ser adicionados ao `.gitignore` sempre que existirem
-  neste diretório de trabalho, para evitar commit acidental de conteúdo
-  pessoal/privado.
+    Tasks, Related Code). Check the next available number before creating
+    one.
+  - `CarShop/Learnings` — a general learning that is not a standalone
+    architectural decision (e.g., a coverage gap, a lesson about the
+    process).
+  - `CarShop/Troubleshooting` — a concrete problem found and resolved
+    during the task (symptom, root cause, fix).
+  - `CarShop/Patterns` — a reusable code pattern that emerged from the
+    task.
+  - `CarShop/Architecture` — an update to an already-existing architecture
+    document (not a new one-off decision).
+  Not every task requires a note in every subfolder — write only what is
+  genuinely relevant; a TRIVIAL task may not generate any note.
+- Outside this exception, agents must not write to or edit vault files as
+  an unrequested side effect (e.g., mid-implementation, before the
+  `reviewer`'s approval).
+- **Never store secrets, tokens, passwords, or `.env` content** in the
+  vault, in any note.
+- Local vault paths (or a folder synced within this repository) must be
+  added to `.gitignore` whenever they exist in this working directory, to
+  avoid accidentally committing personal/private content.
 
-## Resumo rápido (checklist do agente)
+## Quick summary (agent checklist)
 
-- [ ] Confirmado se há vault/pasta sincronizada disponível no ambiente antes
-      de tentar ler ou escrever
-- [ ] Precedência respeitada: código > decisões aprovadas > task do Notion >
-      notas de estudo do Obsidian
-- [ ] Ao final de uma task aprovada pelo `reviewer`, nota registrada
-      automaticamente na subpasta certa do vault (ADR/Learnings/
-      Troubleshooting/Patterns/Architecture), quando genuinamente relevante
-- [ ] Nenhum segredo, token, senha ou `.env` referenciado ou copiado para o
-      vault
-- [ ] Caminhos locais do vault no `.gitignore`, quando aplicável
+- [ ] Confirmed whether a vault/synced folder is available in the
+      environment before attempting to read or write
+- [ ] Precedence respected: code > approved decisions > Notion task >
+      Obsidian study notes
+- [ ] At the end of a task approved by the `reviewer`, a note automatically
+      recorded in the correct vault subfolder (ADR/Learnings/
+      Troubleshooting/Patterns/Architecture), when genuinely relevant
+- [ ] No secrets, tokens, passwords, or `.env` content referenced or copied
+      into the vault
+- [ ] Local vault paths in `.gitignore`, when applicable

@@ -1,16 +1,16 @@
-# Regra: UI e Design System
+# Rule: UI and Design System
 
-- **TailwindCSS** é a estilização oficial-alvo; **Shadcn/UI** para
-  componentes base quando apropriado; **Framer Motion** para animações
-  quando justificadas pela task (não por padrão); **React Icons** para
-  ícones.
-- Figma aprovado é fonte de verdade visual quando houver design aprovado —
-  agentes não redesenham a interface por preferência própria.
-- Enquanto Tailwind/Shadcn não estiverem instalados no `package.json`, a
-  estilização segue o padrão já usado em `src/*.css` (CSS/CSS Modules);
-  ausência da dependência-alvo é bloqueio, não motivo para simular classes
-  Tailwind sem a lib instalada.
-- Markup usa elementos HTML semânticos apropriados por padrão (não
-  `div`/`span` para tudo).
-- Consistência visual (espaçamento, tipografia, cores) é mantida entre
-  componentes e páginas já existentes.
+- **TailwindCSS** is the official target styling solution; **Shadcn/UI** for
+  base components when appropriate; **Framer Motion** for animations when
+  justified by the task (not by default); **React Icons** for icons.
+- An approved Figma design is the visual source of truth when an approved
+  design exists — agents do not redesign the interface based on their own
+  preferences.
+- While Tailwind/Shadcn are not installed in `package.json`, styling follows
+  the pattern already used in `src/*.css` (CSS/CSS Modules); absence of the
+  target dependency is a blocker, not a reason to simulate Tailwind classes
+  without the library installed.
+- Markup uses appropriate semantic HTML elements by default (not `div`/`span`
+  for everything).
+- Visual consistency (spacing, typography, colors) is maintained across
+  existing components and pages.

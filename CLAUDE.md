@@ -1,100 +1,100 @@
 # CLAUDE.md
 
-Ponto de entrada para agentes de IA (Claude Code) trabalhando no CarShop
-Frontend. Este arquivo é um índice curto — o detalhe de cada área vive em
-`AGENTS.md`, `docs/agents/`, `docs/rules/` e `docs/context/`. Nunca duplicar
-aqui o conteúdo vivo dessas fontes.
+Entry point for AI agents (Claude Code) working on the CarShop
+Frontend. This file is a short index — the detail for each area lives in
+`AGENTS.md`, `docs/agents/`, `docs/rules/`, and `docs/context/`. Never duplicate
+the live content of those sources here.
 
-## Arquitetura oficial
+## Official architecture
 
-- **Alvo**: Next.js (App Router) + React + TypeScript estrito, com stack
-  complementar TailwindCSS, Shadcn/UI, TanStack Query, Axios, React Hook
-  Form, Zod, Framer Motion, React Icons e uma stack de testes oficialmente
-  configurada. Detalhe por área em [docs/rules/](docs/rules/).
-- **Estado real atual**: o app ainda roda em Vite + React Router (ver
-  `package.json`, `vite.config.ts`) — a migração de código não faz parte
-  desta configuração de workflow. **Nunca assuma uma dependência da stack
-  alvo como instalada**: confira `package.json` antes de usá-la. Se faltar,
-  isso é um bloqueio/dependência a sinalizar, nunca um motivo para escrever
-  código fictício.
-- React Router deixa de ser orientação ativa para rotas novas; Server vs
-  Client Components é decisão do agente `architect` (ver
+- **Target**: Next.js (App Router) + React + strict TypeScript, with a
+  complementary stack of TailwindCSS, Shadcn/UI, TanStack Query, Axios, React Hook
+  Form, Zod, Framer Motion, React Icons, and an officially configured testing
+  stack. Detail per area in [docs/rules/](docs/rules/).
+- **Current actual state**: the app still runs on Vite + React Router (see
+  `package.json`, `vite.config.ts`) — code migration is not part of
+  this workflow configuration. **Never assume a dependency of the target
+  stack is installed**: check `package.json` before using it. If it's
+  missing, that's a blocker/dependency to flag, never a reason to write
+  fictitious code.
+- React Router is no longer active guidance for new routes; Server vs
+  Client Components is a decision for the `architect` agent (see
   [docs/rules/rendering.md](docs/rules/rendering.md)).
-- Nenhum agente propõe migrar o backend Express para Next Route Handlers, ou
-  migrar o app Vite para Next.js, sem uma task/decisão arquitetural
-  explícita do usuário.
+- No agent proposes migrating the Express backend to Next Route Handlers, or
+  migrating the Vite app to Next.js, without an explicit architectural
+  task/decision from the user.
 
-## Fontes de verdade
+## Sources of truth
 
-Da mais para a menos autoritativa: **código atual do repositório** →
-**decisões arquiteturais aprovadas** (Obsidian `CarShop/Architecture`,
-`CarShop/ADRs`) → **task atual do Notion** (Task Tracker) → **notas de
-estudo do Obsidian** (`CarShop/Studies`, não vinculante). Detalhe completo em
-[docs/context/obsidian.md](docs/context/obsidian.md) e
+From most to least authoritative: **current repository code** →
+**approved architectural decisions** (Obsidian `CarShop/Architecture`,
+`CarShop/ADRs`) → **current Notion task** (Task Tracker) → **Obsidian
+study notes** (`CarShop/Studies`, non-binding). Full detail in
+[docs/context/obsidian.md](docs/context/obsidian.md) and
 [docs/context/notion.md](docs/context/notion.md).
 
-## Fluxo de execução de uma task `CARSHOP-XX`
+## Execution flow for a `CARSHOP-XX` task
 
-1. Identificar a task (branch, ID ou título informado pelo usuário); nunca
-   supor — perguntar quando não houver confiança.
-2. `task-reader` consulta o Task Tracker no Notion (Descrição, DoD, Notas
-   Técnicas, Stack, Sprint, Priority, Component, Status).
-3. `spec-writer` produz a spec da task e classifica o tamanho:
-   **TRIVIAL** (mudança pontual, sem plano), **SMALL** (poucos arquivos,
-   plano opcional) ou **NON-TRIVIAL** (plano obrigatório).
-4. `knowledge-reader` consulta Obsidian/docs internas quando a task se
-   beneficia de contexto histórico/arquitetural.
-5. `architect` decide estrutura/roteamento/Server vs Client Components
-   (somente leitura).
-6. `plan-writer` persiste `plan.md` **apenas para tasks NON-TRIVIAL**.
-7. `developer` implementa seguindo a spec/plano e as regras em
+1. Identify the task (branch, ID, or title provided by the user); never
+   assume — ask when there is no confidence.
+2. `task-reader` consults the Task Tracker on Notion (Description, DoD, Technical
+   Notes, Stack, Sprint, Priority, Component, Status).
+3. `spec-writer` produces the task's spec and classifies its size:
+   **TRIVIAL** (targeted change, no plan), **SMALL** (few files,
+   plan optional), or **NON-TRIVIAL** (plan required).
+4. `knowledge-reader` consults Obsidian/internal docs when the task
+   benefits from historical/architectural context.
+5. `architect` decides structure/routing/Server vs Client Components
+   (read-only).
+6. `plan-writer` persists `plan.md` **only for NON-TRIVIAL tasks**.
+7. `developer` implements following the spec/plan and the rules in
    [docs/rules/](docs/rules/).
-8. `tester` cobre o DoD com a stack de testes oficialmente configurada
-   (≥80% de cobertura em código novo/alterado quando aplicável).
-9. `reviewer` valida o DoD e os pontos descritos em
-   [.claude/agents/reviewer.md](.claude/agents/reviewer.md) antes de a task
-   ser considerada pronta.
-10. `task-manager` nunca marca status `Done` no Notion nem cria tasks novas
-    sem validação explícita do usuário. **Exceções permanentes** (instrução
-    explícita do usuário, sem necessidade de confirmar a cada task): quando
-    o `reviewer` aprova a task sem pontos bloqueantes, (a) o status no
-    Notion é atualizado automaticamente para `Review` (não `Done`) — ver
-    [docs/context/notion.md](docs/context/notion.md); e (b) o
-    `knowledge-manager` registra automaticamente uma nota relevante no vault
-    do Obsidian (ADR/Learnings/Troubleshooting/Patterns/Architecture,
-    conforme o conteúdo) — ver
+8. `tester` covers the DoD with the officially configured testing stack
+   (≥80% coverage on new/changed code when applicable).
+9. `reviewer` validates the DoD and the points described in
+   [.claude/agents/reviewer.md](.claude/agents/reviewer.md) before the task
+   is considered ready.
+10. `task-manager` never marks a status as `Done` on Notion nor creates new
+    tasks without explicit user validation. **Permanent exceptions** (explicit
+    user instruction, no need to confirm on each task): when
+    the `reviewer` approves the task with no blocking points, (a) the status on
+    Notion is automatically updated to `Review` (not `Done`) — see
+    [docs/context/notion.md](docs/context/notion.md); and (b) the
+    `knowledge-manager` automatically records a relevant note in the Obsidian
+    vault (ADR/Learnings/Troubleshooting/Patterns/Architecture,
+    depending on the content) — see
     [docs/context/obsidian.md](docs/context/obsidian.md).
 
-Convenção de branch: `<type>/CARSHOP-<numero>[-<descricao-curta>]` (ver
+Branch convention: `<type>/CARSHOP-<number>[-<short-description>]` (see
 [docs/rules/branching.md](docs/rules/branching.md)).
 
-## Registro de tempo e hotspots de performance
+## Time tracking and performance hotspots
 
-Cada fase do fluxo acima deve ser cronometrada. Se uma única fase consumir
-mais de 50% do tempo total gasto na task, isso deve ser sinalizado
-explicitamente ao usuário como **PERFORMANCE HOTSPOT** (ex.: "PERFORMANCE
-HOTSPOT: fase `developer` consumiu 68% do tempo total da task"), para ajudar
-a identificar gargalos recorrentes no workflow.
+Each phase of the flow above must be timed. If a single phase consumes
+more than 50% of the total time spent on the task, this must be flagged
+explicitly to the user as a **PERFORMANCE HOTSPOT** (e.g., "PERFORMANCE
+HOTSPOT: the `developer` phase consumed 68% of the task's total time"), to help
+identify recurring bottlenecks in the workflow.
 
-## Variáveis de ambiente
+## Environment variables
 
-- `OBSIDIAN_VAULT_ID` (opcional, não-secreta): identifica/aponta a
-  pasta/vault local do Obsidian a ser lida por `knowledge-reader` quando
-  disponível no ambiente. Não é uma credencial de API — o Obsidian é sempre
-  acessado lendo arquivos Markdown locais, nunca por API proprietária (ver
-  [docs/context/obsidian.md](docs/context/obsidian.md)). Se ausente, os
-  agentes avisam o usuário e seguem sem consultar o Obsidian.
-- Demais variáveis (`.env.example`) são responsabilidade do agente de API
-  ([docs/agents/api-integration.md](docs/agents/api-integration.md)); nunca
-  commitar valores reais de `.env`.
+- `OBSIDIAN_VAULT_ID` (optional, non-secret): identifies/points to the
+  local Obsidian folder/vault to be read by `knowledge-reader` when
+  available in the environment. It is not an API credential — Obsidian is always
+  accessed by reading local Markdown files, never through a proprietary API (see
+  [docs/context/obsidian.md](docs/context/obsidian.md)). If absent, the
+  agents notify the user and proceed without consulting Obsidian.
+- Other variables (`.env.example`) are the responsibility of the API
+  agent ([docs/agents/api-integration.md](docs/agents/api-integration.md)); never
+  commit real `.env` values.
 
-## Segurança e limites gerais
+## Security and general limits
 
-- Nenhum agente carrega `.env` completo ou expõe segredos em specs, planos,
-  código ou documentação (ver
+- No agent loads a full `.env` or exposes secrets in specs, plans,
+  code, or documentation (see
   [docs/rules/spec-security.md](docs/rules/spec-security.md)).
-- TypeScript estrito: nunca `any`, `@ts-ignore`/`@ts-expect-error`, ou casts
-  inseguros.
-- Cada agente atua apenas dentro do seu escopo (ver
-  [.claude/agents/](.claude/agents/) e [docs/agents/](docs/agents/)) e
-  sinaliza explicitamente quando outra área precisa ser acionada.
+- Strict TypeScript: never `any`, `@ts-ignore`/`@ts-expect-error`, or unsafe
+  casts.
+- Each agent acts only within its scope (see
+  [.claude/agents/](.claude/agents/) and [docs/agents/](docs/agents/)) and
+  explicitly flags when another area needs to be engaged.

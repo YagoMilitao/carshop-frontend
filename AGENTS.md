@@ -1,60 +1,60 @@
 # AGENTS.md
 
-Instruções para agentes (Claude Code e outros) trabalhando neste repositório
-(CarShop Frontend). Este arquivo é um índice curto — o detalhe de cada área
-fica em `docs/agents/`, `docs/rules/` e `.claude/agents/`.
+Instructions for agents (Claude Code and others) working on this repository
+(CarShop Frontend). This file is a short index — the detail for each area
+lives in `docs/agents/`, `docs/rules/`, and `.claude/agents/`.
 
-Ver [CLAUDE.md](CLAUDE.md) para a arquitetura oficial-alvo (Next.js App
-Router + stack complementar), o fluxo de execução de uma task `CARSHOP-XX`
-com os subagentes nativos em [.claude/agents/](.claude/agents/), e as regras
-por área em [docs/rules/](docs/rules/).
+See [CLAUDE.md](CLAUDE.md) for the official target architecture (Next.js App
+Router + complementary stack), the execution flow for a `CARSHOP-XX` task
+with the native subagents in [.claude/agents/](.claude/agents/), and the rules
+per area in [docs/rules/](docs/rules/).
 
-## Agentes especializados
+## Specialized agents
 
-Para evitar que um único agente acumule responsabilidades e perca contexto,
-o trabalho neste repositório é dividido entre agentes especializados. Todos
-seguem as [regras compartilhadas](docs/agents/shared-rules.md) (TypeScript
-estrito, sem `any`/`@ts-ignore`/casts inseguros, comentários só quando a
-decisão não é óbvia, contexto do Notion consultado antes de implementar) e,
-para o fluxo completo de uma task, os subagentes de
+To prevent a single agent from accumulating responsibilities and losing context,
+work in this repository is divided among specialized agents. All
+follow the [shared rules](docs/agents/shared-rules.md) (strict TypeScript,
+no `any`/`@ts-ignore`/unsafe casts, comments only when the
+decision isn't obvious, Notion context consulted before implementing) and,
+for the full flow of a task, the subagents in
 [.claude/agents/](.claude/agents/) (task-reader, spec-writer,
 knowledge-reader, architect, plan-writer, developer, tester, reviewer,
 task-manager, knowledge-manager).
 
-- [Arquitetura de Frontend](docs/agents/frontend-architect.md) — estrutura
-  de pastas, roteamento, estado, decisões estruturais.
-- [UI e Estilização](docs/agents/ui-tailwind.md) — componentes visuais,
-  CSS/Tailwind, responsividade.
-- [Integração com API e Autenticação](docs/agents/api-integration.md) —
-  chamadas ao backend, login/sessão, variáveis de ambiente.
-- [Qualidade e Acessibilidade](docs/agents/quality.md) — lint, tipos,
-  testes, acessibilidade.
-- [Contexto e Documentação](docs/agents/context-sync.md) — identificação da
-  task atual, consulta ao Notion, manutenção desta documentação.
+- [Frontend Architecture](docs/agents/frontend-architect.md) — folder
+  structure, routing, state, structural decisions.
+- [UI and Styling](docs/agents/ui-tailwind.md) — visual components,
+  CSS/Tailwind, responsiveness.
+- [API Integration and Authentication](docs/agents/api-integration.md) —
+  backend calls, login/session, environment variables.
+- [Quality and Accessibility](docs/agents/quality.md) — lint, types,
+  tests, accessibility.
+- [Context and Documentation](docs/agents/context-sync.md) — identifying the
+  current task, consulting Notion, maintaining this documentation.
 
-Cada documento define responsabilidades, limites, entradas, saídas e um
-checklist próprio. Ao identificar de qual área uma task faz parte, consulte
-o agente correspondente antes de implementar.
+Each document defines responsibilities, boundaries, inputs, outputs, and its own
+checklist. When identifying which area a task belongs to, consult the
+corresponding agent before implementing.
 
-## Contexto de planejamento (Notion)
+## Planning context (Notion)
 
-Antes de implementar qualquer task, consulte a documentação de contexto em
-[docs/context/context-sync.md](docs/context/context-sync.md) e, em
-particular, [docs/context/notion.md](docs/context/notion.md) para o fluxo de
-consulta ao Notion (Task Tracker do CarShop). Quando relevante, consulte
-também [docs/context/obsidian.md](docs/context/obsidian.md) para o contexto
-de conhecimento pessoal (arquitetura, ADRs, estudos) mantido no Obsidian.
+Before implementing any task, consult the context documentation in
+[docs/context/context-sync.md](docs/context/context-sync.md) and, in
+particular, [docs/context/notion.md](docs/context/notion.md) for the
+Notion consultation flow (CarShop Task Tracker). When relevant, also consult
+[docs/context/obsidian.md](docs/context/obsidian.md) for the personal knowledge
+context (architecture, ADRs, studies) kept in Obsidian.
 
-Resumo das regras principais (detalhes completos em `docs/context/notion.md`):
+Summary of the main rules (full details in `docs/context/notion.md`):
 
-- Identifique a task atual (ID/branch `CARSHOP-XX` ou título) antes de
-  implementar; pergunte ao usuário se não for possível identificá-la.
-- Consulte o Task Tracker no Notion e leia Descrição, DoD, Notas Técnicas,
-  Stack, Sprint, Priority e Component da task antes de codar.
-- Notion é a fonte de verdade de planejamento; este repositório é a fonte de
-  verdade do código. Não duplique o conteúdo do Notion aqui.
-- Nunca marque uma task como `Done` no Notion sem validação explícita da
-  implementação pelo usuário, e nunca crie tasks novas sem pedido explícito.
-- Alterações de escopo só são refletidas no Notion quando solicitadas pelo
-  usuário ou necessárias para manter a task consistente — e mesmo assim,
-  confirme com o usuário antes de escrever no Notion.
+- Identify the current task (`CARSHOP-XX` ID/branch or title) before
+  implementing; ask the user if it cannot be identified.
+- Consult the Task Tracker on Notion and read the task's Description, DoD, Technical
+  Notes, Stack, Sprint, Priority, and Component before coding.
+- Notion is the source of truth for planning; this repository is the source of
+  truth for code. Do not duplicate Notion's content here.
+- Never mark a task as `Done` on Notion without explicit validation of the
+  implementation by the user, and never create new tasks without an explicit request.
+- Scope changes are only reflected on Notion when requested by the
+  user or necessary to keep the task consistent — and even then,
+  confirm with the user before writing to Notion.

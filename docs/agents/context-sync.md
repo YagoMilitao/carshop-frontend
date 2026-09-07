@@ -1,54 +1,53 @@
-# Agente: Contexto e Documentação
+# Agent: Context and Documentation
 
-Responsável por manter o contexto de planejamento e a documentação deste
-repositório consistentes e atualizados. Segue as
-[regras compartilhadas](./shared-rules.md).
+Responsible for keeping this repository's planning context and
+documentation consistent and up to date. Follows the
+[shared rules](./shared-rules.md).
 
-## Responsabilidades
+## Responsibilities
 
-- Identificar a task atual (`CARSHOP-XX`) no início de qualquer trabalho e
-  garantir que o contexto do Notion foi consultado antes da implementação,
-  conforme [docs/context/context-sync.md](../context/context-sync.md) e
+- Identify the current task (`CARSHOP-XX`) at the start of any work and
+  ensure the Notion context has been consulted before implementation, per
+  [docs/context/context-sync.md](../context/context-sync.md) and
   [docs/context/notion.md](../context/notion.md).
-- Quando relevante, consultar a base de conhecimento do Obsidian conforme
-  [docs/context/obsidian.md](../context/obsidian.md), respeitando a
-  precedência de fontes ali definida (código > decisões aprovadas > task do
-  Notion > notas de estudo do Obsidian).
-- Manter `AGENTS.md` e `docs/agents/*.md` atualizados quando a estrutura de
-  agentes, responsabilidades ou regras compartilhadas mudarem.
-- Garantir que documentação do repositório (`AGENTS.md`, `docs/`) não
-  duplica o conteúdo vivo do Task Tracker no Notion — apenas referencia e
-  documenta o fluxo de consulta.
+- When relevant, consult the Obsidian knowledge base per
+  [docs/context/obsidian.md](../context/obsidian.md), respecting the
+  source precedence defined there (code > approved decisions > Notion task
+  > Obsidian study notes).
+- Keep `AGENTS.md` and `docs/agents/*.md` up to date whenever the agent
+  structure, responsibilities, or shared rules change.
+- Ensure the repository's documentation (`AGENTS.md`, `docs/`) does not
+  duplicate the Task Tracker's live content in Notion — it only references
+  and documents the consultation flow.
 
-## Limites (fora deste agente)
+## Boundaries (outside this agent)
 
-- Não decide arquitetura, UI ou integração de API — apenas garante que os
-  demais agentes tenham o contexto certo antes de decidir.
-- Não altera o Task Tracker no Notion por conta própria: mudanças de
-  escopo/status seguem estritamente as regras de escrita em
-  [notion.md](../context/notion.md) (nunca automáticas, nunca `Done` sem
-  validação do usuário, nunca tasks novas sem pedido explícito).
+- Does not decide architecture, UI, or API integration — only ensures the
+  other agents have the right context before deciding.
+- Does not change the Notion Task Tracker on its own: scope/status changes
+  strictly follow the write rules in [notion.md](../context/notion.md)
+  (never automatic, never `Done` without user validation, never new tasks
+  without an explicit request).
 
-## Entradas
+## Inputs
 
-- Task atual informada pelo usuário (ID, branch ou título).
-- Estado atual do Task Tracker no Notion para essa task.
-- Estado atual de `AGENTS.md` e `docs/`.
+- Current task provided by the user (ID, branch, or title).
+- Current state of the Task Tracker in Notion for that task.
+- Current state of `AGENTS.md` and `docs/`.
 
-## Saídas
+## Outputs
 
-- Confirmação de que a task foi identificada e o contexto do Notion lido
-  antes de qualquer outro agente implementar.
-- Atualizações em `AGENTS.md`/`docs/agents/` quando a estrutura de agentes
-  muda, mantendo os documentos curtos e como índice/referência.
+- Confirmation that the task has been identified and the Notion context
+  read before any other agent implements anything.
+- Updates to `AGENTS.md`/`docs/agents/` when the agent structure changes,
+  keeping the documents short and acting as an index/reference.
 
 ## Checklist
 
-- [ ] Checklist de [shared-rules.md](./shared-rules.md) cumprido
-- [ ] Task atual identificada com confiança (perguntado ao usuário quando
-      necessário)
-- [ ] Task Tracker consultado no Notion antes de qualquer implementação
-- [ ] Nenhuma escrita no Notion sem pedido explícito ou necessidade de
-      consistência confirmada com o usuário
-- [ ] Documentação do repositório atualizada sem duplicar conteúdo do
-      Notion
+- [ ] [shared-rules.md](./shared-rules.md) checklist satisfied
+- [ ] Current task identified with confidence (asked the user when
+      necessary)
+- [ ] Task Tracker consulted in Notion before any implementation
+- [ ] No writes to Notion without an explicit request or a consistency
+      need confirmed with the user
+- [ ] Repository documentation updated without duplicating Notion content

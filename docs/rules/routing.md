@@ -1,13 +1,13 @@
-# Regra: Roteamento
+# Rule: Routing
 
-- Roteamento oficial-alvo: **App Router do Next.js** (arquivos/pastas
-  `app/`, `page.tsx`, `layout.tsx`, route groups, rotas dinâmicas).
-- React Router deixa de ser orientação ativa para rotas novas planejadas
-  dentro dessa arquitetura. Enquanto o app real ainda usa Vite + React
-  Router (ver [docs/rules/architecture.md](./architecture.md)), qualquer
-  rota nova no código Vite existente segue o padrão já usado até que a
-  migração ocorra como task explícita.
-- Proteção de rotas autenticadas é decisão conjunta de roteamento (`architect`)
-  e autenticação (ver [docs/rules/auth.md](./auth.md)).
-- Não introduzir uma segunda convenção de roteamento em paralelo — se a task
-  exige rota nova, seguir o padrão vigente no código tocado.
+- Official target routing: **Next.js App Router** (`app/` files/folders,
+  `page.tsx`, `layout.tsx`, route groups, dynamic routes).
+- React Router is no longer active guidance for new routes planned within
+  this architecture. While the real app still uses Vite + React Router (see
+  [docs/rules/architecture.md](./architecture.md)), any new route in the
+  existing Vite code follows the pattern already in use until the migration
+  happens as an explicit task.
+- Protection of authenticated routes is a joint decision between routing
+  (`architect`) and authentication (see [docs/rules/auth.md](./auth.md)).
+- Do not introduce a second routing convention in parallel — if the task
+  requires a new route, follow the current pattern in the touched code.

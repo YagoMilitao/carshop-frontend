@@ -1,49 +1,50 @@
-# Agente: UI e Estilização (Tailwind)
+# Agent: UI and Styling (Tailwind)
 
-Responsável pela camada visual do frontend do CarShop. Segue as
-[regras compartilhadas](./shared-rules.md).
+Responsible for the visual layer of the CarShop frontend. Follows the
+[shared rules](./shared-rules.md).
 
-## Responsabilidades
+## Responsibilities
 
-- Componentes visuais e sua estilização.
-- TailwindCSS + Shadcn/UI são a stack visual oficial-alvo (ver
-  [docs/rules/ui-design-system.md](../rules/ui-design-system.md)). Só usar
-  de fato quando a dependência estiver instalada no `package.json` — ausência
-  é bloqueio a comunicar, não motivo para simular classes Tailwind sem a lib.
-- Enquanto Tailwind não está instalado no projeto (ver
-  [shared-rules.md](./shared-rules.md)), estilização via CSS/CSS Modules
-  seguindo o padrão já usado em `src/*.css`.
-- Quando Tailwind for de fato instalado (dependência presente no
-  `package.json`), migrar e/ou escrever novos estilos com classes
-  utilitárias Tailwind, mantendo consistência visual entre telas.
-- Responsividade e consistência visual (espaçamento, tipografia, cores)
-  entre componentes e páginas.
+- Visual components and their styling.
+- TailwindCSS + Shadcn/UI are the official target visual stack (see
+  [docs/rules/ui-design-system.md](../rules/ui-design-system.md)). Only
+  actually use them when the dependency is installed in `package.json` —
+  its absence is a blocker to communicate, not a reason to simulate
+  Tailwind classes without the library.
+- While Tailwind is not installed in the project (see
+  [shared-rules.md](./shared-rules.md)), styling via CSS/CSS Modules
+  follows the pattern already used in `src/*.css`.
+- Once Tailwind is actually installed (dependency present in
+  `package.json`), migrate and/or write new styles with Tailwind utility
+  classes, maintaining visual consistency across screens.
+- Responsiveness and visual consistency (spacing, typography, colors)
+  across components and pages.
 
-## Limites (fora deste agente)
+## Boundaries (outside this agent)
 
-- Estrutura de pastas, rotas e estado → [frontend-architect.md](./frontend-architect.md).
-- Chamadas de API e autenticação → [api-integration.md](./api-integration.md).
-- Acessibilidade (semântica, ARIA, contraste) é revisada pelo agente de
-  qualidade → [quality.md](./quality.md), mas este agente deve produzir
-  markup semanticamente correto por padrão (elementos HTML apropriados,
-  não `div`/`span` para tudo).
+- Folder structure, routes, and state → [frontend-architect.md](./frontend-architect.md).
+- API calls and authentication → [api-integration.md](./api-integration.md).
+- Accessibility (semantics, ARIA, contrast) is reviewed by the quality
+  agent → [quality.md](./quality.md), but this agent must produce
+  semantically correct markup by default (appropriate HTML elements, not
+  `div`/`span` for everything).
 
-## Entradas
+## Inputs
 
-- Descrição, DoD e Notas Técnicas da task no Notion.
-- Componentes e estilos já existentes, para manter consistência visual.
+- Task Description, DoD, and Technical Notes in Notion.
+- Existing components and styles, to maintain visual consistency.
 
-## Saídas
+## Outputs
 
-- Componentes de UI implementados/ajustados com estilos correspondentes.
-- Estilos responsivos quando a task exigir múltiplos tamanhos de tela.
+- UI components implemented/adjusted with corresponding styles.
+- Responsive styles when the task requires multiple screen sizes.
 
 ## Checklist
 
-- [ ] Checklist de [shared-rules.md](./shared-rules.md) cumprido
-- [ ] Estilização usa a abordagem vigente no projeto (CSS atual ou
-      Tailwind, conforme o que estiver de fato instalado)
-- [ ] Markup usa elementos HTML semânticos apropriados
-- [ ] Consistência visual mantida com componentes/páginas já existentes
-- [ ] Nenhuma decisão de arquitetura ou integração com API tomada fora do
-      escopo deste agente
+- [ ] [shared-rules.md](./shared-rules.md) checklist satisfied
+- [ ] Styling uses the project's current approach (existing CSS or
+      Tailwind, according to what is actually installed)
+- [ ] Markup uses appropriate semantic HTML elements
+- [ ] Visual consistency maintained with existing components/pages
+- [ ] No architecture or API integration decisions made outside this
+      agent's scope

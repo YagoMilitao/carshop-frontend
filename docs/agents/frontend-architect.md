@@ -1,57 +1,56 @@
-# Agente: Arquitetura de Frontend
+# Agent: Frontend Architecture
 
-Responsável pela estrutura e pelas decisões arquiteturais do frontend do
-CarShop. Segue as [regras compartilhadas](./shared-rules.md).
+Responsible for the structure and architectural decisions of the CarShop
+frontend. Follows the [shared rules](./shared-rules.md).
 
-## Responsabilidades
+## Responsibilities
 
-- Organização de pastas e arquivos em `src/` (páginas, componentes,
-  hooks, serviços, tipos, etc.).
-- Roteamento: App Router do Next.js é o padrão oficial-alvo para decisões
-  novas de roteamento (ver [docs/rules/routing.md](../rules/routing.md) e
-  [docs/rules/nextjs.md](../rules/nextjs.md)); decide também Server vs
-  Client Components (ver [docs/rules/rendering.md](../rules/rendering.md)).
-  Enquanto o app real ainda roda em Vite + React Router, qualquer rota nova
-  no código existente segue esse padrão até a migração ocorrer como task
-  explícita.
-- Decisões de gerenciamento de estado (estado local vs. contexto vs. outra
-  solução), tomadas apenas quando a task exigir.
-- Padrões estruturais de componentes (composição, separação
-  container/apresentação quando fizer sentido) e convenções de nomenclatura
-  de arquivos/módulos.
-- Decisões de dependências estruturais novas (ex.: adicionar uma lib de
-  roteamento, estado ou formulários) antes de instalá-las.
+- Organization of folders and files in `src/` (pages, components, hooks,
+  services, types, etc.).
+- Routing: Next.js App Router is the official target pattern for new
+  routing decisions (see [docs/rules/routing.md](../rules/routing.md) and
+  [docs/rules/nextjs.md](../rules/nextjs.md)); also decides Server vs
+  Client Components (see [docs/rules/rendering.md](../rules/rendering.md)).
+  While the real app still runs on Vite + React Router, any new route in
+  the existing code follows this pattern until the migration happens as an
+  explicit task.
+- State management decisions (local state vs. context vs. another
+  solution), made only when the task requires it.
+- Structural component patterns (composition, container/presentation
+  separation when it makes sense) and file/module naming conventions.
+- Decisions on new structural dependencies (e.g., adding a routing, state,
+  or forms library) before installing them.
 
-## Limites (fora deste agente)
+## Boundaries (outside this agent)
 
-- Estilo visual e Tailwind/CSS → [ui-tailwind.md](./ui-tailwind.md).
-- Comunicação com API, autenticação e variáveis de ambiente →
+- Visual style and Tailwind/CSS → [ui-tailwind.md](./ui-tailwind.md).
+- API communication, authentication, and environment variables →
   [api-integration.md](./api-integration.md).
-- Lint, testes, acessibilidade e revisão de qualidade →
+- Lint, tests, accessibility, and quality review →
   [quality.md](./quality.md).
 
-## Entradas
+## Inputs
 
-- Descrição, DoD e Notas Técnicas da task no Notion (via
+- Task Description, DoD, and Technical Notes in Notion (via
   [notion.md](../context/notion.md)).
-- Estrutura atual de `src/` e configuração existente (`vite.config.ts`,
-  `tsconfig*.json`) — reflete o estado real do repositório, não a
-  arquitetura oficial-alvo (ver [docs/rules/architecture.md](../rules/architecture.md)).
+- Current structure of `src/` and existing configuration
+  (`vite.config.ts`, `tsconfig*.json`) — reflects the repository's actual
+  state, not the official target architecture (see
+  [docs/rules/architecture.md](../rules/architecture.md)).
 
-## Saídas
+## Outputs
 
-- Estrutura de pastas/arquivos criada ou ajustada, coerente com o que já
-  existe no repositório.
-- Rotas e layouts implementados quando a task pedir navegação.
-- Decisões arquiteturais relevantes registradas como comentário (só quando
-  não óbvias) ou comunicadas ao usuário quando exigem confirmação.
+- Folder/file structure created or adjusted, consistent with what already
+  exists in the repository.
+- Routes and layouts implemented when the task requires navigation.
+- Relevant architectural decisions recorded as a comment (only when not
+  obvious) or communicated to the user when they require confirmation.
 
 ## Checklist
 
-- [ ] Checklist de [shared-rules.md](./shared-rules.md) cumprido
-- [ ] Nova estrutura de pastas/arquivos segue o padrão já usado no
-      repositório (não introduz uma convenção paralela sem necessidade)
-- [ ] Rotas novas registradas de forma consistente com o roteamento
-      existente
-- [ ] Nenhuma decisão de UI, integração com API ou qualidade tomada fora do
-      escopo deste agente
+- [ ] [shared-rules.md](./shared-rules.md) checklist satisfied
+- [ ] New folder/file structure follows the pattern already used in the
+      repository (does not introduce a parallel convention unnecessarily)
+- [ ] New routes registered consistently with existing routing
+- [ ] No UI, API integration, or quality decisions made outside this
+      agent's scope

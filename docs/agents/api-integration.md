@@ -1,53 +1,53 @@
-# Agente: Integração com API e Autenticação
+# Agent: API Integration and Authentication
 
-Responsável pela comunicação do frontend com o backend do CarShop e pelo
-fluxo de autenticação. Segue as [regras compartilhadas](./shared-rules.md).
+Responsible for the frontend's communication with the CarShop backend and
+for the authentication flow. Follows the [shared rules](./shared-rules.md).
 
-## Responsabilidades
+## Responsibilities
 
-- Chamadas HTTP ao backend (definição de serviços/clients de API,
-  tratamento de respostas e erros de rede). **Axios** é o client HTTP
-  oficial-alvo para chamadas client-side quando apropriado (não obrigatório
-  para toda chamada server-side) — ver
-  [docs/rules/api.md](../rules/api.md). Server state interativo no cliente
-  usa TanStack Query quando há necessidade real (ver
-  [docs/rules/state-query.md](../rules/state-query.md)). Só usar essas libs
-  quando de fato instaladas no `package.json`.
-- Fluxo de autenticação no frontend: login, armazenamento de sessão/token,
-  refresh e logout, incluindo proteção de rotas autenticadas em conjunto
-  com o roteamento definido pelo [frontend-architect](./frontend-architect.md).
-- Variáveis de ambiente relacionadas à API (`.env`, `.env.example`):
-  manter `.env.example` atualizado com as chaves necessárias, sem nunca
-  commitar valores reais de `.env`.
-- Tipagem estrita dos dados vindos da API (request/response), sem `any`.
+- HTTP calls to the backend (defining API services/clients, handling
+  responses and network errors). **Axios** is the official target HTTP
+  client for client-side calls when appropriate (not mandatory for every
+  server-side call) — see [docs/rules/api.md](../rules/api.md). Interactive
+  client-side server state uses TanStack Query when there is a real need
+  (see [docs/rules/state-query.md](../rules/state-query.md)). Only use
+  these libraries when they are actually installed in `package.json`.
+- Frontend authentication flow: login, session/token storage, refresh, and
+  logout, including protection of authenticated routes together with the
+  routing defined by [frontend-architect](./frontend-architect.md).
+- API-related environment variables (`.env`, `.env.example`): keep
+  `.env.example` up to date with the required keys, never committing real
+  `.env` values.
+- Strict typing of data coming from the API (request/response), without
+  `any`.
 
-## Limites (fora deste agente)
+## Boundaries (outside this agent)
 
-- Estrutura de pastas, rotas e estado → [frontend-architect.md](./frontend-architect.md).
-- Estilo visual dos formulários/telas de autenticação → [ui-tailwind.md](./ui-tailwind.md).
-- Regras de consulta ao Notion (que é uma fonte de contexto, não uma API do
-  produto) → [context-sync.md](./context-sync.md).
+- Folder structure, routes, and state → [frontend-architect.md](./frontend-architect.md).
+- Visual styling of authentication forms/screens → [ui-tailwind.md](./ui-tailwind.md).
+- Rules for querying Notion (which is a context source, not a product API)
+  → [context-sync.md](./context-sync.md).
 
-## Entradas
+## Inputs
 
-- Descrição, DoD e Notas Técnicas da task no Notion, incluindo contratos de
-  API/endpoints já definidos para o backend do CarShop.
-- Variáveis de ambiente existentes em `.env.example`.
+- Task Description, DoD, and Technical Notes in Notion, including
+  API/endpoint contracts already defined for the CarShop backend.
+- Existing environment variables in `.env.example`.
 
-## Saídas
+## Outputs
 
-- Serviços/clients de API implementados com tipos explícitos para
+- API services/clients implemented with explicit types for
   request/response.
-- Tratamento de erro consistente (rede, autenticação expirada, respostas de
-  erro do backend).
-- `.env.example` atualizado quando novas variáveis forem necessárias.
+- Consistent error handling (network, expired authentication, backend
+  error responses).
+- `.env.example` updated when new variables are needed.
 
 ## Checklist
 
-- [ ] Checklist de [shared-rules.md](./shared-rules.md) cumprido
-- [ ] Nenhum segredo ou valor real de `.env` commitado; apenas
-      `.env.example` é versionado
-- [ ] Tipos de request/response definidos explicitamente, sem `any`
-- [ ] Erros de rede/API tratados (não apenas o caminho feliz)
-- [ ] Nenhuma decisão de arquitetura geral ou de UI tomada fora do escopo
-      deste agente
+- [ ] [shared-rules.md](./shared-rules.md) checklist satisfied
+- [ ] No secrets or real `.env` values committed; only `.env.example` is
+      versioned
+- [ ] Request/response types explicitly defined, without `any`
+- [ ] Network/API errors handled (not just the happy path)
+- [ ] No general architecture or UI decisions made outside this agent's
+      scope

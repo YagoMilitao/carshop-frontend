@@ -1,21 +1,22 @@
-# Regra: API
+# Rule: API
 
-- Backend Swagger/código é a fonte de verdade dos contratos de API — não
-  inventar campos/endpoints que não existem no backend.
-- **Axios** é a infraestrutura de HTTP client oficial-alvo para chamadas
-  client-side, quando apropriado — não é uma obrigação para toda chamada
-  server-side (Server Components/Route Handlers podem usar `fetch` nativo).
-- Tipos de request/response são explícitos, sem `any` (ver
+- The backend's Swagger/code is the source of truth for API contracts —
+  do not invent fields/endpoints that don't exist in the backend.
+- **Axios** is the target-official HTTP client infrastructure for
+  client-side calls, when appropriate — it is not mandatory for every
+  server-side call (Server Components/Route Handlers can use native
+  `fetch`).
+- Request/response types are explicit, without `any` (see
   [docs/rules/typescript.md](./typescript.md)).
-- Tratamento de erro cobre o caminho não-feliz: falha de rede, erro do
-  backend, autenticação expirada — não apenas o caminho feliz.
-- Repositório não duplica endpoints do backend Express como Next Route
-  Handlers sem necessidade explícita (ver
+- Error handling covers the unhappy path: network failure, backend
+  error, expired authentication — not just the happy path.
+- The repository does not duplicate Express backend endpoints as Next
+  Route Handlers without an explicit need (see
   [docs/rules/nextjs.md](./nextjs.md)).
-- Variáveis de ambiente de API ficam em `.env.example`, nunca com valores
-  reais commitados. Variáveis expostas ao bundle do navegador usam o
-  prefixo `NEXT_PUBLIC_` (ex.: `NEXT_PUBLIC_API_URL`) e nunca contêm
-  segredos/credenciais; variáveis server-only não usam esse prefixo.
-  `lib/env/client.ts` (`clientEnv`) e `lib/env/server.ts` (`serverEnv`) são
-  o único ponto de leitura/validação de env do projeto — nenhum outro
-  arquivo deve ler `process.env.NEXT_PUBLIC_API_URL` diretamente.
+- API environment variables live in `.env.example`, never with real
+  values committed. Variables exposed to the browser bundle use the
+  `NEXT_PUBLIC_` prefix (e.g. `NEXT_PUBLIC_API_URL`) and never contain
+  secrets/credentials; server-only variables do not use that prefix.
+  `lib/env/client.ts` (`clientEnv`) and `lib/env/server.ts` (`serverEnv`)
+  are the project's single point for reading/validating env — no other
+  file should read `process.env.NEXT_PUBLIC_API_URL` directly.

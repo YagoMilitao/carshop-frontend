@@ -1,96 +1,100 @@
-# Contexto de Planejamento no Notion
+# Planning Context in Notion
 
-Este documento define como os agentes deste repositório devem consultar o
-Notion antes de implementar qualquer task do CarShop Frontend.
+This document defines how agents in this repository should consult Notion
+before implementing any CarShop Frontend task.
 
-## Fonte de verdade
+## Source of truth
 
-- **Notion → CarShop → Task Tracker** é a fonte de verdade de planejamento:
-  Sprint, prioridade, descrição, Definition of Done (DoD) e notas técnicas.
-- **Este repositório** é a fonte de verdade do código.
-- Nunca duplicar o conteúdo do Task Tracker em arquivos do repositório
-  (AGENTS.md, README, etc.). Arquivos do repo guardam apenas referências e
-  regras de consulta — o conteúdo vivo permanece no Notion.
+- **Notion → CarShop → Task Tracker** is the source of truth for planning:
+  Sprint, priority, description, Definition of Done (DoD), and technical
+  notes.
+- **This repository** is the source of truth for code.
+- Never duplicate Task Tracker content in repository files (AGENTS.md,
+  README, etc.). Repo files only keep references and lookup rules — the
+  live content stays in Notion.
 
-## Localização no Notion
+## Location in Notion
 
-- Página raiz do projeto: `CarShop` (workspace de Yago Militão, em
+- Project root page: `CarShop` (in Yago Militão's workspace, under
   `Projects / CarShop`).
-- Database de tasks: `CarShop / Task Tracker`.
-- Cada task é um item (linha) dessa database, identificado pelo título
-  (`Task`) e por um ID incremental (`ID`).
+- Task database: `CarShop / Task Tracker`.
+- Each task is an item (row) in that database, identified by its title
+  (`Task`) and by an incremental ID (`ID`).
 
-## Fluxo obrigatório antes de implementar
+## Mandatory flow before implementing
 
-1. **Identificar a task atual.** Antes de escrever qualquer código, o agente
-   deve saber qual item do Task Tracker está sendo trabalhado. A
-   identificação pode vir de:
-   - o número/branch `CARSHOP-XX` informado pelo usuário (padrão de branch:
-     `feat/CARSHOP-XX-descricao`, `fix/CARSHOP-XX-descricao`, etc.);
-   - o título da task citado pelo usuário; ou
-   - pergunta direta ao usuário quando a task não puder ser inferida.
+1. **Identify the current task.** Before writing any code, the agent must
+   know which Task Tracker item is being worked on. Identification can come
+   from:
+   - the `CARSHOP-XX` number/branch given by the user (branch convention:
+     `feat/CARSHOP-XX-short-description`, `fix/CARSHOP-XX-short-description`,
+     etc.);
+   - the task title mentioned by the user; or
+   - asking the user directly when the task cannot be inferred.
 
-   Se a task não puder ser identificada com confiança, o agente deve
-   perguntar ao usuário em vez de supor ou inventar uma task.
+   If the task cannot be identified with confidence, the agent must ask the
+   user instead of assuming or inventing a task.
 
-2. **Consultar o Task Tracker no Notion** (via conector Notion, quando
-   disponível no ambiente) e ler, no mínimo, as seguintes propriedades do
-   item correspondente:
-   - `Task` (título)
-   - `Descrição`
+2. **Consult the Task Tracker in Notion** (via the Notion connector, when
+   available in the environment) and read, at minimum, the following
+   properties of the corresponding item:
+   - `Task` (title)
+   - `Description` (Notion property: `Descrição`)
    - `DoD (Definition of Done)`
-   - `Notas Técnicas`
+   - `Technical Notes` (Notion property: `Notas Técnicas`)
    - `Stack`
    - `Sprint`
    - `Priority`
    - `Component`
-   - `Status` (para saber o estado atual — Backlog, To Do, In Progress,
+   - `Status` (to know the current state — Backlog, To Do, In Progress,
      Review, Blocked, Cancel, Done)
 
-3. **Usar essas informações para orientar a implementação**: a `Descrição` e
-   o `DoD` definem o escopo e o critério de aceite; `Notas Técnicas` traz
-   restrições/decisões já tomadas; `Stack`/`Component` ajudam a confirmar que
-   a task pertence de fato ao frontend antes de implementar aqui.
+3. **Use this information to guide implementation**: the `Description` and
+   the `DoD` define the scope and acceptance criteria; `Technical Notes`
+   brings constraints/decisions already made; `Stack`/`Component` help
+   confirm that the task actually belongs to the frontend before
+   implementing it here.
 
-4. Se o conector Notion não estiver disponível no ambiente, o agente deve
-   avisar o usuário explicitamente e pedir as informações da task
-   manualmente (Descrição, DoD, Notas Técnicas) antes de prosseguir, em vez
-   de assumir valores.
+4. If the Notion connector is not available in the environment, the agent
+   must explicitly warn the user and ask for the task's information
+   manually (Description, DoD, Technical Notes) before proceeding, instead
+   of assuming values.
 
-## Regras de escrita no Notion
+## Notion writing rules
 
-- O agente **não deve alterar o Task Tracker automaticamente** como efeito
-  colateral de uma implementação, com a única exceção explícita abaixo
-  (transição para `Review`).
-- **Exceção: transição automática para `Review`.** Quando o `reviewer`
-  concluir a revisão de uma task com veredito de aprovação (sem pontos
-  bloqueantes), o status dessa task no Task Tracker deve ser atualizado
-  automaticamente para `Review`, sem precisar perguntar ao usuário a cada
-  vez. Isso reflete uma instrução permanente do usuário (não é uma decisão
-  automática de "task concluída" — `Review` apenas sinaliza que a
-  implementação está pronta para revisão humana/merge, não que a task está
-  finalizada).
-- Mudanças de escopo (nova nota técnica, ajuste de descrição, mudança de
-  Sprint/Priority/Component, etc.) só devem ser refletidas no Notion quando:
-  - o usuário pedir explicitamente; ou
-  - for necessário para manter a task consistente com o que foi de fato
-    implementado (ex.: o escopo mudou durante a implementação e o Notion
-    ficaria desatualizado/enganoso se não for ajustado) — e mesmo nesse caso,
-    o agente deve confirmar com o usuário antes de escrever no Notion.
-- **Nunca marcar uma task como `Done`** sem validação explícita da
-  implementação pelo usuário. O agente não decide sozinho que uma task está
-  concluída — `Done` permanece fora da exceção acima e sempre exige
-  confirmação explícita.
-- **Nunca inventar tasks** no Task Tracker. Uma nova task só é criada a
-  pedido explícito do usuário.
+- The agent **must not change the Task Tracker automatically** as a side
+  effect of an implementation, with the single explicit exception below
+  (transition to `Review`).
+- **Exception: automatic transition to `Review`.** When the `reviewer`
+  completes the review of a task with an approval verdict (no blocking
+  points), that task's status in the Task Tracker must be automatically
+  updated to `Review`, without needing to ask the user every time. This
+  reflects a permanent instruction from the user (it is not an automatic
+  "task completed" decision — `Review` only signals that the implementation
+  is ready for human review/merge, not that the task is finished).
+- Scope changes (a new technical note, a description adjustment, a change
+  to Sprint/Priority/Component, etc.) should only be reflected in Notion
+  when:
+  - the user explicitly asks for it; or
+  - it is necessary to keep the task consistent with what was actually
+    implemented (e.g., the scope changed during implementation and Notion
+    would become outdated/misleading if not adjusted) — and even in this
+    case, the agent must confirm with the user before writing to Notion.
+- **Never mark a task as `Done`** without explicit validation of the
+  implementation by the user. The agent does not decide on its own that a
+  task is complete — `Done` remains outside the exception above and always
+  requires explicit confirmation.
+- **Never invent tasks** in the Task Tracker. A new task is only created at
+  the user's explicit request.
 
-## Resumo rápido (checklist do agente)
+## Quick summary (agent checklist)
 
-- [ ] Task atual identificada (ID/branch/título confirmado com o usuário se
-      necessário)
-- [ ] Task Tracker consultado no Notion para essa task
-- [ ] Descrição, DoD, Notas Técnicas, Stack, Sprint, Priority e Component
-      lidos
-- [ ] Implementação alinhada ao DoD antes de considerar a task concluída
-- [ ] Nenhuma escrita no Notion sem pedido explícito ou necessidade de
-      consistência confirmada com o usuário
+- [ ] Current task identified (ID/branch/title confirmed with the user if
+      necessary)
+- [ ] Task Tracker consulted in Notion for this task
+- [ ] Description, DoD, Technical Notes, Stack, Sprint, Priority, and
+      Component read
+- [ ] Implementation aligned with the DoD before considering the task
+      complete
+- [ ] No writes to Notion without an explicit request or a need for
+      consistency confirmed with the user
