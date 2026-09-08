@@ -21,11 +21,19 @@ before implementing any CarShop Frontend task.
   a manual copy of the Notion task's Technical Notes. This is documented in
   `CarShop/ADR/ADR-018-versioned-api-contract-doc-for-cross-repo-consumers.md`
   (Obsidian), cross-referenced with `ADR-016` (SameSite=None/CSRF cookies).
-- When `carshop-backend` is available as a local checkout, `knowledge-reader`
-  /`spec-writer` should read `docs/api-contract.md` from there instead of
-  transcribing Technical Notes by hand. Notion's Technical Notes remain the
-  fallback when that file isn't reachable (e.g. still on an unmerged
-  branch, or the backend checkout isn't present in the environment).
+- This project runs with **no local checkout of `carshop-backend`** by
+  design (the user consumes only deployed/published artifacts, never runs
+  the backend locally, to keep the two projects independently
+  autonomous). `knowledge-reader`/`spec-writer` must fetch
+  `docs/api-contract.md` remotely instead of assuming a sibling directory
+  exists:
+  `https://raw.githubusercontent.com/YagoMilitao/carshop-backend/master/docs/api-contract.md`
+  (via `WebFetch`) — read it once per task that touches the API contract,
+  not on every step.
+- Notion's Technical Notes remain the fallback when that fetch fails (file
+  not yet merged to `master`, repo renamed/moved, or the fetch tool
+  unavailable in the environment) — warn the user explicitly when falling
+  back, rather than silently reusing stale Technical Notes.
 - `GET /docs` / `GET /docs.json` (Swagger) stay available only when
   `ENABLE_SWAGGER=true` (not the default in production) — do not rely on
   them as the primary contract source, especially for production behavior.
