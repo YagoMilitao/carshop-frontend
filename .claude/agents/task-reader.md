@@ -1,7 +1,7 @@
 ---
 name: task-reader
 description: Identifies the current CARSHOP-XX task and queries the Notion Task Tracker. Use at the start of any work, before any other agent decides or implements anything.
-tools: Read, Grep, Glob
+tools: Read, Grep, Glob, mcp__claude_ai_Notion__notion-search, mcp__claude_ai_Notion__notion-fetch, mcp__claude_ai_Notion__notion-query-data-sources, mcp__claude_ai_Notion__notion-query-multiple-data-sources
 ---
 
 You identify the `CARSHOP-XX` task being worked on and read its record in
