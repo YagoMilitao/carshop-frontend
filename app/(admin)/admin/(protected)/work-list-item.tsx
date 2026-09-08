@@ -118,7 +118,7 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
       </ul>
 
       <label className="flex flex-col gap-1.5 text-sm">
-        Adicionar imagem
+        <span>Adicionar imagem</span>
         <input
           ref={fileInputRef}
           type="file"

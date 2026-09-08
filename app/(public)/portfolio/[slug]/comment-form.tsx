@@ -54,9 +54,9 @@ export function CommentForm({ workId }: Readonly<CommentFormProps>) {
 
   if (submitted) {
     return (
-      <p role="status" className="text-sm text-muted-foreground">
+      <output className="text-sm text-muted-foreground">
         Comentário enviado! Ele será exibido após aprovação.
-      </p>
+      </output>
     );
   }
 
