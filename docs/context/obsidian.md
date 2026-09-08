@@ -50,6 +50,18 @@ source and must not guide implementation on their own.
   hand clearly benefits from historical/architectural context (e.g., a
   question about a decision already made, an ADR relevant to the area being
   touched).
+- **The `CarShop/` vault folder is shared across multiple CarShop
+  repositories** (at least `carshop-frontend` and `carshop-backend`), not
+  scoped to this repository alone. Before treating an ADR/note found in the
+  vault as applicable here, check its "Related Code"/"Related Tasks"
+  section: if it references paths, agent names, or a workflow shape that do
+  not match this repository (e.g. `.claude/rules/*` instead of this repo's
+  `docs/rules/*`, or a `coordinator` agent that does not exist in
+  `.claude/agents/` here), treat it as historical context from the sibling
+  repository, not as a decision binding on `carshop-frontend`. Never assume
+  "no relevant note in Obsidian" without actually searching the vault first
+  — an agent skipping `knowledge-reader` must say the vault was checked (or
+  unavailable), not merely assert relevance is unlikely.
 - Never duplicate vault content in repository files (`AGENTS.md`, `docs/`,
   etc.) — only reference the note's path/name when relevant, as is already
   done for Notion.

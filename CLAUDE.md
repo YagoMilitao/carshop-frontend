@@ -65,7 +65,7 @@ study notes** (`CarShop/Studies`, non-binding). Full detail in
     depending on the content) — see
     [docs/context/obsidian.md](docs/context/obsidian.md).
 
-Branch convention: `<type>/CARSHOP-<number>[-<short-description>]` (see
+Branch convention: `<type>/CARSHOP-<number>-<short-description>` (see
 [docs/rules/branching.md](docs/rules/branching.md)).
 
 ## Time tracking and performance hotspots
