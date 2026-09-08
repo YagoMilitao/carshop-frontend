@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import type { Work } from '@/lib/api/works'
+import type { Comment } from '@/lib/api/comments'
 
 const getWorkBySlugMock = vi.fn<(slug: string) => Promise<Work | undefined>>()
 const notFoundMock = vi.fn(() => {
@@ -8,11 +9,16 @@ const notFoundMock = vi.fn(() => {
 })
 
 const getWorksMock = vi.fn<() => Promise<Work[]>>()
+const getWorkCommentsMock = vi.fn<(workId: string) => Promise<Comment[]>>()
 
 vi.mock('@/lib/api/works', () => ({
   getWorkBySlug: (slug: string) => getWorkBySlugMock(slug),
   getCoverImage: (work: Work) => work.images.find((image) => image.isCover),
   getWorks: () => getWorksMock(),
+}))
+
+vi.mock('@/lib/api/comments', () => ({
+  getWorkComments: (workId: string) => getWorkCommentsMock(workId),
 }))
 
 vi.mock('next/navigation', () => ({
@@ -66,6 +72,7 @@ describe('ProjectDetailsPage', () => {
 
   it('renderiza os dados reais do projeto encontrado pelo slug', async () => {
     getWorkBySlugMock.mockResolvedValue(baseWork)
+    getWorkCommentsMock.mockResolvedValue([])
     const { default: ProjectDetailsPage } = await import('./page')
 
     render(
@@ -78,6 +85,35 @@ describe('ProjectDetailsPage', () => {
       screen.getByRole('heading', { level: 1, name: baseWork.title }),
     ).toBeInTheDocument()
     expect(screen.getByText(baseWork.description)).toBeInTheDocument()
+    expect(getWorkCommentsMock).toHaveBeenCalledWith(baseWork.id)
+    expect(
+      screen.getByText('Ainda não há comentários aprovados para este projeto.'),
+    ).toBeInTheDocument()
+  })
+
+  it('renderiza os comentários aprovados retornados para o work', async () => {
+    getWorkBySlugMock.mockResolvedValue(baseWork)
+    getWorkCommentsMock.mockResolvedValue([
+      {
+        id: 'comment-1',
+        workId: baseWork.id,
+        authorName: 'Maria',
+        content: 'Ficou excelente!',
+        status: 'APPROVED',
+        createdAt: '2024-01-03T00:00:00.000Z',
+        updatedAt: '2024-01-03T00:00:00.000Z',
+      },
+    ])
+    const { default: ProjectDetailsPage } = await import('./page')
+
+    render(
+      await ProjectDetailsPage({
+        params: Promise.resolve({ slug: baseWork.slug }),
+      }),
+    )
+
+    expect(screen.getByText('Maria')).toBeInTheDocument()
+    expect(screen.getByText('Ficou excelente!')).toBeInTheDocument()
   })
 
   it('chama notFound() quando o slug não corresponde a nenhum work', async () => {
