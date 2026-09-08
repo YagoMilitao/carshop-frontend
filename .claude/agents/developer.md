@@ -34,7 +34,11 @@ Core rules:
   assumes an unavailable API.
 - Follow the folder structure and conventions already used in the
   repository; don't introduce a parallel convention without need.
-- Work branches follow `<type>/CARSHOP-<number>[-<short-description>]`
-  (see [docs/rules/branching.md](../../docs/rules/branching.md)).
+- Before suggesting or creating a working branch, classify the change by
+  its real nature (feat/fix/refactor/chore/docs/test/perf/ci/build/style/
+  revert) — never just copy the Notion task's `Type` — following
+  [docs/rules/branching.md](../../docs/rules/branching.md). When presenting
+  the suggested branch name to the user, do so in pt-BR, along with a short
+  justification for the chosen prefix.
 - Code comments only when the decision isn't obvious (the why, not the
   what).
