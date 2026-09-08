@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getCoverImage, getWorkBySlug, getWorks } from '@/lib/api/works'
+import { getWorkComments } from '@/lib/api/comments'
+import { CommentForm } from './comment-form'
 
 type ProjectDetailsPageProps = {
   params: Promise<{ slug: string }>
@@ -49,10 +51,31 @@ export default async function ProjectDetailsPage({
     notFound()
   }
 
+  const comments = await getWorkComments(work.id)
+
   return (
     <main>
       <h1>{work.title}</h1>
       <p>{work.description}</p>
+
+      <section aria-labelledby="comments-heading">
+        <h2 id="comments-heading">Comentários</h2>
+
+        {comments.length === 0 ? (
+          <p>Ainda não há comentários aprovados para este projeto.</p>
+        ) : (
+          <ul>
+            {comments.map((comment) => (
+              <li key={comment.id}>
+                <p className="font-medium">{comment.authorName}</p>
+                <p>{comment.content}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <CommentForm workId={work.id} />
+      </section>
     </main>
   )
 }
