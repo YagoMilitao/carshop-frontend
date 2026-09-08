@@ -13,6 +13,23 @@ before implementing any CarShop Frontend task.
   README, etc.). Repo files only keep references and lookup rules — the
   live content stays in Notion.
 
+## API contract (cross-repo): prefer the versioned doc over Technical Notes
+
+- For the `carshop-backend` HTTP contract specifically (routes,
+  authentication, CSRF, cookies, payloads, errors), the versioned source of
+  truth is `docs/api-contract.md` in the `carshop-backend` repository — not
+  a manual copy of the Notion task's Technical Notes. This is documented in
+  `CarShop/ADR/ADR-018-versioned-api-contract-doc-for-cross-repo-consumers.md`
+  (Obsidian), cross-referenced with `ADR-016` (SameSite=None/CSRF cookies).
+- When `carshop-backend` is available as a local checkout, `knowledge-reader`
+  /`spec-writer` should read `docs/api-contract.md` from there instead of
+  transcribing Technical Notes by hand. Notion's Technical Notes remain the
+  fallback when that file isn't reachable (e.g. still on an unmerged
+  branch, or the backend checkout isn't present in the environment).
+- `GET /docs` / `GET /docs.json` (Swagger) stay available only when
+  `ENABLE_SWAGGER=true` (not the default in production) — do not rely on
+  them as the primary contract source, especially for production behavior.
+
 ## Location in Notion
 
 - Project root page: `CarShop` (in Yago Militão's workspace, under
