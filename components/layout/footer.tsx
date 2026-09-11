@@ -1,12 +1,6 @@
 import Link from "next/link"
 import { navLinks } from "./nav-links"
 
-const socialLinks = [
-  { href: "https://www.instagram.com", label: "Instagram" },
-  { href: "https://www.facebook.com", label: "Facebook" },
-  { href: "https://www.linkedin.com", label: "LinkedIn" },
-]
-
 export function Footer() {
   const currentYear = new Date().getFullYear()
 
@@ -30,23 +24,6 @@ export function Footer() {
                 >
                   {link.label}
                 </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <nav aria-label="Redes sociais">
-          <ul className="flex gap-4 text-sm">
-            {socialLinks.map((social) => (
-              <li key={social.href}>
-                <a
-                  href={social.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-lg text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
-                >
-                  {social.label}
-                </a>
               </li>
             ))}
           </ul>

@@ -29,15 +29,4 @@ describe("Footer", () => {
       expect(anchor).toHaveAttribute("href", link.href);
     });
   });
-
-  it("renderiza os links de redes sociais apontando para URLs externas", () => {
-    render(<Footer />);
-
-    const socialNav = screen.getByRole("navigation", { name: "Redes sociais" });
-
-    const instagram = within(socialNav).getByRole("link", { name: "Instagram" });
-    expect(instagram).toHaveAttribute("href", "https://www.instagram.com");
-    expect(instagram).toHaveAttribute("target", "_blank");
-    expect(instagram).toHaveAttribute("rel", "noreferrer");
-  });
 });
