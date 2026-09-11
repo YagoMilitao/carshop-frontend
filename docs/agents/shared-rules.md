@@ -7,22 +7,23 @@ is specific to its own area.
 
 ## Stack and technical conventions
 
-- Official target architecture: Next.js (App Router) + React + strict
-  TypeScript, with a complementary stack of TailwindCSS, Shadcn/UI,
-  TanStack Query, Axios, React Hook Form, Zod, Framer Motion, React Icons,
-  and an officially configured testing stack. Details per area in
-  [docs/rules/](../rules/).
-- Repository's actual current state: React + TypeScript + Vite + React
-  Router (see `README.md`, `package.json`). Migrating the code to the
-  target architecture is not implied by this task — **always check
-  `package.json`** before assuming any target-stack dependency is
-  installed. A missing dependency is a blocker/dependency to communicate
-  to the user, never a reason to write fictitious code.
-- React Router and Vite are no longer active guidance for new
-  routing/build decisions — see [docs/rules/routing.md](../rules/routing.md)
-  and [docs/rules/nextjs.md](../rules/nextjs.md). No agent migrates the
-  app from Vite to Next.js, nor proposes migrating the Express backend to
-  Next Route Handlers, without an explicit task/architectural decision.
+- Official architecture (converged with the repository's actual state):
+  Next.js (App Router) + React + strict TypeScript, with a complementary
+  stack of TailwindCSS, Shadcn/UI, TanStack Query, Axios, React Hook Form,
+  Zod, Framer Motion, React Icons, and an officially configured testing
+  stack. Details per area in [docs/rules/](../rules/).
+- The migration from Vite + React Router to Next.js App Router is
+  **complete** (see `README.md`, `package.json`: `next` scripts/dependency,
+  no `vite`/`react-router-dom`) — **always check `package.json`** before
+  assuming any stack dependency is installed, rather than assuming it from
+  this document. A missing dependency is a blocker/dependency to
+  communicate to the user, never a reason to write fictitious code.
+- React Router and Vite are no longer used in this repository — see
+  [docs/rules/routing.md](../rules/routing.md) and
+  [docs/rules/nextjs.md](../rules/nextjs.md). No agent proposes migrating
+  the Express backend to Next Route Handlers without an explicit
+  task/architectural decision (the backend is a separate project and has
+  not migrated).
 - Strict TypeScript mode: never use `any`, `@ts-ignore`/`@ts-expect-error`
   to silence type errors, or unsafe casts (`as unknown as X`, `as X`
   without a real guarantee that the value is `X`). Prefer explicit types,
@@ -30,6 +31,17 @@ is specific to its own area.
 - Code comments should explain **why**, not **what** — they are only worth
   it when they document a non-obvious decision, an external constraint, or
   a workaround. Self-explanatory code doesn't need a comment.
+
+## Language for user-facing communication
+
+All output directed at the user — chat responses, summaries, reports,
+clarifying questions, explanations — must be written in Brazilian
+Portuguese (pt-BR), regardless of the agent. This does not apply to code
+identifiers, file names, or external technical conventions, which keep
+following the normal rules in [docs/rules/](../rules/) (typically English).
+Repository documentation files themselves (`AGENTS.md`, `CLAUDE.md`,
+`docs/`) are not covered by this rule and stay in English by project
+convention.
 
 ## Mandatory context before implementing
 

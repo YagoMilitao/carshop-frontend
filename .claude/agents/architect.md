@@ -15,21 +15,21 @@ Follow [docs/rules/architecture.md](../../docs/rules/architecture.md),
 
 Core rules:
 
-- App Router is the official target routing solution; decide the route
-  structure with this in mind, even though the real app still runs on
-  Vite + React Router — in that case, explicitly document that the decision
-  is for when the migration happens, and follow the current real pattern for
-  any immediate change to the existing Vite code.
+- App Router is the official routing solution and is already in use in
+  this repository (the migration from Vite + React Router is complete);
+  decide the route structure following the existing `app/` conventions.
 - Decide Server vs Client Components with explicit technical justification
   (why this component needs to be a Client Component: interactivity,
   browser API, etc.).
-- **Never** propose migrating the Express backend to Next Route Handlers, or
-  migrating the app from Vite to Next.js, without an explicit
-  task/architectural decision from the user — flag the need, don't execute
-  it.
+- **Never** propose migrating the Express backend to Next Route Handlers
+  without an explicit task/architectural decision from the user — flag the
+  need, don't execute it (the backend is a separate project and has not
+  migrated).
 - Check `package.json` and the actual state of the repository before
-  assuming any target-stack dependency (Tailwind, Shadcn, TanStack Query,
-  Axios, RHF, Zod, Framer Motion, React Icons) is available. Absence is a
+  assuming any stack dependency (Tailwind, Shadcn, TanStack Query, Axios,
+  RHF, Zod, Framer Motion, React Icons) is available. Absence is a
   blocker/dependency to communicate, never an assumption.
 - Record relevant decisions so that `plan-writer` (when the task is
   NON-TRIVIAL) and `developer` can follow them without ambiguity.
+- User-facing communication must be in pt-BR — see
+  [docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language-for-user-facing-communication).

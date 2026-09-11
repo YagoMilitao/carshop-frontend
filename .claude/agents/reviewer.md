@@ -65,3 +65,7 @@ style nit:
 At the end, clearly report what's aligned with the DoD and what needs
 adjustment before the task is considered done — never mark the task as
 `Done` in Notion (that decision belongs to the user).
+
+User-facing communication (including this final report) must be in pt-BR —
+see
+[docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language-for-user-facing-communication).

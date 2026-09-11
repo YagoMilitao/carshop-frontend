@@ -1,19 +1,20 @@
 # Rule: Architecture
 
-- Target-official architecture: **Next.js (App Router) + React + strict
+- Official architecture: **Next.js (App Router) + React + strict
   TypeScript**, with a complementary stack of TailwindCSS, Shadcn/UI,
   TanStack Query, Axios, React Hook Form, Zod, Framer Motion, React Icons,
   and an officially configured test stack.
-- Actual current state of the repository: Vite + React + React Router.
-  The code migration to Next.js is **not** assumed to be done — always
-  check `package.json` and the existing configuration (`vite.config.ts`,
-  `tsconfig*.json`) before deciding based on the target stack.
-- The absence of a target-stack dependency in `package.json` is a
+- Actual current state of the repository: the migration from Vite + React
+  Router to Next.js App Router is **complete** — always confirm against
+  `package.json` (`next` scripts/dependency, no `vite`/`react-router-dom`)
+  and the existing configuration (`tsconfig*.json`) before deciding, rather
+  than assuming this document alone.
+- The absence of a stack dependency in `package.json` is a
   blocker/dependency to communicate to the user, never a reason to write
   fictitious code or simulate the API of an uninstalled library.
-- No agent migrates the app from Vite to Next.js, nor proposes migrating
-  the Express backend to Next Route Handlers, without an explicit
-  task/architectural decision from the user.
+- No agent proposes migrating the Express backend to Next Route Handlers
+  without an explicit task/architectural decision from the user (the
+  backend is a separate project and has not migrated).
 - Sources of truth, from most to least authoritative: current repository
   code → approved architectural decisions (Obsidian) → current Notion
   task → Obsidian study notes. See

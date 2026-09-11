@@ -24,3 +24,5 @@ Rules:
 - If the `architect` flagged a blocker (missing dependency, architecture
   conflict), explicitly document it in the plan as a step to confirm with
   the user before implementation proceeds.
+- User-facing communication must be in pt-BR — see
+  [docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language-for-user-facing-communication).

@@ -7,22 +7,25 @@ the live content of those sources here.
 
 ## Official architecture
 
-- **Target**: Next.js (App Router) + React + strict TypeScript, with a
-  complementary stack of TailwindCSS, Shadcn/UI, TanStack Query, Axios, React Hook
-  Form, Zod, Framer Motion, React Icons, and an officially configured testing
-  stack. Detail per area in [docs/rules/](docs/rules/).
-- **Current actual state**: the app still runs on Vite + React Router (see
-  `package.json`, `vite.config.ts`) — code migration is not part of
-  this workflow configuration. **Never assume a dependency of the target
-  stack is installed**: check `package.json` before using it. If it's
-  missing, that's a blocker/dependency to flag, never a reason to write
-  fictitious code.
-- React Router is no longer active guidance for new routes; Server vs
-  Client Components is a decision for the `architect` agent (see
+- **Official architecture and current actual state (converged)**: Next.js
+  (App Router) + React + strict TypeScript, with a complementary stack of
+  TailwindCSS, Shadcn/UI, TanStack Query, Axios, React Hook Form, Zod,
+  Framer Motion, React Icons, and an officially configured testing stack.
+  The migration from Vite + React Router to Next.js App Router is
+  **complete** (see `package.json`: `next dev`/`next build`/`next start`
+  scripts, `next` dependency, no `vite`/`react-router-dom`; and the `app/`
+  directory). Detail per area in [docs/rules/](docs/rules/).
+- **Never assume a dependency of the stack is installed**: always confirm
+  against `package.json` before using it (e.g., confirm the stack is
+  Next.js as described, don't just assume it from this document). If
+  something is missing, that's a blocker/dependency to flag, never a
+  reason to write fictitious code.
+- React Router is no longer used in this repository; Server vs Client
+  Components is a decision for the `architect` agent (see
   [docs/rules/rendering.md](docs/rules/rendering.md)).
-- No agent proposes migrating the Express backend to Next Route Handlers, or
-  migrating the Vite app to Next.js, without an explicit architectural
-  task/decision from the user.
+- No agent proposes migrating the Express backend to Next Route Handlers
+  without an explicit architectural task/decision from the user (the
+  backend is a separate project and has not migrated).
 
 ## Sources of truth
 
@@ -87,6 +90,16 @@ identify recurring bottlenecks in the workflow.
 - Other variables (`.env.example`) are the responsibility of the API
   agent ([docs/agents/api-integration.md](docs/agents/api-integration.md)); never
   commit real `.env` values.
+
+## Language for user-facing communication
+
+All output directed at the user (agent responses, summaries, reports,
+clarifying questions, explanations) must be in Brazilian Portuguese
+(pt-BR); code identifiers, file names, and external technical conventions
+keep following the normal rules in [docs/rules/](docs/rules/). Detail in
+[docs/agents/shared-rules.md](docs/agents/shared-rules.md). This does not
+apply to the repository's own documentation files (`AGENTS.md`,
+`CLAUDE.md`, `docs/`), which stay in English by convention.
 
 ## Security and general limits
 

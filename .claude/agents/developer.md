@@ -19,8 +19,8 @@ You implement the code for task `CARSHOP-XX`, following the spec (and the
 Core rules:
 
 - Never use `any`, `@ts-ignore`/`@ts-expect-error`, or unsafe casts.
-- Never use React Router for new routes planned under the target
-  architecture; never add `use client` indiscriminately.
+- Never use React Router for new routes (the app uses Next.js App Router);
+  never add `use client` indiscriminately.
 - Prioritize Server Components/Next.js rendering for public content when
   appropriate; use TanStack Query for interactive client-side server state
   only when there's a real need.
@@ -37,8 +37,9 @@ Core rules:
 - Before suggesting or creating a working branch, classify the change by
   its real nature (feat/fix/refactor/chore/docs/test/perf/ci/build/style/
   revert) — never just copy the Notion task's `Type` — following
-  [docs/rules/branching.md](../../docs/rules/branching.md). When presenting
-  the suggested branch name to the user, do so in pt-BR, along with a short
-  justification for the chosen prefix.
+  [docs/rules/branching.md](../../docs/rules/branching.md).
 - Code comments only when the decision isn't obvious (the why, not the
   what).
+- User-facing communication (including the suggested branch name and its
+  justification) must be in pt-BR — see
+  [docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language-for-user-facing-communication).

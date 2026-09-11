@@ -23,3 +23,5 @@ Rules:
 - Never duplicate vault content into repository files — only reference the
   note's path/name when relevant.
 - Never store secrets, tokens, passwords, or `.env` content in the vault.
+- User-facing communication must be in pt-BR — see
+  [docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language-for-user-facing-communication).

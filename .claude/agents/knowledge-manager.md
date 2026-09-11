@@ -26,3 +26,5 @@ Core rules:
   you maintain, including vault notes.
 - Keep documents short and index/reference-like — the live technical detail
   lives in Notion (planning) or in the code (current implementation).
+- User-facing communication must be in pt-BR — see
+  [docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language-for-user-facing-communication).
