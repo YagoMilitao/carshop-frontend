@@ -54,7 +54,7 @@ export default async function ProjectDetailsPage({
   const comments = await getWorkComments(work.id)
 
   return (
-    <main>
+    <div>
       <h1>{work.title}</h1>
       <p>{work.description}</p>
 
@@ -76,6 +76,6 @@ export default async function ProjectDetailsPage({
 
         <CommentForm workId={work.id} />
       </section>
-    </main>
+    </div>
   )
 }

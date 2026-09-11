@@ -29,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-US" className={cn("font-sans", geist.variable)}>
-      <body>
+      <body suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -9,7 +9,7 @@ import { AuthProvider } from "@/lib/auth/AuthProvider";
 export const dynamic = "force-dynamic";
 
 /**
- * Camada 2 de proteção das rotas `/admin/*` (complementar ao `middleware`,
+ * Camada 2 de proteção das rotas `/admin/*` (complementar ao `proxy`,
  * camada 1). Engloba todas as rotas admin exceto `/admin/login`, que vive
  * fora deste grupo de rota — ver `app/(admin)/admin/layout.tsx`.
  */
