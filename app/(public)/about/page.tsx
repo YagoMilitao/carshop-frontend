@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <main>
+    <div>
       <h1>About</h1>
       <p>Página em construção.</p>
-    </main>
+    </div>
   )
 }

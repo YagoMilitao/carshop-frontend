@@ -19,7 +19,7 @@ export default async function PortfolioPage() {
   const works = await getWorks()
 
   return (
-    <main>
+    <div>
       <h1>Portfolio</h1>
       <ul>
         {works.map((work) => (
@@ -28,6 +28,6 @@ export default async function PortfolioPage() {
           </li>
         ))}
       </ul>
-    </main>
+    </div>
   )
 }

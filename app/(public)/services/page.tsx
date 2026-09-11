@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 
 export default function ServicesPage() {
   return (
-    <main>
+    <div>
       <h1>Services</h1>
       <p>Página em construção.</p>
-    </main>
+    </div>
   )
 }

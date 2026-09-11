@@ -17,9 +17,9 @@ export const metadata: Metadata = {
 // Client Component isolado (boundary mínima), não a página inteira.
 export default function ContactPage() {
   return (
-    <main>
+    <div>
       <h1>Contact</h1>
       <p>Página em construção.</p>
-    </main>
+    </div>
   )
 }

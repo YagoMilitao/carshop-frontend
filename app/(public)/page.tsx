@@ -1,8 +1,8 @@
 export default function HomePage() {
   return (
-    <main>
+    <div>
       <h1>CarShop</h1>
       <p>Página inicial — em construção.</p>
-    </main>
+    </div>
   )
 }
