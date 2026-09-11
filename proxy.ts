@@ -7,7 +7,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * backend aqui (isso é responsabilidade de `auth.server#getSession()` no
  * layout, que valida a sessão de fato).
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   if (request.nextUrl.pathname === "/admin/login") {
     return NextResponse.next();
   }
