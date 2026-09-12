@@ -109,4 +109,19 @@ describe("WorkGallery", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
+
+  it("devolve o foco à miniatura que abriu o lightbox ao fechar", async () => {
+    const user = userEvent.setup();
+    render(<WorkGallery images={images} fallbackAlt="Fusca 1978" />);
+
+    const trigger = screen.getByRole("button", {
+      name: "Ampliar imagem 2 de 3",
+    });
+    await user.click(trigger);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+
+    expect(trigger).toHaveFocus();
+  });
 });

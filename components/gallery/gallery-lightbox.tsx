@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, RefObject } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -19,6 +19,8 @@ type GalleryLightboxProps = {
   onOpenChange: (open: boolean) => void;
   onNavigate: (index: number) => void;
   fallbackAlt: string;
+  /** Elemento (miniatura) que abriu o lightbox — recebe o foco de volta ao fechar. */
+  restoreFocusRef: RefObject<HTMLElement | null>;
 };
 
 /**
@@ -26,8 +28,11 @@ type GalleryLightboxProps = {
  * `next/image` da imagem selecionada quando o dialog está aberto — não
  * pré-carrega as demais. Navegação circular (avança do último para o
  * primeiro e vice-versa) via botões ou setas do teclado; `Esc`/focus trap
- * e devolução de foco ao elemento que abriu já são cobertos nativamente
- * pelo Radix Dialog.
+ * são cobertos nativamente pelo Radix Dialog. A devolução de foco à
+ * miniatura que abriu o lightbox é explícita via `restoreFocusRef` (o
+ * Dialog é controlado por botões externos ao Dialog root, sem
+ * `DialogTrigger`, então não há um trigger implícito para o Radix
+ * devolver o foco sozinho).
  */
 export function GalleryLightbox({
   images,
@@ -35,6 +40,7 @@ export function GalleryLightbox({
   onOpenChange,
   onNavigate,
   fallbackAlt,
+  restoreFocusRef,
 }: Readonly<GalleryLightboxProps>) {
   const isOpen = selectedIndex !== null;
   const currentImage =
@@ -65,6 +71,12 @@ export function GalleryLightbox({
       <DialogContent
         className="flex max-w-3xl flex-col gap-4 bg-background/95 p-4 sm:max-w-3xl"
         onKeyDown={handleKeyDown}
+        onCloseAutoFocus={(event) => {
+          if (restoreFocusRef.current) {
+            event.preventDefault();
+            restoreFocusRef.current.focus();
+          }
+        }}
       >
         {currentImage && selectedIndex !== null && (
           <>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { WorkImage } from "@/lib/api/works";
 import { WorkImageThumb } from "./work-image-thumb";
 import { GalleryLightbox } from "./gallery-lightbox";
@@ -23,6 +23,7 @@ export function WorkGallery({
   fallbackAlt,
 }: Readonly<WorkGalleryProps>) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const lastTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   if (images.length === 0) {
     return null;
@@ -37,7 +38,10 @@ export function WorkGallery({
           <li key={image.id}>
             <button
               type="button"
-              onClick={() => setSelectedIndex(index)}
+              onClick={(event) => {
+                lastTriggerRef.current = event.currentTarget;
+                setSelectedIndex(index);
+              }}
               aria-label={`Ampliar imagem ${index + 1} de ${sortedImages.length}`}
               className="block w-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50 rounded-lg"
             >
@@ -59,6 +63,7 @@ export function WorkGallery({
         }}
         onNavigate={setSelectedIndex}
         fallbackAlt={fallbackAlt}
+        restoreFocusRef={lastTriggerRef}
       />
     </div>
   );

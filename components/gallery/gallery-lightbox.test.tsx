@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { RefObject } from "react";
 import type { WorkImage } from "@/lib/api/works";
 import { GalleryLightbox } from "./gallery-lightbox";
+
+const restoreFocusRef: RefObject<HTMLElement | null> = { current: null };
 
 const images: WorkImage[] = [
   {
@@ -46,6 +49,7 @@ describe("GalleryLightbox", () => {
         onOpenChange={vi.fn()}
         onNavigate={vi.fn()}
         fallbackAlt="Fusca 1978"
+        restoreFocusRef={restoreFocusRef}
       />,
     );
 
@@ -61,6 +65,7 @@ describe("GalleryLightbox", () => {
         onOpenChange={vi.fn()}
         onNavigate={vi.fn()}
         fallbackAlt="Fusca 1978"
+        restoreFocusRef={restoreFocusRef}
       />,
     );
 
@@ -81,6 +86,7 @@ describe("GalleryLightbox", () => {
         onOpenChange={vi.fn()}
         onNavigate={vi.fn()}
         fallbackAlt="Fusca 1978"
+        restoreFocusRef={restoreFocusRef}
       />,
     );
 
@@ -101,6 +107,7 @@ describe("GalleryLightbox", () => {
         onOpenChange={vi.fn()}
         onNavigate={onNavigate}
         fallbackAlt="Fusca 1978"
+        restoreFocusRef={restoreFocusRef}
       />,
     );
 
@@ -119,6 +126,7 @@ describe("GalleryLightbox", () => {
         onOpenChange={vi.fn()}
         onNavigate={onNavigate}
         fallbackAlt="Fusca 1978"
+        restoreFocusRef={restoreFocusRef}
       />,
     );
 
@@ -137,6 +145,7 @@ describe("GalleryLightbox", () => {
         onOpenChange={vi.fn()}
         onNavigate={onNavigate}
         fallbackAlt="Fusca 1978"
+        restoreFocusRef={restoreFocusRef}
       />,
     );
 
@@ -158,6 +167,7 @@ describe("GalleryLightbox", () => {
         onOpenChange={onOpenChange}
         onNavigate={vi.fn()}
         fallbackAlt="Fusca 1978"
+        restoreFocusRef={restoreFocusRef}
       />,
     );
 
@@ -173,6 +183,7 @@ describe("GalleryLightbox", () => {
         onOpenChange={vi.fn()}
         onNavigate={vi.fn()}
         fallbackAlt="Fusca 1978"
+        restoreFocusRef={restoreFocusRef}
       />,
     );
 
