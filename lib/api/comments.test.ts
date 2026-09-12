@@ -58,13 +58,18 @@ describe("lib/api/comments", () => {
       );
     });
 
-    it("lança erro quando a resposta não é ok", async () => {
+    it("lança erro quando a resposta não é ok (após esgotar retries)", async () => {
+      vi.useFakeTimers();
       vi.stubGlobal(
         "fetch",
         vi.fn().mockResolvedValue({ ok: false, status: 500 }),
       );
 
-      await expect(getWorkComments("work-1")).rejects.toThrow();
+      const resultPromise = expect(getWorkComments("work-1")).rejects.toThrow();
+      await vi.runAllTimersAsync();
+      await resultPromise;
+
+      vi.useRealTimers();
     });
   });
 });

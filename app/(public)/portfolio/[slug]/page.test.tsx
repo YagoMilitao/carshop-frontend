@@ -10,6 +10,7 @@ const notFoundMock = vi.fn(() => {
 
 const getWorksMock = vi.fn<() => Promise<Work[]>>()
 const getWorkCommentsMock = vi.fn<(workId: string) => Promise<Comment[]>>()
+const toastErrorMock = vi.fn()
 
 vi.mock('@/lib/api/works', () => ({
   getWorkBySlug: (slug: string) => getWorkBySlugMock(slug),
@@ -19,6 +20,12 @@ vi.mock('@/lib/api/works', () => ({
 
 vi.mock('@/lib/api/comments', () => ({
   getWorkComments: (workId: string) => getWorkCommentsMock(workId),
+}))
+
+vi.mock('sonner', () => ({
+  toast: {
+    error: (message: string) => toastErrorMock(message),
+  },
 }))
 
 vi.mock('next/navigation', () => ({
@@ -196,5 +203,41 @@ describe('ProjectDetailsPage', () => {
       generateMetadata({ params: Promise.resolve({ slug: 'inexistente' }) }),
     ).rejects.toThrow('NEXT_NOT_FOUND')
     expect(notFoundMock).toHaveBeenCalled()
+  })
+
+  it('generateStaticParams retorna [] (fallback gracioso) quando getWorks() falha mesmo após retries', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    getWorksMock.mockRejectedValue(new Error('backend indisponível'))
+    const { generateStaticParams } = await import('./page')
+
+    const params = await generateStaticParams()
+
+    expect(params).toEqual([])
+    expect(consoleErrorSpy).toHaveBeenCalled()
+
+    consoleErrorSpy.mockRestore()
+  })
+
+  it('renderiza <ErrorToast /> e comentários vazios quando getWorkComments() falha', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    getWorkBySlugMock.mockResolvedValue(baseWork)
+    getWorkCommentsMock.mockRejectedValue(new Error('backend indisponível'))
+    const { default: ProjectDetailsPage } = await import('./page')
+
+    render(
+      await ProjectDetailsPage({
+        params: Promise.resolve({ slug: baseWork.slug }),
+      }),
+    )
+
+    expect(toastErrorMock).toHaveBeenCalledWith(
+      'Não foi possível carregar os comentários agora. Tente novamente mais tarde.',
+    )
+    expect(
+      screen.getByText('Ainda não há comentários aprovados para este projeto.'),
+    ).toBeInTheDocument()
+    expect(consoleErrorSpy).toHaveBeenCalled()
+
+    consoleErrorSpy.mockRestore()
   })
 })

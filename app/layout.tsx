@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import './globals.css'
 import { Geist } from "next/font/google";
+import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 import { clientEnv } from "@/lib/env/client";
 import { Providers } from "./providers";
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="en-US" className={cn("font-sans", geist.variable)}>
       <body suppressHydrationWarning>
         <Providers>{children}</Providers>
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   )

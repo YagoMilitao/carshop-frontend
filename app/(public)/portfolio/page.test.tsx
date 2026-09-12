@@ -1,12 +1,19 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import type { Work } from '@/lib/api/works'
 
 const getWorksMock = vi.fn<() => Promise<Work[]>>()
+const toastErrorMock = vi.fn()
 
 vi.mock('@/lib/api/works', () => ({
   getWorks: () => getWorksMock(),
   getCoverImage: (work: Work) => work.images.find((image) => image.isCover),
+}))
+
+vi.mock('sonner', () => ({
+  toast: {
+    error: (message: string) => toastErrorMock(message),
+  },
 }))
 
 const works: Work[] = [
@@ -51,6 +58,10 @@ const workWithCover: Work = {
 }
 
 describe('PortfolioPage', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('renderiza a listagem de projetos reais a partir de getWorks()', async () => {
     getWorksMock.mockResolvedValue(works)
     const { default: PortfolioPage } = await import('./page')
@@ -97,5 +108,38 @@ describe('PortfolioPage', () => {
     expect(metadata.title).toBe('Portfolio')
     expect(metadata.alternates?.canonical).toContain('/portfolio')
     expect(metadata.openGraph).toMatchObject({ title: 'Portfolio' })
+  })
+
+  it('renderiza fallback gracioso com ErrorToast quando getWorks() falha (mesmo após retries)', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    getWorksMock.mockRejectedValue(new Error('backend indisponível'))
+    const { default: PortfolioPage } = await import('./page')
+
+    render(await PortfolioPage())
+
+    expect(
+      screen.getByText(
+        'Não foi possível carregar o portfólio agora. Tente novamente em alguns instantes.',
+      ),
+    ).toBeInTheDocument()
+    expect(toastErrorMock).toHaveBeenCalledWith(
+      'Não foi possível carregar o portfólio agora. Tente novamente em alguns instantes.',
+    )
+    expect(consoleErrorSpy).toHaveBeenCalled()
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+
+    consoleErrorSpy.mockRestore()
+  })
+
+  it('renderiza mensagem de lista vazia quando não há projetos publicados', async () => {
+    getWorksMock.mockResolvedValue([])
+    const { default: PortfolioPage } = await import('./page')
+
+    render(await PortfolioPage())
+
+    expect(
+      screen.getByText('Nenhum projeto publicado ainda.'),
+    ).toBeInTheDocument()
+    expect(toastErrorMock).not.toHaveBeenCalled()
   })
 })
