@@ -1,6 +1,8 @@
 import "server-only";
 
 import { serverEnv } from "@/lib/env/server";
+import { HttpError } from "./errors";
+import { withRetryBackoff } from "./retry";
 
 /**
  * Camada de acesso a dados de leitura pública de `Comment` (backend
@@ -37,19 +39,24 @@ export function workCommentsTag(workId: string): string {
  * aprovados — filtro aplicado pelo backend).
  */
 export async function getWorkComments(workId: string): Promise<Comment[]> {
-  const response = await fetch(
-    `${serverEnv.apiUrl}/works/${workId}/comments`,
-    {
-      next: {
-        revalidate: WORK_COMMENTS_REVALIDATE_SECONDS,
-        tags: [workCommentsTag(workId)],
+  return withRetryBackoff(async () => {
+    const response = await fetch(
+      `${serverEnv.apiUrl}/works/${workId}/comments`,
+      {
+        next: {
+          revalidate: WORK_COMMENTS_REVALIDATE_SECONDS,
+          tags: [workCommentsTag(workId)],
+        },
       },
-    },
-  );
+    );
 
-  if (!response.ok) {
-    throw new Error(`Falha ao buscar comentários: ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new HttpError(
+        `Falha ao buscar comentários: ${response.status}`,
+        response.status,
+      );
+    }
 
-  return (await response.json()) as Comment[];
+    return (await response.json()) as Comment[];
+  });
 }

@@ -94,4 +94,26 @@ describe('app/sitemap', () => {
     expect(staticCount).toBe(5)
     expect(result).toHaveLength(6)
   })
+
+  it('retorna apenas as rotas estáticas quando getWorks falha (fallback gracioso)', async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined)
+    getWorksMock.mockRejectedValue(new Error('Backend indisponível'))
+    const { default: sitemap } = await import('./sitemap')
+
+    const result = await sitemap()
+    const urls = result.map((entry) => entry.url)
+
+    expect(urls).toEqual([
+      'http://localhost:3000/',
+      'http://localhost:3000/about',
+      'http://localhost:3000/services',
+      'http://localhost:3000/portfolio',
+      'http://localhost:3000/contact',
+    ])
+    expect(consoleErrorSpy).toHaveBeenCalledTimes(1)
+
+    consoleErrorSpy.mockRestore()
+  })
 })

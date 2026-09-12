@@ -22,7 +22,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency,
   }))
 
-  const works = await getWorks()
+  let works: Awaited<ReturnType<typeof getWorks>> = []
+
+  try {
+    works = await getWorks()
+  } catch (error) {
+    console.error('Falha ao buscar works para o sitemap:', error)
+  }
 
   const workEntries = works
     .filter((work) => work.status === 'published')

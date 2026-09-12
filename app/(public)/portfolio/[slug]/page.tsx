@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getCoverImage, getWorkBySlug, getWorks } from '@/lib/api/works'
-import { getWorkComments } from '@/lib/api/comments'
+import { getWorkComments, type Comment } from '@/lib/api/comments'
 import { WorkGallery } from '@/components/gallery/work-gallery'
+import { ErrorToast } from '@/components/feedback/error-toast'
 import { CommentForm } from './comment-form'
 
 type ProjectDetailsPageProps = {
@@ -10,9 +11,18 @@ type ProjectDetailsPageProps = {
 }
 
 export async function generateStaticParams() {
-  const works = await getWorks()
+  try {
+    const works = await getWorks()
 
-  return works.map((work) => ({ slug: work.slug }))
+    return works.map((work) => ({ slug: work.slug }))
+  } catch (error) {
+    console.error(
+      'Falha ao buscar works para generateStaticParams de /portfolio/[slug]:',
+      error,
+    )
+
+    return []
+  }
 }
 
 export async function generateMetadata({
@@ -52,7 +62,19 @@ export default async function ProjectDetailsPage({
     notFound()
   }
 
-  const comments = await getWorkComments(work.id)
+  let comments: Comment[] = []
+  let commentsErrorMessage: string | null = null
+
+  try {
+    comments = await getWorkComments(work.id)
+  } catch (error) {
+    console.error(
+      `Falha ao buscar comentários do work ${work.id}:`,
+      error,
+    )
+    commentsErrorMessage =
+      'Não foi possível carregar os comentários agora. Tente novamente mais tarde.'
+  }
 
   return (
     <div>
@@ -63,6 +85,10 @@ export default async function ProjectDetailsPage({
 
       <section aria-labelledby="comments-heading">
         <h2 id="comments-heading">Comentários</h2>
+
+        {commentsErrorMessage && (
+          <ErrorToast message={commentsErrorMessage} />
+        )}
 
         {comments.length === 0 ? (
           <p>Ainda não há comentários aprovados para este projeto.</p>

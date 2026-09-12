@@ -1,6 +1,8 @@
 import "server-only";
 
 import { serverEnv } from "@/lib/env/server";
+import { HttpError } from "./errors";
+import { withRetryBackoff } from "./retry";
 
 /**
  * Camada de acesso a dados do recurso `Work` (backend `carshop-backend`).
@@ -49,15 +51,20 @@ export const WORKS_REVALIDATE_SECONDS = 3600;
  * pelo backend).
  */
 export async function getWorks(): Promise<Work[]> {
-  const response = await fetch(`${serverEnv.apiUrl}/works`, {
-    next: { revalidate: WORKS_REVALIDATE_SECONDS, tags: ["works"] },
+  return withRetryBackoff(async () => {
+    const response = await fetch(`${serverEnv.apiUrl}/works`, {
+      next: { revalidate: WORKS_REVALIDATE_SECONDS, tags: ["works"] },
+    });
+
+    if (!response.ok) {
+      throw new HttpError(
+        `Falha ao buscar works: ${response.status}`,
+        response.status,
+      );
+    }
+
+    return (await response.json()) as Work[];
   });
-
-  if (!response.ok) {
-    throw new Error(`Falha ao buscar works: ${response.status}`);
-  }
-
-  return (await response.json()) as Work[];
 }
 
 /**

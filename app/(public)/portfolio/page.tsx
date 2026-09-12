@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import { clientEnv } from '@/lib/env/client'
-import { getCoverImage, getWorks } from '@/lib/api/works'
+import { getCoverImage, getWorks, type Work } from '@/lib/api/works'
 import { WorkImageThumb } from '@/components/gallery/work-image-thumb'
+import { ErrorToast } from '@/components/feedback/error-toast'
 
 export const metadata: Metadata = {
   title: 'Portfolio',
@@ -17,11 +19,30 @@ export const metadata: Metadata = {
 }
 
 export default async function PortfolioPage() {
-  const works = await getWorks()
+  let works: Work[] = []
+  let errorMessage: string | null = null
 
-  return (
-    <div>
-      <h1>Portfolio</h1>
+  try {
+    works = await getWorks()
+  } catch (error) {
+    console.error('Falha ao buscar works em /portfolio:', error)
+    errorMessage =
+      'Não foi possível carregar o portfólio agora. Tente novamente em alguns instantes.'
+  }
+
+  let content: ReactNode
+
+  if (errorMessage) {
+    content = (
+      <>
+        <ErrorToast message={errorMessage} />
+        <p>{errorMessage}</p>
+      </>
+    )
+  } else if (works.length === 0) {
+    content = <p>Nenhum projeto publicado ainda.</p>
+  } else {
+    content = (
       <ul>
         {works.map((work) => {
           const cover = getCoverImage(work)
@@ -41,6 +62,13 @@ export default async function PortfolioPage() {
           )
         })}
       </ul>
+    )
+  }
+
+  return (
+    <div>
+      <h1>Portfolio</h1>
+      {content}
     </div>
   )
 }
