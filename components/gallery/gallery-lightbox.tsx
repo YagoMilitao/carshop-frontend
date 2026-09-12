@@ -131,8 +131,15 @@ export function GalleryLightbox({
             </div>
 
             {images.length > 1 && (
-              <p className="text-center text-sm text-muted-foreground">
+              <p
+                className="text-center text-sm text-muted-foreground"
+                aria-live="polite"
+                aria-atomic="true"
+              >
                 {selectedIndex + 1} / {images.length}
+                <VisuallyHidden.Root asChild>
+                  <span>{`: ${currentImage.alt || fallbackAlt}`}</span>
+                </VisuallyHidden.Root>
               </p>
             )}
           </>

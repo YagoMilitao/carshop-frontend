@@ -92,7 +92,9 @@ describe("WorkGallery", () => {
 
     await user.click(screen.getByRole("button", { name: "Próxima imagem" }));
 
-    expect(screen.getByText("2 / 3")).toBeInTheDocument();
+    const liveRegion = screen.getByText(/2 \/ 3/);
+    expect(liveRegion).toHaveAttribute("aria-live", "polite");
+    expect(liveRegion).toHaveTextContent("2 / 3: Segunda imagem");
     expect(screen.getByAltText("Segunda imagem")).toBeInTheDocument();
   });
 

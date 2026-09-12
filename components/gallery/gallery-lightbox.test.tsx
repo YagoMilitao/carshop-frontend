@@ -175,6 +175,24 @@ describe("GalleryLightbox", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("anuncia a posição e a descrição da imagem atual em uma região aria-live", () => {
+    render(
+      <GalleryLightbox
+        images={images}
+        selectedIndex={1}
+        onOpenChange={vi.fn()}
+        onNavigate={vi.fn()}
+        fallbackAlt="Fusca 1978"
+        restoreFocusRef={restoreFocusRef}
+      />,
+    );
+
+    const liveRegion = screen.getByText(/2 \/ 3/);
+    expect(liveRegion).toHaveAttribute("aria-live", "polite");
+    expect(liveRegion).toHaveAttribute("aria-atomic", "true");
+    expect(liveRegion).toHaveTextContent("2 / 3: Banco traseiro");
+  });
+
   it("não exibe controles de navegação nem contador quando há apenas uma imagem", () => {
     render(
       <GalleryLightbox
