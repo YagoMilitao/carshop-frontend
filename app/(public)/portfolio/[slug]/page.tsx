@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getCoverImage, getWorkBySlug, getWorks } from '@/lib/api/works'
 import { getWorkComments } from '@/lib/api/comments'
+import { WorkGallery } from '@/components/gallery/work-gallery'
 import { CommentForm } from './comment-form'
 
 type ProjectDetailsPageProps = {
@@ -57,6 +58,8 @@ export default async function ProjectDetailsPage({
     <div>
       <h1>{work.title}</h1>
       <p>{work.description}</p>
+
+      <WorkGallery images={work.images} fallbackAlt={work.title} />
 
       <section aria-labelledby="comments-heading">
         <h2 id="comments-heading">Comentários</h2>

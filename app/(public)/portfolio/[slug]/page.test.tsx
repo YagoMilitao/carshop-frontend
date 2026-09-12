@@ -91,6 +91,40 @@ describe('ProjectDetailsPage', () => {
     ).toBeInTheDocument()
   })
 
+  it('renderiza a galeria de imagens (WorkGallery) do work no corpo da página', async () => {
+    getWorkBySlugMock.mockResolvedValue(baseWork)
+    getWorkCommentsMock.mockResolvedValue([])
+    const { default: ProjectDetailsPage } = await import('./page')
+
+    render(
+      await ProjectDetailsPage({
+        params: Promise.resolve({ slug: baseWork.slug }),
+      }),
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Ampliar imagem 1 de 1' }),
+    ).toBeInTheDocument()
+    expect(screen.getByAltText('Banco restaurado')).toBeInTheDocument()
+  })
+
+  it('não renderiza a galeria quando o work não possui imagens', async () => {
+    const workWithoutImages: Work = { ...baseWork, images: [] }
+    getWorkBySlugMock.mockResolvedValue(workWithoutImages)
+    getWorkCommentsMock.mockResolvedValue([])
+    const { default: ProjectDetailsPage } = await import('./page')
+
+    render(
+      await ProjectDetailsPage({
+        params: Promise.resolve({ slug: baseWork.slug }),
+      }),
+    )
+
+    expect(
+      screen.queryByRole('button', { name: /Ampliar imagem/ }),
+    ).not.toBeInTheDocument()
+  })
+
   it('renderiza os comentários aprovados retornados para o work', async () => {
     getWorkBySlugMock.mockResolvedValue(baseWork)
     getWorkCommentsMock.mockResolvedValue([
