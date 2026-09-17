@@ -293,7 +293,7 @@ Full visual rules live in `docs/design/`.
 
 Use:
 
-`<type>/CARSHOP-<number>-<short-description>`
+`<type>/CARSHOP-<number>`
 
 Follow the detailed branching rules in:
 

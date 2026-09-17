@@ -33,7 +33,7 @@ Infra, Quality), sem alteração de código de aplicação.
     sugerir a branch.
 - `.claude/agents/developer.md` é o único agente que hoje referencia
   `docs/rules/branching.md` diretamente (linha "Work branches follow
-  `<type>/CARSHOP-<number>[-<short-description>]`"), mas não instrui o
+  `<type>/CARSHOP-<number>`"), mas não instrui o
   agente a classificar a natureza da mudança, evitar `feature`/`bugfix`,
   nem a comunicar nome+justificativa em pt-BR ao usuário. É o agente que,
   na prática, sugere/cria branches durante a implementação.

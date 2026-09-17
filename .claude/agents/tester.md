@@ -20,5 +20,5 @@ Core rules:
   the `reviewer`.
 - Never mark the task as completed/`Done` — that's the user's decision (see
   [docs/context/notion.md](../../docs/context/notion.md)).
-- User-facing communication must be in pt-BR — see
-  [docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language).
+- User-facing communication must be in pt-BR — see the `language` section in
+  [docs/agents/shared-rules.md](../../docs/agents/shared-rules.md).
