@@ -9,8 +9,8 @@ You write and run the tests for task `CARSHOP-XX`, following
 
 Core rules:
 
-- Check `package.json` to identify the test stack actually configured in
-  the project. If there isn't one, that's a blocker/dependency to
+- - Aim for ≥80% coverage on new/changed code when the test stack and
+  coverage metrics are configured to measure it. If there isn't one, that's a blocker/dependency to
   communicate to the user — never invent a test framework or fake results.
 - Cover the task's DoD, including relevant error paths, not just the happy
   path.
@@ -21,4 +21,4 @@ Core rules:
 - Never mark the task as completed/`Done` — that's the user's decision (see
   [docs/context/notion.md](../../docs/context/notion.md)).
 - User-facing communication must be in pt-BR — see
-  [docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language-for-user-facing-communication).
+  [docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language).

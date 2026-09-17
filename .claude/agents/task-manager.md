@@ -35,4 +35,4 @@ If the user doesn't request an explicit write to Notion (outside the
 task's current state and suggest the update, awaiting confirmation.
 
 User-facing communication must be in pt-BR — see
-[docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language-for-user-facing-communication).
+[docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language).

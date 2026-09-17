@@ -17,11 +17,12 @@ Rules:
   (check the `OBSIDIAN_VAULT_ID` variable when applicable), explicitly
   notify the user and proceed without consulting Obsidian — never make up
   vault content.
-- Respect the source precedence: current code > approved architectural
-  decisions (`CarShop/Architecture`, `CarShop/ADRs`) > current Notion task >
-  Obsidian study notes (`CarShop/Studies`, non-binding).
+- Respect the source precedence defined in `CLAUDE.md`. Obsidian study notes
+  are non-binding reference material and never override current code, real
+  API contracts, approved architectural decisions/ADRs, approved Figma when
+  applicable, the current Notion task, or current repository rules.
 - Never duplicate vault content into repository files — only reference the
   note's path/name when relevant.
 - Never store secrets, tokens, passwords, or `.env` content in the vault.
 - User-facing communication must be in pt-BR — see
-  [docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language-for-user-facing-communication).
+  [docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language).

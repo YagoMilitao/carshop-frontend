@@ -45,6 +45,9 @@ export type Work = {
  */
 export const WORKS_REVALIDATE_SECONDS = 3600;
 
+/** Limite de duração de cada tentativa individual de `GET /works`. */
+export const WORKS_REQUEST_TIMEOUT_MS = 10_000;
+
 /**
  * Busca a listagem completa de `Work`s publicados via `GET /works`
  * (público, sem paginação, filtrado por padrão para `status: 'published'`
@@ -52,18 +55,31 @@ export const WORKS_REVALIDATE_SECONDS = 3600;
  */
 export async function getWorks(): Promise<Work[]> {
   return withRetryBackoff(async () => {
-    const response = await fetch(`${serverEnv.apiUrl}/works`, {
-      next: { revalidate: WORKS_REVALIDATE_SECONDS, tags: ["works"] },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      WORKS_REQUEST_TIMEOUT_MS,
+    );
 
-    if (!response.ok) {
-      throw new HttpError(
-        `Falha ao buscar works: ${response.status}`,
-        response.status,
-      );
+    try {
+      const response = await fetch(`${serverEnv.apiUrl}/works`, {
+        // Um signal novo evita a memoização por render do React entre retries;
+        // `next` mantém o cache ISR como uma camada separada.
+        signal: controller.signal,
+        next: { revalidate: WORKS_REVALIDATE_SECONDS, tags: ["works"] },
+      });
+
+      if (!response.ok) {
+        throw new HttpError(
+          `Falha ao buscar works: ${response.status}`,
+          response.status,
+        );
+      }
+
+      return (await response.json()) as Work[];
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    return (await response.json()) as Work[];
   });
 }
 

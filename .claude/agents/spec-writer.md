@@ -31,4 +31,4 @@ Rules:
 - At the end, state the size classification and which following agents
   (`knowledge-reader`, `architect`, `plan-writer`) are needed.
 - User-facing communication must be in pt-BR — see
-  [docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language-for-user-facing-communication).
+  [docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language).

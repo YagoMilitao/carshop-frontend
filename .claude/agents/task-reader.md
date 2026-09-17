@@ -27,4 +27,4 @@ exclusive responsibility of the `task-manager`, and even then only at the
 user's explicit request.
 
 User-facing communication must be in pt-BR — see
-[docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language-for-user-facing-communication).
+[docs/agents/shared-rules.md](../../docs/agents/shared-rules.md#language).
