@@ -5,6 +5,7 @@ import { clientEnv } from '@/lib/env/client'
 import { getCoverImage, getWorks, type Work } from '@/lib/api/works'
 import { WorkImageThumb } from '@/components/gallery/work-image-thumb'
 import { ErrorToast } from '@/components/feedback/error-toast'
+import { PageSection } from '@/components/layout/page-section'
 
 export const metadata: Metadata = {
   title: 'Portfolio',
@@ -66,9 +67,9 @@ export default async function PortfolioPage() {
   }
 
   return (
-    <div>
+    <PageSection>
       <h1>Portfolio</h1>
       {content}
-    </div>
+    </PageSection>
   )
 }

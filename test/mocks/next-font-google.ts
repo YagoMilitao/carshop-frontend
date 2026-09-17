@@ -7,6 +7,7 @@
  */
 type FontOptions = {
   subsets?: string[];
+  weight?: string | string[];
   variable?: string;
 };
 
@@ -24,4 +25,5 @@ function createFontStub(name: string) {
   });
 }
 
-export const Geist = createFontStub("geist");
+export const Barlow_Condensed = createFontStub("barlow-condensed");
+export const Manrope = createFontStub("manrope");

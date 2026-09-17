@@ -1,11 +1,12 @@
 import Link from "next/link"
 import { navLinks } from "./nav-links"
 import { MobileNav } from "./mobile-nav"
+import { Container } from "./container"
 
 export function Header() {
   return (
     <header className="relative border-b border-border bg-background">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+      <Container variant="page" className="flex h-16 items-center justify-between">
         <Link
           href="/"
           className="rounded-lg text-lg font-semibold text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -29,7 +30,7 @@ export function Header() {
         </nav>
 
         <MobileNav />
-      </div>
+      </Container>
     </header>
   )
 }
