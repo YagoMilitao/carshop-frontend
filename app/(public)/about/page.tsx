@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { clientEnv } from '@/lib/env/client'
+import { PageSection } from '@/components/layout/page-section'
 
 export const metadata: Metadata = {
   title: 'About',
@@ -15,9 +16,9 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div>
+    <PageSection>
       <h1>About</h1>
       <p>Página em construção.</p>
-    </div>
+    </PageSection>
   )
 }

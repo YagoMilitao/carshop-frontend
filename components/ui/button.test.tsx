@@ -13,6 +13,9 @@ describe("Button", () => {
     const button = screen.getByRole("button", { name: "Salvar" });
     expect(button).toHaveAttribute("data-variant", "default");
     expect(button).toHaveAttribute("data-size", "default");
+    expect(button.className).toContain(
+      "hover:bg-[color-mix(in_oklch,var(--primary),var(--foreground)_10%)]",
+    );
 
     await user.click(button);
     expect(onClick).toHaveBeenCalledTimes(1);

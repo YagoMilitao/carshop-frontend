@@ -1,8 +1,10 @@
+import { PageSection } from "@/components/layout/page-section"
+
 export default function HomePage() {
   return (
-    <div>
+    <PageSection>
       <h1>CarShop</h1>
       <p>Página inicial — em construção.</p>
-    </div>
+    </PageSection>
   )
 }
