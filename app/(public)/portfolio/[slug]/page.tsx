@@ -10,6 +10,17 @@ type ProjectDetailsPageProps = {
   params: Promise<{ slug: string }>
 }
 
+const commentDateFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'UTC',
+})
+
+function formatCommentDate(isoDate: string): string {
+  return commentDateFormatter.format(new Date(isoDate))
+}
+
 export async function generateStaticParams() {
   try {
     const works = await getWorks()
@@ -98,6 +109,11 @@ export default async function ProjectDetailsPage({
               <li key={comment.id}>
                 <p className="font-medium">{comment.authorName}</p>
                 <p>{comment.content}</p>
+                <p className="text-muted-foreground text-sm">
+                  <time dateTime={comment.createdAt}>
+                    {formatCommentDate(comment.createdAt)}
+                  </time>
+                </p>
               </li>
             ))}
           </ul>
