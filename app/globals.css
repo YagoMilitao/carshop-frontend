@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
+
 :root {
   --background: #0c0c0c;
   --foreground: #f4f0e8;
@@ -17,7 +19,7 @@
   --muted-foreground: #aaa59c;
   --accent: #1c1b19;
   --accent-foreground: #f4f0e8;
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.704 0.191 22.216);
   --border: #302e2a;
   --input: #302e2a;
   --ring: #b56a3b;

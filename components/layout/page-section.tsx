@@ -25,7 +25,7 @@ export function PageSection({
   className,
   children,
   ...props
-}: PageSectionProps) {
+}: Readonly<PageSectionProps>) {
   return (
     <Component className={cn(spacingClassNames[spacing], className)} {...props}>
       {container === "none" ? children : <Container variant={container}>{children}</Container>}

@@ -15,7 +15,7 @@ export function Container({
   className,
   children,
   ...props
-}: ContainerProps) {
+}: Readonly<ContainerProps>) {
   return (
     <Component
       className={cn(
