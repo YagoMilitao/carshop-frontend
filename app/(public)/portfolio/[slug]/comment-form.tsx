@@ -9,9 +9,18 @@ import { createComment } from "@/lib/api/comments.client";
 import { getApiErrorMessage } from "@/lib/api/auth.client";
 import { Button } from "@/components/ui/button";
 
+const HTML_TAG_PATTERN = /<\/?[a-z][\s\S]*>/i;
+const NO_HTML_MESSAGE = "Não é permitido incluir HTML ou scripts.";
+
 const commentSchema = z.object({
-  authorName: z.string().min(1, "Informe seu nome."),
-  content: z.string().min(1, "Escreva um comentário."),
+  authorName: z
+    .string()
+    .min(1, "Informe seu nome.")
+    .refine((value) => !HTML_TAG_PATTERN.test(value), NO_HTML_MESSAGE),
+  content: z
+    .string()
+    .min(1, "Escreva um comentário.")
+    .refine((value) => !HTML_TAG_PATTERN.test(value), NO_HTML_MESSAGE),
 });
 
 type CommentFormValues = z.infer<typeof commentSchema>;

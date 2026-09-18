@@ -83,4 +83,55 @@ describe("CommentForm", () => {
       "Ocorreu um erro inesperado. Tente novamente.",
     );
   });
+
+  it("bloqueia tentativa de injeção de HTML/script no campo Comentário e não chama a API", async () => {
+    const user = userEvent.setup();
+    render(<CommentForm workId="work-1" />);
+
+    await user.type(screen.getByLabelText("Nome"), "Maria");
+    await user.type(
+      screen.getByLabelText("Comentário"),
+      "<script>alert(1)</script>",
+    );
+    await user.click(screen.getByRole("button", { name: "Enviar comentário" }));
+
+    expect(
+      await screen.findByText("Não é permitido incluir HTML ou scripts."),
+    ).toBeInTheDocument();
+    expect(createCommentMock).not.toHaveBeenCalled();
+  });
+
+  it("bloqueia tentativa de injeção de HTML/script no campo Nome e não chama a API", async () => {
+    const user = userEvent.setup();
+    render(<CommentForm workId="work-1" />);
+
+    await user.type(
+      screen.getByLabelText("Nome"),
+      "<img src=x onerror=alert(1)>",
+    );
+    await user.type(screen.getByLabelText("Comentário"), "Ótimo trabalho!");
+    await user.click(screen.getByRole("button", { name: "Enviar comentário" }));
+
+    expect(
+      await screen.findByText("Não é permitido incluir HTML ou scripts."),
+    ).toBeInTheDocument();
+    expect(createCommentMock).not.toHaveBeenCalled();
+  });
+
+  it("bloqueia HTML embutido no meio de um texto legítimo e não chama a API", async () => {
+    const user = userEvent.setup();
+    render(<CommentForm workId="work-1" />);
+
+    await user.type(screen.getByLabelText("Nome"), "Maria");
+    await user.type(
+      screen.getByLabelText("Comentário"),
+      "Ótimo <b>trabalho</b> mesmo!",
+    );
+    await user.click(screen.getByRole("button", { name: "Enviar comentário" }));
+
+    expect(
+      await screen.findByText("Não é permitido incluir HTML ou scripts."),
+    ).toBeInTheDocument();
+    expect(createCommentMock).not.toHaveBeenCalled();
+  });
 });
