@@ -3,23 +3,27 @@ import { cn } from "@/lib/utils"
 
 type ContainerVariant = "page" | "reading"
 
-interface ContainerProps extends ComponentPropsWithoutRef<"div"> {
+type ContainerProps<T extends ElementType = "div"> = {
   variant?: ContainerVariant
-  as?: ElementType
+  as?: T
+  className?: string
   children: ReactNode
-}
+} & Omit<ComponentPropsWithoutRef<T>, "as" | "children" | "className" | "variant">
 
-export function Container({
-  variant = "page",
-  as: Component = "div",
+export function Container<T extends ElementType = "div">({
+  variant,
+  as,
   className,
   children,
   ...props
-}: Readonly<ContainerProps>) {
+}: Readonly<ContainerProps<T>>) {
+  const Component: ElementType = as ?? "div"
+  const resolvedVariant: ContainerVariant = variant ?? "page"
+
   return (
     <Component
       className={cn(
-        variant === "page"
+        resolvedVariant === "page"
           ? "container-page px-5 sm:px-8 lg:px-16 xl:px-20"
           : "container-reading",
         className,

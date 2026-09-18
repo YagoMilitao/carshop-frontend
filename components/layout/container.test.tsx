@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
+import Link from "next/link";
 import { Container } from "./container";
 
 describe("Container", () => {
@@ -41,6 +42,19 @@ describe("Container", () => {
     );
 
     expect(screen.getByTestId("container").tagName).toBe("MAIN");
+  });
+
+  it("aceita e repassa as props do componente definido via as", () => {
+    render(
+      <Container as={Link} href="/portfolio">
+        Ver portfólio
+      </Container>,
+    );
+
+    expect(screen.getByRole("link", { name: "Ver portfólio" })).toHaveAttribute(
+      "href",
+      "/portfolio",
+    );
   });
 
   it("mescla className customizado sem sobrescrever as classes base", () => {

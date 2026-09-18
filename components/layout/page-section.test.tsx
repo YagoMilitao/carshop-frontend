@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
+import Link from "next/link";
 import { PageSection } from "./page-section";
 
 describe("PageSection", () => {
@@ -77,5 +78,18 @@ describe("PageSection", () => {
     );
 
     expect(screen.getByTestId("section").tagName).toBe("DIV");
+  });
+
+  it("aceita e repassa as props do componente definido via as", () => {
+    render(
+      <PageSection as={Link} href="/portfolio" container="none">
+        Ver portfólio
+      </PageSection>,
+    );
+
+    expect(screen.getByRole("link", { name: "Ver portfólio" })).toHaveAttribute(
+      "href",
+      "/portfolio",
+    );
   });
 });
