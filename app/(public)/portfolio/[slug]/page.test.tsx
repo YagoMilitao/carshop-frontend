@@ -3,6 +3,14 @@ import { render, screen } from '@testing-library/react'
 import type { Work } from '@/lib/api/works'
 import type { Comment } from '@/lib/api/comments'
 
+// `formatCommentDate` (page.tsx) usa `Intl.DateTimeFormat` sem `timeZone`
+// explícito, ou seja, depende do fuso horário local do processo Node em
+// execução (ver achado reportado ao reviewer/developer). Fixamos `TZ=UTC`
+// aqui para que as asserções de data sejam determinísticas
+// independentemente da máquina/CI que roda a suíte — isso NÃO corrige o
+// bug de fuso horário, apenas isola o teste dele.
+process.env.TZ = 'UTC'
+
 const getWorkBySlugMock = vi.fn<(slug: string) => Promise<Work | undefined>>()
 const notFoundMock = vi.fn(() => {
   throw new Error('NEXT_NOT_FOUND')
@@ -132,7 +140,7 @@ describe('ProjectDetailsPage', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('renderiza os comentários aprovados retornados para o work', async () => {
+  it('renderiza os comentários aprovados retornados para o work, incluindo nome, mensagem e data formatada', async () => {
     getWorkBySlugMock.mockResolvedValue(baseWork)
     getWorkCommentsMock.mockResolvedValue([
       {
@@ -155,6 +163,75 @@ describe('ProjectDetailsPage', () => {
 
     expect(screen.getByText('Maria')).toBeInTheDocument()
     expect(screen.getByText('Ficou excelente!')).toBeInTheDocument()
+
+    const timeElement = screen.getByText('January 3, 2024')
+    expect(timeElement).toBeInTheDocument()
+    expect(timeElement.tagName).toBe('TIME')
+    expect(timeElement).toHaveAttribute(
+      'dateTime',
+      '2024-01-03T00:00:00.000Z',
+    )
+  })
+
+  it('renderiza a data de cada comentário aprovado formatada corretamente quando há múltiplos comentários', async () => {
+    getWorkBySlugMock.mockResolvedValue(baseWork)
+    getWorkCommentsMock.mockResolvedValue([
+      {
+        id: 'comment-1',
+        workId: baseWork.id,
+        authorName: 'Maria',
+        content: 'Ficou excelente!',
+        status: 'APPROVED',
+        createdAt: '2024-01-03T00:00:00.000Z',
+        updatedAt: '2024-01-03T00:00:00.000Z',
+      },
+      {
+        id: 'comment-2',
+        workId: baseWork.id,
+        authorName: 'João',
+        content: 'Recomendo muito.',
+        status: 'APPROVED',
+        createdAt: '2024-03-15T00:00:00.000Z',
+        updatedAt: '2024-03-15T00:00:00.000Z',
+      },
+    ])
+    const { default: ProjectDetailsPage } = await import('./page')
+
+    render(
+      await ProjectDetailsPage({
+        params: Promise.resolve({ slug: baseWork.slug }),
+      }),
+    )
+
+    expect(screen.getByText('January 3, 2024')).toBeInTheDocument()
+    expect(screen.getByText('March 15, 2024')).toBeInTheDocument()
+  })
+
+  it('nunca renderiza o conteúdo de um comentário como HTML (proteção contra XSS)', async () => {
+    getWorkBySlugMock.mockResolvedValue(baseWork)
+    const maliciousContent = '<script>alert(1)</script><b>bold</b>'
+    getWorkCommentsMock.mockResolvedValue([
+      {
+        id: 'comment-xss',
+        workId: baseWork.id,
+        authorName: 'Atacante',
+        content: maliciousContent,
+        status: 'APPROVED',
+        createdAt: '2024-01-03T00:00:00.000Z',
+        updatedAt: '2024-01-03T00:00:00.000Z',
+      },
+    ])
+    const { default: ProjectDetailsPage } = await import('./page')
+
+    const { container } = render(
+      await ProjectDetailsPage({
+        params: Promise.resolve({ slug: baseWork.slug }),
+      }),
+    )
+
+    expect(screen.getByText(maliciousContent)).toBeInTheDocument()
+    expect(container.querySelector('script')).not.toBeInTheDocument()
+    expect(container.querySelector('b')).not.toBeInTheDocument()
   })
 
   it('chama notFound() quando o slug não corresponde a nenhum work', async () => {
