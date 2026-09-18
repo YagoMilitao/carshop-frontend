@@ -12,6 +12,8 @@ import {
 } from "@/lib/api/images.client";
 import { getApiErrorMessage } from "@/lib/api/auth.client";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import type { Work } from "@/lib/api/works";
 
 import { revalidateWorksTag } from "../actions";
@@ -82,57 +84,65 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
   };
 
   return (
-    <li className="flex flex-col gap-3 rounded-lg border border-border p-4">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="font-medium">{work.title}</p>
-          <p className="text-sm text-muted-foreground">{work.status}</p>
-        </div>
-        <Button
-          type="button"
-          variant="destructive"
-          disabled={isPending}
-          onClick={onDeleteWork}
-        >
-          Excluir work
-        </Button>
-      </div>
-
-      <ul className="flex flex-wrap gap-2">
-        {work.images.map((image) => (
-          <li key={image.id} className="flex flex-col items-start gap-1">
-            <span className="text-xs text-muted-foreground">
-              {image.alt || image.id}
-            </span>
+    <li>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <CardTitle>{work.title}</CardTitle>
+              <Badge variant="secondary" className="mt-1">
+                {work.status}
+              </Badge>
+            </div>
             <Button
               type="button"
-              variant="outline"
-              size="sm"
+              variant="destructive"
               disabled={isPending}
-              onClick={() => onDeleteImage(image.id)}
+              onClick={onDeleteWork}
             >
-              Remover imagem
+              Excluir work
             </Button>
-          </li>
-        ))}
-      </ul>
+          </div>
+        </CardHeader>
 
-      <label className="flex flex-col gap-1.5 text-sm">
-        <span>Adicionar imagem</span>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={ACCEPTED_IMAGE_MIME_TYPES.join(",")}
-          disabled={isPending}
-          onChange={onUploadImage}
-        />
-      </label>
+        <CardContent className="flex flex-col gap-4">
+          <ul className="flex flex-wrap gap-2">
+            {work.images.map((image) => (
+              <li key={image.id} className="flex flex-col items-start gap-1">
+                <span className="text-body-sm text-muted-foreground">
+                  {image.alt || image.id}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isPending}
+                  onClick={() => onDeleteImage(image.id)}
+                >
+                  Remover imagem
+                </Button>
+              </li>
+            ))}
+          </ul>
 
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
+          <label className="flex flex-col gap-1.5 text-body-sm">
+            <span>Adicionar imagem</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={ACCEPTED_IMAGE_MIME_TYPES.join(",")}
+              disabled={isPending}
+              onChange={onUploadImage}
+            />
+          </label>
+
+          {error && (
+            <p role="alert" className="text-body-sm text-destructive-text">
+              {error}
+            </p>
+          )}
+        </CardContent>
+      </Card>
     </li>
   );
 }

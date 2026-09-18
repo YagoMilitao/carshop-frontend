@@ -37,39 +37,55 @@ export default async function PortfolioPage() {
     content = (
       <>
         <ErrorToast message={errorMessage} />
-        <p>{errorMessage}</p>
+        <p className="text-body text-secondary-foreground">{errorMessage}</p>
       </>
     )
   } else if (works.length === 0) {
-    content = <p>Nenhum projeto publicado ainda.</p>
+    content = (
+      <p className="text-body text-secondary-foreground">
+        Nenhum projeto publicado ainda.
+      </p>
+    )
   } else {
     content = (
-      <ul>
+      <div className="flex flex-col divide-y divide-border">
         {works.map((work) => {
           const cover = getCoverImage(work)
 
           return (
-            <li key={work.id} className="flex items-center gap-3">
+            <Link
+              key={work.id}
+              href={`/portfolio/${work.slug}`}
+              aria-label={work.title}
+              className="group flex items-center gap-6 py-8 outline-none first:pt-0 focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
               {cover && (
                 <WorkImageThumb
                   image={cover}
                   fallbackAlt={work.title}
-                  sizes="64px"
-                  className="size-16 shrink-0"
+                  sizes="96px"
+                  className="size-24 shrink-0 transition-transform duration-200 group-hover:scale-105"
                 />
               )}
-              <Link href={`/portfolio/${work.slug}`}>{work.title}</Link>
-            </li>
+              <div className="flex flex-col gap-1">
+                <span className="text-label text-muted-foreground">
+                  {work.category}
+                </span>
+                <span className="text-heading-3 text-foreground transition-colors group-hover:text-primary">
+                  {work.title}
+                </span>
+              </div>
+            </Link>
           )
         })}
-      </ul>
+      </div>
     )
   }
 
   return (
-    <PageSection>
-      <h1>Portfolio</h1>
-      {content}
+    <PageSection spacing="editorial">
+      <h1 className="text-display-lg text-foreground">Portfolio</h1>
+      <div className="mt-10">{content}</div>
     </PageSection>
   )
 }

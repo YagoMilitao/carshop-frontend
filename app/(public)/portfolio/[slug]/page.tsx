@@ -4,6 +4,8 @@ import { getCoverImage, getWorkBySlug, getWorks } from '@/lib/api/works'
 import { getWorkComments, type Comment } from '@/lib/api/comments'
 import { WorkGallery } from '@/components/gallery/work-gallery'
 import { ErrorToast } from '@/components/feedback/error-toast'
+import { Container } from '@/components/layout/container'
+import { PageSection } from '@/components/layout/page-section'
 import { CommentForm } from './comment-form'
 
 type ProjectDetailsPageProps = {
@@ -88,28 +90,54 @@ export default async function ProjectDetailsPage({
   }
 
   return (
-    <div>
-      <h1>{work.title}</h1>
-      <p>{work.description}</p>
+    <>
+      <PageSection spacing="editorial" container="reading">
+        <span className="text-label text-muted-foreground">
+          {work.category}
+        </span>
+        <h1 className="mt-2 text-display-lg text-foreground">
+          {work.title}
+        </h1>
+        <p className="mt-6 text-body-lg text-secondary-foreground">
+          {work.description}
+        </p>
+      </PageSection>
 
-      <WorkGallery images={work.images} fallbackAlt={work.title} />
+      <PageSection spacing="compact" container="none">
+        <Container variant="page">
+          <WorkGallery images={work.images} fallbackAlt={work.title} />
+        </Container>
+      </PageSection>
 
-      <section aria-labelledby="comments-heading">
-        <h2 id="comments-heading">Comentários</h2>
+      <PageSection
+        as="section"
+        spacing="standard"
+        container="reading"
+        aria-labelledby="comments-heading"
+      >
+        <h2 id="comments-heading" className="text-heading-2 text-foreground">
+          Comentários
+        </h2>
 
         {commentsErrorMessage && (
           <ErrorToast message={commentsErrorMessage} />
         )}
 
         {comments.length === 0 ? (
-          <p>Ainda não há comentários aprovados para este projeto.</p>
+          <p className="mt-6 text-body text-secondary-foreground">
+            Ainda não há comentários aprovados para este projeto.
+          </p>
         ) : (
-          <ul>
+          <ul className="mt-6 flex flex-col divide-y divide-border">
             {comments.map((comment) => (
-              <li key={comment.id}>
-                <p className="font-medium">{comment.authorName}</p>
-                <p>{comment.content}</p>
-                <p className="text-muted-foreground text-sm">
+              <li key={comment.id} className="flex flex-col gap-1 py-6 first:pt-0">
+                <p className="text-body font-semibold text-foreground">
+                  {comment.authorName}
+                </p>
+                <p className="text-body text-secondary-foreground">
+                  {comment.content}
+                </p>
+                <p className="text-body-sm text-muted-foreground">
                   <time dateTime={comment.createdAt}>
                     {formatCommentDate(comment.createdAt)}
                   </time>
@@ -119,8 +147,10 @@ export default async function ProjectDetailsPage({
           </ul>
         )}
 
-        <CommentForm workId={work.id} />
-      </section>
-    </div>
+        <div className="mt-10">
+          <CommentForm workId={work.id} />
+        </div>
+      </PageSection>
+    </>
   )
 }

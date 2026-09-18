@@ -64,6 +64,16 @@ describe("WorkListItem", () => {
     vi.clearAllMocks();
   });
 
+  it("exibe o título e o status do work em um Badge", () => {
+    render(<WorkListItem work={work} />);
+
+    expect(screen.getByText("Restauração Fusca")).toBeInTheDocument();
+
+    const statusBadge = screen.getByText("published");
+    expect(statusBadge).toBeInTheDocument();
+    expect(statusBadge).toHaveAttribute("data-slot", "badge");
+  });
+
   it("exclui o work, invalida o cache e atualiza a listagem", async () => {
     deleteWorkMock.mockResolvedValue(undefined);
     revalidateWorksTagMock.mockResolvedValue(undefined);

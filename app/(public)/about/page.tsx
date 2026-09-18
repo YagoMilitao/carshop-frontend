@@ -17,8 +17,10 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <PageSection>
-      <h1>About</h1>
-      <p>Página em construção.</p>
+      <h1 className="text-heading-1 text-foreground">About</h1>
+      <p className="text-body-lg text-secondary-foreground">
+        Página em construção.
+      </p>
     </PageSection>
   )
 }

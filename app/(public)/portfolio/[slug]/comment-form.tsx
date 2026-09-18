@@ -8,6 +8,8 @@ import { z } from "zod";
 import { createComment } from "@/lib/api/comments.client";
 import { getApiErrorMessage } from "@/lib/api/auth.client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const HTML_TAG_PATTERN = /<(?:!|\/?[a-z])[^>]*>/i;
 const NO_HTML_MESSAGE = "Não é permitido incluir HTML ou scripts.";
@@ -63,7 +65,7 @@ export function CommentForm({ workId }: Readonly<CommentFormProps>) {
 
   if (submitted) {
     return (
-      <output className="text-sm text-muted-foreground">
+      <output className="text-body-sm text-muted-foreground">
         Comentário enviado! Ele será exibido após aprovação.
       </output>
     );
@@ -76,23 +78,20 @@ export function CommentForm({ workId }: Readonly<CommentFormProps>) {
       onSubmit={(event) => void handleSubmit(onSubmit)(event)}
     >
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="comment-author-name" className="text-sm font-medium">
-          Nome
-        </label>
-        <input
+        <Label htmlFor="comment-author-name">Nome</Label>
+        <Input
           id="comment-author-name"
           autoComplete="name"
           aria-invalid={errors.authorName ? "true" : "false"}
           aria-describedby={
             errors.authorName ? "comment-author-name-error" : undefined
           }
-          className="h-9 rounded-lg border border-border bg-background px-2.5 text-sm"
           {...register("authorName")}
         />
         {errors.authorName && (
           <p
             id="comment-author-name-error"
-            className="text-xs text-destructive"
+            className="text-body-sm text-destructive-text"
           >
             {errors.authorName.message}
           </p>
@@ -100,25 +99,23 @@ export function CommentForm({ workId }: Readonly<CommentFormProps>) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="comment-content" className="text-sm font-medium">
-          Comentário
-        </label>
+        <Label htmlFor="comment-content">Comentário</Label>
         <textarea
           id="comment-content"
           aria-invalid={errors.content ? "true" : "false"}
           aria-describedby={errors.content ? "comment-content-error" : undefined}
-          className="rounded-lg border border-border bg-background px-2.5 py-2 text-sm"
+          className="min-h-28 rounded-lg border border-input bg-transparent px-2.5 py-2 text-body-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           {...register("content")}
         />
         {errors.content && (
-          <p id="comment-content-error" className="text-xs text-destructive">
+          <p id="comment-content-error" className="text-body-sm text-destructive-text">
             {errors.content.message}
           </p>
         )}
       </div>
 
       {formError && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-body-sm text-destructive-text">
           {formError}
         </p>
       )}

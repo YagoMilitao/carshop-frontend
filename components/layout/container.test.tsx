@@ -22,7 +22,7 @@ describe("Container", () => {
     );
   });
 
-  it("aplica a classe container-reading quando variant='reading'", () => {
+  it("aplica a classe container-reading e os gutters responsivos quando variant='reading'", () => {
     render(
       <Container variant="reading" data-testid="container">
         conteúdo
@@ -30,7 +30,7 @@ describe("Container", () => {
     );
 
     const element = screen.getByTestId("container");
-    expect(element).toHaveClass("container-reading");
+    expect(element).toHaveClass("container-reading", "px-5", "sm:px-8");
     expect(element).not.toHaveClass("container-page");
   });
 

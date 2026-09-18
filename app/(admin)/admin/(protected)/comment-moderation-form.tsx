@@ -10,6 +10,8 @@ import {
 } from "@/lib/api/comments.client";
 import { getApiErrorMessage } from "@/lib/api/auth.client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import { revalidateCommentsTag } from "../actions";
 
@@ -78,45 +80,41 @@ export function CommentModerationForm() {
       onSubmit={onUpdate}
     >
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="comment-id" className="text-sm font-medium">
-          ID do comentário
-        </label>
-        <input
+        <Label htmlFor="comment-id">ID do comentário</Label>
+        <Input
           id="comment-id"
           required
           value={commentId}
           onChange={(event) => setCommentId(event.target.value)}
-          className="h-9 rounded-lg border border-border bg-background px-2.5 text-sm"
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="comment-work-id" className="text-sm font-medium">
+        <Label htmlFor="comment-work-id">
           ID do work (para invalidar o cache de comentários)
-        </label>
-        <input
+        </Label>
+        <Input
           id="comment-work-id"
           required
           value={workId}
           onChange={(event) => setWorkId(event.target.value)}
-          className="h-9 rounded-lg border border-border bg-background px-2.5 text-sm"
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="comment-content" className="text-sm font-medium">
+        <Label htmlFor="comment-content">
           Novo conteúdo (opcional, para editar)
-        </label>
+        </Label>
         <textarea
           id="comment-content"
           value={content}
           onChange={(event) => setContent(event.target.value)}
-          className="rounded-lg border border-border bg-background px-2.5 py-2 text-sm"
+          className="min-h-24 rounded-lg border border-input bg-transparent px-2.5 py-2 text-body-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-body-sm text-destructive-text">
           {error}
         </p>
       )}

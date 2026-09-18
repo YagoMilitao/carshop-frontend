@@ -25,7 +25,7 @@ export function Container<T extends ElementType = "div">({
       className={cn(
         resolvedVariant === "page"
           ? "container-page px-5 sm:px-8 lg:px-16 xl:px-20"
-          : "container-reading",
+          : "container-reading px-5 sm:px-8",
         className,
       )}
       {...props}
