@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -13,6 +13,10 @@ vi.mock("@/lib/api/comments.client", () => ({
 import { CommentForm } from "./comment-form";
 
 describe("CommentForm", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("exibe erros de validação quando o formulário é submetido vazio", async () => {
     const user = userEvent.setup();
     render(<CommentForm workId="work-1" />);
@@ -84,54 +88,54 @@ describe("CommentForm", () => {
     );
   });
 
-  it("bloqueia tentativa de injeção de HTML/script no campo Comentário e não chama a API", async () => {
-    const user = userEvent.setup();
-    render(<CommentForm workId="work-1" />);
+  it.each([
+    {
+      scenario: "tag <script>",
+      invalidField: "Comentário",
+      invalidValue: "<script>alert(1)</script>",
+    },
+    {
+      scenario: "HTML com manipulador de evento",
+      invalidField: "Nome",
+      invalidValue: "<img src=x onerror=alert(1)>",
+    },
+    {
+      scenario: "HTML embutido no meio de texto legítimo",
+      invalidField: "Comentário",
+      invalidValue: "Ótimo <b>trabalho</b> mesmo!",
+    },
+    {
+      scenario: "comentário HTML",
+      invalidField: "Comentário",
+      invalidValue: "<!-- comentário -->",
+    },
+    {
+      scenario: "declaração doctype",
+      invalidField: "Comentário",
+      invalidValue: "<!doctype html>",
+    },
+  ])(
+    "bloqueia $scenario no campo $invalidField e não chama a API",
+    async ({ invalidField, invalidValue }) => {
+      const user = userEvent.setup();
+      render(<CommentForm workId="work-1" />);
 
-    await user.type(screen.getByLabelText("Nome"), "Maria");
-    await user.type(
-      screen.getByLabelText("Comentário"),
-      "<script>alert(1)</script>",
-    );
-    await user.click(screen.getByRole("button", { name: "Enviar comentário" }));
+      await user.type(
+        screen.getByLabelText("Nome"),
+        invalidField === "Nome" ? invalidValue : "Maria",
+      );
+      await user.type(
+        screen.getByLabelText("Comentário"),
+        invalidField === "Comentário" ? invalidValue : "Ótimo trabalho!",
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Enviar comentário" }),
+      );
 
-    expect(
-      await screen.findByText("Não é permitido incluir HTML ou scripts."),
-    ).toBeInTheDocument();
-    expect(createCommentMock).not.toHaveBeenCalled();
-  });
-
-  it("bloqueia tentativa de injeção de HTML/script no campo Nome e não chama a API", async () => {
-    const user = userEvent.setup();
-    render(<CommentForm workId="work-1" />);
-
-    await user.type(
-      screen.getByLabelText("Nome"),
-      "<img src=x onerror=alert(1)>",
-    );
-    await user.type(screen.getByLabelText("Comentário"), "Ótimo trabalho!");
-    await user.click(screen.getByRole("button", { name: "Enviar comentário" }));
-
-    expect(
-      await screen.findByText("Não é permitido incluir HTML ou scripts."),
-    ).toBeInTheDocument();
-    expect(createCommentMock).not.toHaveBeenCalled();
-  });
-
-  it("bloqueia HTML embutido no meio de um texto legítimo e não chama a API", async () => {
-    const user = userEvent.setup();
-    render(<CommentForm workId="work-1" />);
-
-    await user.type(screen.getByLabelText("Nome"), "Maria");
-    await user.type(
-      screen.getByLabelText("Comentário"),
-      "Ótimo <b>trabalho</b> mesmo!",
-    );
-    await user.click(screen.getByRole("button", { name: "Enviar comentário" }));
-
-    expect(
-      await screen.findByText("Não é permitido incluir HTML ou scripts."),
-    ).toBeInTheDocument();
-    expect(createCommentMock).not.toHaveBeenCalled();
-  });
+      expect(
+        await screen.findByText("Não é permitido incluir HTML ou scripts."),
+      ).toBeInTheDocument();
+      expect(createCommentMock).not.toHaveBeenCalled();
+    },
+  );
 });

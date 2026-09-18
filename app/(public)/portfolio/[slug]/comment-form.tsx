@@ -9,7 +9,7 @@ import { createComment } from "@/lib/api/comments.client";
 import { getApiErrorMessage } from "@/lib/api/auth.client";
 import { Button } from "@/components/ui/button";
 
-const HTML_TAG_PATTERN = /<\/?[a-z][\s\S]*>/i;
+const HTML_TAG_PATTERN = /<(?:!|\/?[a-z])[^>]*>/i;
 const NO_HTML_MESSAGE = "Não é permitido incluir HTML ou scripts.";
 
 const commentSchema = z.object({
