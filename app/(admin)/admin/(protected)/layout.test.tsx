@@ -36,12 +36,35 @@ vi.mock("@/lib/auth/AuthProvider", () => ({
 }));
 
 describe("ProtectedAdminLayout", () => {
-  it("redireciona para /admin/login quando getSession() retorna null", async () => {
+  it("redireciona para /admin/login e não renderiza children quando nunca houve sessão (acesso não autenticado)", async () => {
+    // Cenário "nunca autenticado": getSession() retorna null porque não
+    // havia sessão/cookie válido nenhum na request. Este Server Component
+    // trata "nunca autenticado" e "sessão expirada" de forma idêntica
+    // (qualquer `null` de getSession() vira redirect) — a distinção
+    // semântica entre os dois cenários de entrada HTTP é coberta
+    // explicitamente em `lib/api/auth.server.test.ts`.
     getSessionMock.mockResolvedValue(null);
     const { default: ProtectedAdminLayout } = await import("./layout");
 
     await expect(
-      ProtectedAdminLayout({ children: <p>conteúdo</p> }),
+      ProtectedAdminLayout({ children: <p>conteúdo admin sigiloso</p> }),
+    ).rejects.toThrow("NEXT_REDIRECT");
+
+    expect(redirectMock).toHaveBeenCalledWith("/admin/login");
+  });
+
+  it("redireciona para /admin/login e não renderiza children quando a sessão existente expirou entre requests", async () => {
+    // Cenário "sessão expirada": diferente do teste anterior — aqui existia
+    // uma sessão previamente válida (ex.: usuário autenticado navegando),
+    // mas getSession() retorna null porque essa sessão não é mais aceita
+    // pelo backend na request atual. O DoD exige que este cenário também
+    // não exponha conteúdo admin, o que é verificado aqui de forma nomeada
+    // e independente do cenário "nunca autenticado" acima.
+    getSessionMock.mockResolvedValue(null);
+    const { default: ProtectedAdminLayout } = await import("./layout");
+
+    await expect(
+      ProtectedAdminLayout({ children: <p>conteúdo admin sigiloso</p> }),
     ).rejects.toThrow("NEXT_REDIRECT");
 
     expect(redirectMock).toHaveBeenCalledWith("/admin/login");

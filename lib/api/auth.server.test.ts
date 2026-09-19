@@ -69,19 +69,55 @@ describe("lib/api/auth.server", () => {
     );
   });
 
-  it("retorna null quando a resposta não é ok (sessão ausente/expirada)", async () => {
+  it("retorna null quando nunca houve sessão (nenhum cookie enviado, backend responde 401)", async () => {
+    // Cenário "nunca autenticado": nenhum cookie de sessão/refresh presente
+    // na request original repassada ao backend.
     cookiesMock.mockResolvedValue({ toString: () => "" });
 
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({ ok: false, status: 401 }),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 401 });
+    vi.stubGlobal("fetch", fetchMock);
 
     const { getSession } = await import("./auth.server");
 
     const result = await getSession();
 
     expect(result).toBeNull();
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/auth/session"),
+      expect.objectContaining({ headers: undefined }),
+    );
+  });
+
+  it("retorna null quando a sessão existente expirou (refresh_token presente, backend responde 401)", async () => {
+    // Cenário "sessão expirada": diferente do anterior, aqui existe um
+    // `refresh_token` sendo repassado ao backend, mas a sessão associada a
+    // ele não é mais válida (expirada/revogada) — o backend responde 401
+    // mesmo com o cookie presente. `getSession()` trata o resultado da
+    // mesma forma (`null`), mas o cenário de entrada é semanticamente
+    // distinto do "nunca autenticado" acima.
+    cookiesMock.mockResolvedValue({
+      toString: () => "refresh_token=expired-rt; csrf_token=csrf-1",
+    });
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 401 });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { getSession } = await import("./auth.server");
+
+    const result = await getSession();
+
+    expect(result).toBeNull();
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/auth/session"),
+      expect.objectContaining({
+        headers: { Cookie: "refresh_token=expired-rt; csrf_token=csrf-1" },
+        cache: "no-store",
+      }),
+    );
   });
 
   it("retorna null quando o fetch lança (erro de rede)", async () => {
