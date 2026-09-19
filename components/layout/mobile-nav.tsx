@@ -5,22 +5,25 @@ import Link from "next/link"
 import { Menu, X } from "lucide-react"
 import { cn } from "cn"
 import { navLinks } from "./nav-links"
+import { Button } from "@/components/ui/button"
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
     <div className="md:hidden">
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
+        className="size-11"
         aria-expanded={isOpen}
         aria-controls="mobile-nav-panel"
         aria-label={isOpen ? "Fechar menu de navegação" : "Abrir menu de navegação"}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="inline-flex items-center justify-center rounded-lg p-2 text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         {isOpen ? <X className="size-6" aria-hidden="true" /> : <Menu className="size-6" aria-hidden="true" />}
-      </button>
+      </Button>
 
       <div
         id="mobile-nav-panel"
@@ -36,7 +39,7 @@ export function MobileNav() {
                 <Link
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="block rounded-lg px-3 py-2 text-sm font-medium text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="block rounded-lg px-3 py-3 text-sm font-medium text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
                   {link.label}
                 </Link>
@@ -44,6 +47,18 @@ export function MobileNav() {
             ))}
           </ul>
         </nav>
+
+        <div className="border-t border-border p-4">
+          <Button
+            variant="default"
+            className="w-full"
+            disabled
+            aria-disabled="true"
+            aria-label="Get a Quote (coming soon)"
+          >
+            Get a Quote
+          </Button>
+        </div>
       </div>
     </div>
   )

@@ -57,4 +57,51 @@ describe("MobileNav", () => {
       "false",
     );
   });
+
+  it("renderiza o trigger como um botão acessível com touch target adequado", () => {
+    render(<MobileNav />);
+
+    const toggle = screen.getByRole("button", { name: "Abrir menu de navegação" });
+    expect(toggle.tagName).toBe("BUTTON");
+    expect(toggle).toHaveAttribute("data-slot", "button");
+    expect(toggle.className).toContain("size-11");
+  });
+
+  it("renderiza o CTA 'Get a Quote' desabilitado dentro do painel mobile", async () => {
+    const user = userEvent.setup();
+    render(<MobileNav />);
+
+    await user.click(screen.getByRole("button", { name: "Abrir menu de navegação" }));
+
+    const panel = screen.getByRole("navigation", { name: "Navegação principal (mobile)" })
+      .parentElement as HTMLElement;
+    const cta = within(panel).getByRole("button", { name: "Get a Quote (coming soon)" });
+
+    expect(cta).toBeDisabled();
+    expect(cta).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("renderiza o container do MobileNav oculto a partir de md (md:hidden), visível apenas no mobile", () => {
+    const { container } = render(<MobileNav />);
+
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.className).toContain("md:hidden");
+  });
+
+  it("aplica foco visível acessível (focus-visible:ring) no trigger e nos links do painel mobile", async () => {
+    const user = userEvent.setup();
+    render(<MobileNav />);
+
+    const toggle = screen.getByRole("button", { name: "Abrir menu de navegação" });
+    expect(toggle.className).toContain("focus-visible:ring");
+
+    await user.click(toggle);
+
+    const mobileNav = screen.getByRole("navigation", { name: "Navegação principal (mobile)" });
+    within(mobileNav)
+      .getAllByRole("link")
+      .forEach((link) => {
+        expect(link.className).toContain("focus-visible:ring");
+      });
+  });
 });

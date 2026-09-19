@@ -29,4 +29,25 @@ describe("Footer", () => {
       expect(anchor).toHaveAttribute("href", link.href);
     });
   });
+
+  it("não renderiza dados de negócio inventados (telefone, endereço, horário, redes sociais)", () => {
+    render(<Footer />);
+
+    const footer = screen.getByRole("contentinfo");
+    const footerText = footer.textContent ?? "";
+
+    expect(footerText).not.toMatch(/\(\d{3}\)\s?\d{3}-\d{4}/);
+    expect(screen.queryByRole("link", { name: /instagram|facebook|twitter|linkedin/i })).not.toBeInTheDocument();
+  });
+
+  it("não renderiza o item legado 'Início' e usa os rótulos em inglês do redesign", () => {
+    render(<Footer />);
+
+    const institutionalNav = screen.getByRole("navigation", { name: "Links institucionais" });
+
+    expect(within(institutionalNav).queryByRole("link", { name: "Início" })).not.toBeInTheDocument();
+    ["Services", "Our Work", "About", "Contact"].forEach((label) => {
+      expect(within(institutionalNav).getByRole("link", { name: label })).toBeInTheDocument();
+    });
+  });
 });
