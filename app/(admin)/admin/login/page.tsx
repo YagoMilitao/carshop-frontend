@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
-import { getApiErrorMessage } from "@/lib/api/auth.client";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ const loginSchema = z.object({
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
+
+const INVALID_CREDENTIALS_MESSAGE = "E-mail ou senha inválidos.";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -38,9 +40,10 @@ export default function AdminLoginPage() {
 
     try {
       await login(values);
+      toast.success("Admin logado");
       router.push("/admin");
-    } catch (error) {
-      setFormError(getApiErrorMessage(error));
+    } catch {
+      setFormError(INVALID_CREDENTIALS_MESSAGE);
     }
   };
 

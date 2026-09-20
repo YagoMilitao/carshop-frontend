@@ -1,10 +1,10 @@
-import { AxiosError } from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const loginMock = vi.fn();
 const pushMock = vi.fn();
+const toastSuccessMock = vi.fn();
 
 vi.mock("@/lib/auth/AuthProvider", () => ({
   useAuth: () => ({ login: (payload: unknown) => loginMock(payload) }),
@@ -14,7 +14,33 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
 }));
 
+vi.mock("sonner", () => ({
+  toast: {
+    success: (message: string) => toastSuccessMock(message),
+  },
+}));
+
 import AdminLoginPage from "./page";
+
+type LoginInput = {
+  email?: string;
+  password?: string;
+};
+
+async function submitLogin({ email, password }: LoginInput = {}) {
+  const user = userEvent.setup();
+  render(<AdminLoginPage />);
+
+  if (email) {
+    await user.type(screen.getByLabelText("E-mail"), email);
+  }
+
+  if (password) {
+    await user.type(screen.getByLabelText("Senha"), password);
+  }
+
+  await user.click(screen.getByRole("button", { name: "Entrar" }));
+}
 
 describe("AdminLoginPage", () => {
   beforeEach(() => {
@@ -22,10 +48,7 @@ describe("AdminLoginPage", () => {
   });
 
   it("exibe erros de validação quando o formulário é submetido vazio", async () => {
-    const user = userEvent.setup();
-    render(<AdminLoginPage />);
-
-    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    await submitLogin();
 
     expect(
       await screen.findByText("Informe o e-mail."),
@@ -35,25 +58,18 @@ describe("AdminLoginPage", () => {
   });
 
   it("exibe erro de formato quando o e-mail é inválido", async () => {
-    const user = userEvent.setup();
-    render(<AdminLoginPage />);
-
-    await user.type(screen.getByLabelText("E-mail"), "nao-e-email");
-    await user.type(screen.getByLabelText("Senha"), "123456");
-    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    await submitLogin({ email: "nao-e-email", password: "123456" });
 
     expect(await screen.findByText("E-mail inválido.")).toBeInTheDocument();
     expect(loginMock).not.toHaveBeenCalled();
   });
 
-  it("submit bem-sucedido chama login() com email/senha e redireciona para /admin", async () => {
+  it("conclui o login, exibe o toast de sucesso e redireciona para /admin", async () => {
     loginMock.mockResolvedValue(undefined);
-    const user = userEvent.setup();
-    render(<AdminLoginPage />);
-
-    await user.type(screen.getByLabelText("E-mail"), "admin@carshop.com");
-    await user.type(screen.getByLabelText("Senha"), "123456");
-    await user.click(screen.getByRole("button", { name: "Entrar" }));
+    await submitLogin({
+      email: "admin@carshop.com",
+      password: "123456",
+    });
 
     await waitFor(() =>
       expect(loginMock).toHaveBeenCalledWith({
@@ -61,29 +77,30 @@ describe("AdminLoginPage", () => {
         password: "123456",
       }),
     );
-    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/admin"));
-  });
-
-  it("submit com erro exibe a mensagem da API sem travar a UI (permanece no formulário)", async () => {
-    loginMock.mockRejectedValue(
-      new AxiosError("Unauthorized", "ERR_BAD_REQUEST", undefined, undefined, {
-        status: 401,
-        statusText: "Unauthorized",
-        headers: {},
-        config: {} as never,
-        data: { message: "Credenciais inválidas." },
-      }),
+    expect(toastSuccessMock).toHaveBeenCalledWith("Admin logado");
+    expect(pushMock).toHaveBeenCalledWith("/admin");
+    expect(toastSuccessMock.mock.invocationCallOrder[0]).toBeLessThan(
+      pushMock.mock.invocationCallOrder[0],
     );
-    const user = userEvent.setup();
-    render(<AdminLoginPage />);
-
-    await user.type(screen.getByLabelText("E-mail"), "admin@carshop.com");
-    await user.type(screen.getByLabelText("Senha"), "senha-errada");
-    await user.click(screen.getByRole("button", { name: "Entrar" }));
-
-    expect(
-      await screen.findByRole("alert"),
-    ).toHaveTextContent("Credenciais inválidas.");
-    expect(pushMock).not.toHaveBeenCalled();
   });
+
+  it.each(["E-mail não encontrado.", "Senha incorreta."])(
+    "normaliza a mensagem da API sem revelar a causa da falha: %s",
+    async (apiMessage) => {
+      loginMock.mockRejectedValue({
+        response: { data: { message: apiMessage } },
+      });
+      await submitLogin({
+        email: "admin@carshop.com",
+        password: "senha-errada",
+      });
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "E-mail ou senha inválidos.",
+      );
+      expect(screen.queryByText(apiMessage)).not.toBeInTheDocument();
+      expect(toastSuccessMock).not.toHaveBeenCalled();
+      expect(pushMock).not.toHaveBeenCalled();
+    },
+  );
 });
