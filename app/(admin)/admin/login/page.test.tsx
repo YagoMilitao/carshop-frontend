@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 
 const loginMock = vi.fn();
 const pushMock = vi.fn();
+const toastSuccessMock = vi.fn();
 
 vi.mock("@/lib/auth/AuthProvider", () => ({
   useAuth: () => ({ login: (payload: unknown) => loginMock(payload) }),
@@ -12,6 +13,12 @@ vi.mock("@/lib/auth/AuthProvider", () => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: (message: string) => toastSuccessMock(message),
+  },
 }));
 
 import AdminLoginPage from "./page";
@@ -62,6 +69,43 @@ describe("AdminLoginPage", () => {
       }),
     );
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/admin"));
+  });
+
+  it("submit bem-sucedido exibe toast de sucesso 'Admin logado' antes do redirect", async () => {
+    loginMock.mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    render(<AdminLoginPage />);
+
+    await user.type(screen.getByLabelText("E-mail"), "admin@carshop.com");
+    await user.type(screen.getByLabelText("Senha"), "123456");
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+
+    await waitFor(() =>
+      expect(toastSuccessMock).toHaveBeenCalledWith("Admin logado"),
+    );
+    expect(pushMock).toHaveBeenCalledWith("/admin");
+  });
+
+  it("submit com erro não exibe o toast de sucesso", async () => {
+    loginMock.mockRejectedValue(
+      new AxiosError("Unauthorized", "ERR_BAD_REQUEST", undefined, undefined, {
+        status: 401,
+        statusText: "Unauthorized",
+        headers: {},
+        config: {} as never,
+        data: { message: "Credenciais inválidas." },
+      }),
+    );
+    const user = userEvent.setup();
+    render(<AdminLoginPage />);
+
+    await user.type(screen.getByLabelText("E-mail"), "admin@carshop.com");
+    await user.type(screen.getByLabelText("Senha"), "senha-errada");
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+
+    await screen.findByRole("alert");
+    expect(toastSuccessMock).not.toHaveBeenCalled();
+    expect(pushMock).not.toHaveBeenCalled();
   });
 
   it("submit com erro exibe a mensagem da API sem travar a UI (permanece no formulário)", async () => {
