@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { getWorks } from "@/lib/api/works";
+import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { PageSection } from "@/components/layout/page-section";
 
 import { CommentModerationForm } from "./comment-moderation-form";
-import { CreateWorkForm } from "./create-work-form";
 import { WorkListItem } from "./work-list-item";
 
 // Defesa em profundidade, complementar a `app/(admin)/admin/layout.tsx`:
@@ -26,16 +27,14 @@ export default async function AdminPage() {
         <h1 className="text-heading-2 text-foreground">Admin</h1>
 
         <section className="flex flex-col gap-4">
-          <h2 className="text-body-lg font-semibold text-foreground">
-            Novo work
-          </h2>
-          <CreateWorkForm />
-        </section>
-
-        <section className="flex flex-col gap-4">
-          <h2 className="text-body-lg font-semibold text-foreground">
-            Works
-          </h2>
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-body-lg font-semibold text-foreground">
+              Works
+            </h2>
+            <Button asChild>
+              <Link href="/admin/trabalhos/novo">Novo trabalho</Link>
+            </Button>
+          </div>
           {works.length === 0 ? (
             <p className="text-body-sm text-muted-foreground">
               Nenhum work cadastrado.
