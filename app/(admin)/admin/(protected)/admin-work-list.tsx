@@ -18,9 +18,9 @@ export function AdminWorkList() {
 
   if (isPending) {
     return (
-      <p role="status" className="text-body-sm text-muted-foreground">
+      <output className="text-body-sm text-muted-foreground">
         Carregando trabalhos...
-      </p>
+      </output>
     );
   }
 
