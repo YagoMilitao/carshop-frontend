@@ -15,6 +15,8 @@ const logoutRequestMock = vi.fn();
 const setAccessTokenMock = vi.fn();
 let registeredAuthFailureCallback: (() => void) | null = null;
 const pushMock = vi.fn();
+const usePathnameMock = vi.fn(() => "/admin");
+const useSearchParamsMock = vi.fn(() => new URLSearchParams());
 
 vi.mock("@/lib/api/auth.client", () => ({
   getSession: () => getSessionMock(),
@@ -31,6 +33,8 @@ vi.mock("@/lib/api/http", () => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
+  usePathname: () => usePathnameMock(),
+  useSearchParams: () => useSearchParamsMock(),
 }));
 
 import { AuthProvider, useAuth } from "./AuthProvider";
@@ -63,6 +67,8 @@ describe("AuthProvider / useAuth", () => {
     vi.clearAllMocks();
     registeredAuthFailureCallback = null;
     getSessionMock.mockResolvedValue({ user });
+    usePathnameMock.mockReturnValue("/admin");
+    useSearchParamsMock.mockReturnValue(new URLSearchParams());
   });
 
   it("estado inicial reflete initialUser (isAuthenticated true quando há usuário)", async () => {
@@ -159,8 +165,9 @@ describe("AuthProvider / useAuth", () => {
     expect(setAccessTokenMock).toHaveBeenCalledWith(null);
   });
 
-  it("registra callback em onAuthFailure que limpa o estado e redireciona para /admin/login", async () => {
+  it("registra callback em onAuthFailure que limpa o estado e redireciona para /admin/login (sem ?redirect= quando a rota atual já é /admin)", async () => {
     getSessionMock.mockReturnValue(new Promise(() => undefined));
+    usePathnameMock.mockReturnValue("/admin");
 
     render(
       <AuthProvider initialUser={user}>
@@ -179,6 +186,31 @@ describe("AuthProvider / useAuth", () => {
     );
     expect(setAccessTokenMock).toHaveBeenCalledWith(null);
     expect(pushMock).toHaveBeenCalledWith("/admin/login");
+  });
+
+  it("registra callback em onAuthFailure que redireciona para /admin/login?redirect=<rota atual> quando a rota protegida não é /admin", async () => {
+    getSessionMock.mockReturnValue(new Promise(() => undefined));
+    usePathnameMock.mockReturnValue("/admin/trabalhos/123");
+    useSearchParamsMock.mockReturnValue(new URLSearchParams("tab=fotos"));
+
+    render(
+      <AuthProvider initialUser={user}>
+        <Consumer />
+      </AuthProvider>,
+    );
+
+    expect(registeredAuthFailureCallback).not.toBeNull();
+
+    registeredAuthFailureCallback?.();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("is-authenticated")).toHaveTextContent(
+        "false",
+      ),
+    );
+    expect(pushMock).toHaveBeenCalledWith(
+      "/admin/login?redirect=%2Fadmin%2Ftrabalhos%2F123%3Ftab%3Dfotos",
+    );
   });
 
   it("re-bootstrap ao montar: sincroniza user a partir de getSession() no cliente", async () => {
