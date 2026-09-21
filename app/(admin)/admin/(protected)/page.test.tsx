@@ -6,12 +6,13 @@ import type { Work } from "@/lib/api/works";
 /**
  * `./page` importa `lib/api/works.ts` (`import "server-only"`, `fetch`
  * server-side) — mockado como no-op para permitir importar o módulo sob
- * Vitest/jsdom, mesmo padrão de `lib/api/works.test.ts`. Os três
- * componentes filhos (`CreateWorkForm`, `WorkListItem`,
- * `CommentModerationForm`) são "use client" com sua própria cobertura
- * dedicada (`create-work-form.test.tsx`, `work-list-item.test.tsx`,
+ * Vitest/jsdom, mesmo padrão de `lib/api/works.test.ts`. Os componentes
+ * filhos (`WorkListItem`, `CommentModerationForm`) são "use client" com sua
+ * própria cobertura dedicada (`work-list-item.test.tsx`,
  * `comment-moderation-form.test.tsx`) — mockados aqui como stubs simples
- * para isolar apenas a lógica de data-fetching/composição desta page.
+ * para isolar apenas a lógica de data-fetching/composição desta page. O
+ * formulário de criação de work foi movido para a rota dedicada
+ * `/admin/trabalhos/novo` (CARSHOP-134); esta página apenas linka para lá.
  */
 vi.mock("server-only", () => ({}));
 
@@ -19,10 +20,6 @@ const getWorksMock = vi.fn<() => Promise<Work[]>>();
 
 vi.mock("@/lib/api/works", () => ({
   getWorks: () => getWorksMock(),
-}));
-
-vi.mock("./create-work-form", () => ({
-  CreateWorkForm: () => <div data-testid="create-work-form" />,
 }));
 
 vi.mock("./work-list-item", () => ({
@@ -82,13 +79,15 @@ describe("AdminPage (protegida)", () => {
     expect(screen.queryByTestId("work-list-item")).not.toBeInTheDocument();
   });
 
-  it("renderiza CreateWorkForm e CommentModerationForm", async () => {
+  it("renderiza o link para /admin/trabalhos/novo e o CommentModerationForm", async () => {
     getWorksMock.mockResolvedValue([]);
     const { default: AdminPage } = await import("./page");
 
     render(await AdminPage());
 
-    expect(screen.getByTestId("create-work-form")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Novo trabalho" }),
+    ).toHaveAttribute("href", "/admin/trabalhos/novo");
     expect(screen.getByTestId("comment-moderation-form")).toBeInTheDocument();
   });
 });
