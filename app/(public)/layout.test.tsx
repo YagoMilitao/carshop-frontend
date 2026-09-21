@@ -1,6 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import PublicLayout from './layout'
+
+/**
+ * `PublicLayout` renderiza `Footer` (Server Component), que importa
+ * `serverEnv` (lib/env/server.ts) e, transitivamente, o pacote
+ * `server-only`. Sob Vitest esse pacote sempre lança (ver limitação
+ * documentada em `lib/env/server.test.ts`), então precisamos do mesmo
+ * mock no-op usado em `components/layout/footer.test.tsx`.
+ */
+vi.mock('server-only', () => ({}))
 
 describe('PublicLayout', () => {
   it('renderiza os children recebidos', () => {

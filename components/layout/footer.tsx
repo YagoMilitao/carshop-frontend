@@ -1,6 +1,15 @@
 import Link from "next/link"
 import { navLinks } from "./nav-links"
 import { Container } from "./container"
+import { serverEnv } from "@/lib/env/server"
+
+const socialLinks = [
+  { href: serverEnv.social.instagramUrl, label: "Instagram" },
+  { href: serverEnv.social.facebookUrl, label: "Facebook" },
+  { href: serverEnv.social.linkedinUrl, label: "LinkedIn" },
+].filter(
+  (link): link is { href: string; label: string } => Boolean(link.href),
+)
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -32,6 +41,25 @@ export function Footer() {
             ))}
           </ul>
         </nav>
+
+        {socialLinks.length > 0 && (
+          <nav aria-label="Redes sociais">
+            <ul className="flex flex-col gap-2 text-body-sm md:flex-row md:gap-6">
+              {socialLinks.map((link) => (
+                <li key={link.label}>
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-lg text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
       </Container>
     </footer>
   )
