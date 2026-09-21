@@ -51,6 +51,7 @@ function buildHeaders(entries: Record<string, string>): Headers {
 
 describe("ProtectedAdminLayout", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     headersMock.mockReturnValue(Promise.resolve(buildHeaders({})));
   });
 

@@ -213,6 +213,32 @@ describe("AuthProvider / useAuth", () => {
     );
   });
 
+  it("limpa a sessão sem navegar quando onAuthFailure ocorre na rota de login", async () => {
+    getSessionMock.mockReturnValue(new Promise(() => undefined));
+    usePathnameMock.mockReturnValue("/admin/login");
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams("redirect=/admin/trabalhos/123"),
+    );
+
+    render(
+      <AuthProvider initialUser={user}>
+        <Consumer />
+      </AuthProvider>,
+    );
+
+    expect(registeredAuthFailureCallback).not.toBeNull();
+
+    registeredAuthFailureCallback?.();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("is-authenticated")).toHaveTextContent(
+        "false",
+      ),
+    );
+    expect(setAccessTokenMock).toHaveBeenCalledWith(null);
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
   it("re-bootstrap ao montar: sincroniza user a partir de getSession() no cliente", async () => {
     const refreshedUser = { id: "2", email: "outro@carshop.com", name: "Outro" };
     getSessionMock.mockResolvedValue({ user: refreshedUser });

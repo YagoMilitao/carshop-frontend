@@ -19,7 +19,10 @@ import {
 } from "@/lib/api/auth.client";
 import type { User } from "@/lib/api/auth.server";
 import { onAuthFailure, setAccessToken } from "@/lib/api/http";
-import { buildLoginUrlWithRedirect } from "@/lib/auth/redirect";
+import {
+  buildLoginUrlWithRedirect,
+  LOGIN_PATH,
+} from "@/lib/auth/redirect";
 
 type AuthContextValue = {
   user: User | null;
@@ -65,6 +68,10 @@ export function AuthProvider({
     onAuthFailure(() => {
       setAccessToken(null);
       setUser(null);
+
+      if (pathname === LOGIN_PATH) {
+        return;
+      }
 
       const search = searchParams.toString();
 

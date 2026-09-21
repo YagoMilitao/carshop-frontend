@@ -20,37 +20,29 @@ function buildRequest(
 }
 
 describe("proxy (camada 1 de proteção /admin/*)", () => {
-  it("redireciona para /admin/login sem ?redirect= quando a rota original já é /admin", () => {
-    const request = buildRequest("/admin");
-
-    const response = proxy(request);
-
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe(
+  it.each([
+    [
+      "sem ?redirect= quando a rota original já é /admin",
+      "/admin",
       "http://localhost:3000/admin/login",
-    );
-  });
-
-  it("redireciona para /admin/login com ?redirect= incluindo a rota original quando não é /admin", () => {
-    const request = buildRequest("/admin/trabalhos/123");
-
-    const response = proxy(request);
-
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe(
+    ],
+    [
+      "com ?redirect= incluindo a rota original quando não é /admin",
+      "/admin/trabalhos/123",
       "http://localhost:3000/admin/login?redirect=%2Fadmin%2Ftrabalhos%2F123",
-    );
-  });
-
-  it("redireciona para /admin/login com ?redirect= incluindo pathname + search original", () => {
-    const request = buildRequest("/admin/trabalhos/123?tab=fotos");
+    ],
+    [
+      "com ?redirect= incluindo pathname + search original",
+      "/admin/trabalhos/123?tab=fotos",
+      "http://localhost:3000/admin/login?redirect=%2Fadmin%2Ftrabalhos%2F123%3Ftab%3Dfotos",
+    ],
+  ])("redireciona para /admin/login %s", (_description, requestPath, expectedLocation) => {
+    const request = buildRequest(requestPath);
 
     const response = proxy(request);
 
     expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe(
-      "http://localhost:3000/admin/login?redirect=%2Fadmin%2Ftrabalhos%2F123%3Ftab%3Dfotos",
-    );
+    expect(response.headers.get("location")).toBe(expectedLocation);
   });
 
   it("segue adiante (NextResponse.next()) quando o cookie refresh_token está presente, propagando os headers de pathname/search", () => {

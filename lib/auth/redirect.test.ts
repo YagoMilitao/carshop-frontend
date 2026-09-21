@@ -106,7 +106,7 @@ describe("buildLoginUrlWithRedirect", () => {
       "?tab=fotos&page=2",
     );
 
-    const url = new URL(result, "http://internal.local");
+    const url = new URL(result, "https://internal.local");
     const redirectParam = url.searchParams.get(REDIRECT_QUERY_PARAM);
 
     expect(redirectParam).toBe("/admin/trabalhos/123?tab=fotos&page=2");

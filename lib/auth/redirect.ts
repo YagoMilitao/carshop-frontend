@@ -17,7 +17,7 @@ export const REDIRECT_PATHNAME_HEADER = "x-carshop-pathname";
 export const REDIRECT_SEARCH_HEADER = "x-carshop-search";
 
 /** Base opaca usada apenas para parsing via `URL`; nunca exposta como destino. */
-const INTERNAL_BASE = "http://internal.local";
+const INTERNAL_BASE = "https://internal.local";
 
 /** Caracteres de controle (inclui whitespace) — rejeitados em qualquer posição. */
 // eslint-disable-next-line no-control-regex
