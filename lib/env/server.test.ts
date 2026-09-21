@@ -26,6 +26,9 @@ vi.mock('server-only', () => ({}))
 describe('lib/env/server', () => {
   const originalApiUrl = process.env.NEXT_PUBLIC_API_URL
   const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  const originalInstagramUrl = process.env.SOCIAL_INSTAGRAM_URL
+  const originalFacebookUrl = process.env.SOCIAL_FACEBOOK_URL
+  const originalLinkedinUrl = process.env.SOCIAL_LINKEDIN_URL
 
   afterEach(() => {
     if (originalApiUrl === undefined) {
@@ -38,6 +41,24 @@ describe('lib/env/server', () => {
       delete process.env.NEXT_PUBLIC_SITE_URL
     } else {
       process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl
+    }
+
+    if (originalInstagramUrl === undefined) {
+      delete process.env.SOCIAL_INSTAGRAM_URL
+    } else {
+      process.env.SOCIAL_INSTAGRAM_URL = originalInstagramUrl
+    }
+
+    if (originalFacebookUrl === undefined) {
+      delete process.env.SOCIAL_FACEBOOK_URL
+    } else {
+      process.env.SOCIAL_FACEBOOK_URL = originalFacebookUrl
+    }
+
+    if (originalLinkedinUrl === undefined) {
+      delete process.env.SOCIAL_LINKEDIN_URL
+    } else {
+      process.env.SOCIAL_LINKEDIN_URL = originalLinkedinUrl
     }
 
     vi.resetModules()
@@ -84,6 +105,21 @@ describe('lib/env/server', () => {
     expect(serverEnv.social.linkedinUrl).toBeUndefined()
   })
 
+  it('normaliza env vars SOCIAL_*_URL vazias para undefined', async () => {
+    process.env.SOCIAL_INSTAGRAM_URL = ''
+    process.env.SOCIAL_FACEBOOK_URL = ''
+    process.env.SOCIAL_LINKEDIN_URL = ''
+    process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3333'
+    process.env.NEXT_PUBLIC_SITE_URL = 'http://localhost:3000'
+    vi.resetModules()
+
+    const { serverEnv } = await import('./server')
+
+    expect(serverEnv.social.instagramUrl).toBeUndefined()
+    expect(serverEnv.social.facebookUrl).toBeUndefined()
+    expect(serverEnv.social.linkedinUrl).toBeUndefined()
+  })
+
   it('serverEnv.social.* reflete as env vars SOCIAL_*_URL quando definidas', async () => {
     process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3333'
     process.env.NEXT_PUBLIC_SITE_URL = 'http://localhost:3000'
@@ -97,9 +133,5 @@ describe('lib/env/server', () => {
     expect(serverEnv.social.instagramUrl).toBe('https://instagram.com/carshop')
     expect(serverEnv.social.facebookUrl).toBe('https://facebook.com/carshop')
     expect(serverEnv.social.linkedinUrl).toBe('https://linkedin.com/company/carshop')
-
-    delete process.env.SOCIAL_INSTAGRAM_URL
-    delete process.env.SOCIAL_FACEBOOK_URL
-    delete process.env.SOCIAL_LINKEDIN_URL
   })
 })

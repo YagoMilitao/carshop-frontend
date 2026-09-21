@@ -16,10 +16,15 @@ import { clientEnv } from "./client";
  * erro de configuração, é o estado padrão até o negócio fornecer os
  * perfis reais.
  */
+const optionalUrlSchema = z.preprocess(
+  (value) => (value === "" ? undefined : value),
+  z.string().url().optional(),
+);
+
 const serverEnvSchema = z.object({
-  SOCIAL_INSTAGRAM_URL: z.string().url().optional(),
-  SOCIAL_FACEBOOK_URL: z.string().url().optional(),
-  SOCIAL_LINKEDIN_URL: z.string().url().optional(),
+  SOCIAL_INSTAGRAM_URL: optionalUrlSchema,
+  SOCIAL_FACEBOOK_URL: optionalUrlSchema,
+  SOCIAL_LINKEDIN_URL: optionalUrlSchema,
 });
 
 const parsedServerEnv = serverEnvSchema.parse({
