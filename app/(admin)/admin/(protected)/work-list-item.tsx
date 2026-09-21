@@ -2,8 +2,12 @@
 
 import { useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { deleteWork } from "@/lib/api/works.client";
+import {
+  adminWorksQueryKey,
+  deleteWork,
+} from "@/lib/api/works.client";
 import {
   ACCEPTED_IMAGE_MIME_TYPES,
   MAX_IMAGE_SIZE_BYTES,
@@ -24,6 +28,7 @@ function formatBytes(bytes: number): string {
 
 export function WorkListItem({ work }: Readonly<{ work: Work }>) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -34,7 +39,10 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
 
     try {
       await mutation();
-      await revalidateWorksTag();
+      await Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: adminWorksQueryKey }),
+        revalidateWorksTag(),
+      ]);
       router.refresh();
     } catch (mutationError) {
       setError(getApiErrorMessage(mutationError));

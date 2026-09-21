@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
-import { getWorks } from "@/lib/api/works";
+import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { PageSection } from "@/components/layout/page-section";
 
 import { CommentModerationForm } from "./comment-moderation-form";
-import { CreateWorkForm } from "./create-work-form";
-import { WorkListItem } from "./work-list-item";
+import { AdminWorkList } from "./admin-work-list";
 
 // Defesa em profundidade, complementar a `app/(admin)/admin/layout.tsx`:
 // Admin nunca é tratado como conteúdo público indexável.
@@ -17,36 +17,22 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function AdminPage() {
-  const works = await getWorks();
-
+export default function AdminPage() {
   return (
     <PageSection as="main" spacing="compact" container="none">
       <Container variant="reading" className="flex flex-col gap-10">
         <h1 className="text-heading-2 text-foreground">Admin</h1>
 
         <section className="flex flex-col gap-4">
-          <h2 className="text-body-lg font-semibold text-foreground">
-            Novo work
-          </h2>
-          <CreateWorkForm />
-        </section>
-
-        <section className="flex flex-col gap-4">
-          <h2 className="text-body-lg font-semibold text-foreground">
-            Works
-          </h2>
-          {works.length === 0 ? (
-            <p className="text-body-sm text-muted-foreground">
-              Nenhum work cadastrado.
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-4">
-              {works.map((work) => (
-                <WorkListItem key={work.id} work={work} />
-              ))}
-            </ul>
-          )}
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-body-lg font-semibold text-foreground">
+              Works
+            </h2>
+            <Button asChild>
+              <Link href="/admin/trabalhos/novo">Novo trabalho</Link>
+            </Button>
+          </div>
+          <AdminWorkList />
         </section>
 
         <section className="flex flex-col gap-4">
