@@ -55,71 +55,49 @@ describe("ProtectedAdminLayout", () => {
     headersMock.mockReturnValue(Promise.resolve(buildHeaders({})));
   });
 
-  it("redireciona para /admin/login?redirect=<rota> quando nunca houve sessão e os headers custom trazem uma rota protegida", async () => {
-    // Cenário "nunca autenticado": getSession() retorna null porque não
-    // havia sessão/cookie válido nenhum na request. Este Server Component
-    // trata "nunca autenticado" e "sessão expirada" de forma idêntica
-    // (qualquer `null` de getSession() vira redirect) — a distinção
-    // semântica entre os dois cenários de entrada HTTP é coberta
-    // explicitamente em `lib/api/auth.server.test.ts`.
-    getSessionMock.mockResolvedValue(null);
-    headersMock.mockReturnValue(
-      Promise.resolve(
-        buildHeaders({
-          [REDIRECT_PATHNAME_HEADER]: "/admin/trabalhos/123",
-          [REDIRECT_SEARCH_HEADER]: "?tab=fotos",
-        }),
-      ),
-    );
-    const { default: ProtectedAdminLayout } = await import("./layout");
-
-    await expect(
-      ProtectedAdminLayout({ children: <p>conteúdo admin sigiloso</p> }),
-    ).rejects.toThrow("NEXT_REDIRECT");
-
-    expect(redirectMock).toHaveBeenCalledWith(
+  // Este Server Component trata "nunca autenticado" e "sessão expirada" de
+  // forma idêntica (qualquer `null` de getSession() vira redirect) — a
+  // distinção semântica entre os dois cenários de entrada HTTP é coberta
+  // explicitamente em `lib/api/auth.server.test.ts`. Os 3 casos abaixo
+  // verificam apenas que o `?redirect=` é montado corretamente a partir dos
+  // headers custom propagados pelo `proxy.ts`, incluindo o fallback quando
+  // eles estão ausentes.
+  it.each([
+    [
+      "nunca autenticado, com pathname + search",
+      {
+        [REDIRECT_PATHNAME_HEADER]: "/admin/trabalhos/123",
+        [REDIRECT_SEARCH_HEADER]: "?tab=fotos",
+      },
       "/admin/login?redirect=%2Fadmin%2Ftrabalhos%2F123%3Ftab%3Dfotos",
-    );
-  });
-
-  it("redireciona para /admin/login e não renderiza children quando a sessão existente expirou entre requests", async () => {
-    // Cenário "sessão expirada": diferente do teste anterior — aqui existia
-    // uma sessão previamente válida (ex.: usuário autenticado navegando),
-    // mas getSession() retorna null porque essa sessão não é mais aceita
-    // pelo backend na request atual. O DoD exige que este cenário também
-    // não exponha conteúdo admin, o que é verificado aqui de forma nomeada
-    // e independente do cenário "nunca autenticado" acima.
-    getSessionMock.mockResolvedValue(null);
-    headersMock.mockReturnValue(
-      Promise.resolve(
-        buildHeaders({
-          [REDIRECT_PATHNAME_HEADER]: "/admin/trabalhos/456",
-          [REDIRECT_SEARCH_HEADER]: "",
-        }),
-      ),
-    );
-    const { default: ProtectedAdminLayout } = await import("./layout");
-
-    await expect(
-      ProtectedAdminLayout({ children: <p>conteúdo admin sigiloso</p> }),
-    ).rejects.toThrow("NEXT_REDIRECT");
-
-    expect(redirectMock).toHaveBeenCalledWith(
+    ],
+    [
+      "sessão expirada entre requests, só com pathname",
+      {
+        [REDIRECT_PATHNAME_HEADER]: "/admin/trabalhos/456",
+        [REDIRECT_SEARCH_HEADER]: "",
+      },
       "/admin/login?redirect=%2Fadmin%2Ftrabalhos%2F456",
-    );
-  });
+    ],
+    [
+      "headers custom ausentes (fallback para DEFAULT_ADMIN_PATH, sem ?redirect=)",
+      {},
+      "/admin/login",
+    ],
+  ])(
+    "redireciona para /admin/login e não renderiza children quando getSession() falha (%s)",
+    async (_description, headerEntries, expectedLocation) => {
+      getSessionMock.mockResolvedValue(null);
+      headersMock.mockReturnValue(Promise.resolve(buildHeaders(headerEntries)));
+      const { default: ProtectedAdminLayout } = await import("./layout");
 
-  it("redireciona para /admin/login sem ?redirect= quando os headers custom estão ausentes (fallback para DEFAULT_ADMIN_PATH)", async () => {
-    getSessionMock.mockResolvedValue(null);
-    headersMock.mockReturnValue(Promise.resolve(buildHeaders({})));
-    const { default: ProtectedAdminLayout } = await import("./layout");
+      await expect(
+        ProtectedAdminLayout({ children: <p>conteúdo admin sigiloso</p> }),
+      ).rejects.toThrow("NEXT_REDIRECT");
 
-    await expect(
-      ProtectedAdminLayout({ children: <p>conteúdo admin sigiloso</p> }),
-    ).rejects.toThrow("NEXT_REDIRECT");
-
-    expect(redirectMock).toHaveBeenCalledWith("/admin/login");
-  });
+      expect(redirectMock).toHaveBeenCalledWith(expectedLocation);
+    },
+  );
 
   it("renderiza AuthProvider com initialUser e os children quando getSession() tem sucesso, sem chamar redirect", async () => {
     const user = { id: "1", email: "admin@carshop.com", name: "Admin" };
