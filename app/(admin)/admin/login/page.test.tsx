@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 const loginMock = vi.fn();
 const pushMock = vi.fn();
 const toastSuccessMock = vi.fn();
+const useSearchParamsMock = vi.fn(() => new URLSearchParams());
 
 vi.mock("@/lib/auth/AuthProvider", () => ({
   useAuth: () => ({ login: (payload: unknown) => loginMock(payload) }),
@@ -12,6 +13,7 @@ vi.mock("@/lib/auth/AuthProvider", () => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
+  useSearchParams: () => useSearchParamsMock(),
 }));
 
 vi.mock("sonner", () => ({
@@ -45,6 +47,13 @@ async function submitLogin({ email, password }: LoginInput = {}) {
 describe("AdminLoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useSearchParamsMock.mockReturnValue(new URLSearchParams());
+  });
+
+  it("renderiza LoginForm dentro de Suspense (smoke test)", async () => {
+    await submitLogin();
+
+    expect(screen.getByRole("heading", { name: "Entrar no painel admin" })).toBeInTheDocument();
   });
 
   it("exibe erros de validação quando o formulário é submetido vazio", async () => {
@@ -64,7 +73,7 @@ describe("AdminLoginPage", () => {
     expect(loginMock).not.toHaveBeenCalled();
   });
 
-  it("conclui o login, exibe o toast de sucesso e redireciona para /admin", async () => {
+  it("conclui o login, exibe o toast de sucesso e redireciona para /admin quando não há ?redirect=", async () => {
     loginMock.mockResolvedValue(undefined);
     await submitLogin({
       email: "admin@carshop.com",
@@ -83,6 +92,40 @@ describe("AdminLoginPage", () => {
       pushMock.mock.invocationCallOrder[0],
     );
   });
+
+  it("conclui o login e redireciona para a rota original quando ?redirect= é uma rota interna válida", async () => {
+    loginMock.mockResolvedValue(undefined);
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({ redirect: "/admin/trabalhos/123" }),
+    );
+
+    await submitLogin({
+      email: "admin@carshop.com",
+      password: "123456",
+    });
+
+    await waitFor(() =>
+      expect(pushMock).toHaveBeenCalledWith("/admin/trabalhos/123"),
+    );
+  });
+
+  it.each(["https://evil.com", "//evil.com"])(
+    "conclui o login e redireciona para /admin quando ?redirect= é malicioso: %s",
+    async (maliciousRedirect) => {
+      loginMock.mockResolvedValue(undefined);
+      useSearchParamsMock.mockReturnValue(
+        new URLSearchParams({ redirect: maliciousRedirect }),
+      );
+
+      await submitLogin({
+        email: "admin@carshop.com",
+        password: "123456",
+      });
+
+      await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/admin"));
+      expect(pushMock).not.toHaveBeenCalledWith(maliciousRedirect);
+    },
+  );
 
   it.each(["E-mail não encontrado.", "Senha incorreta."])(
     "normaliza a mensagem da API sem revelar a causa da falha: %s",
