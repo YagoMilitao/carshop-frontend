@@ -1,4 +1,5 @@
-import { AxiosError } from "axios";
+import { AxiosError, AxiosHeaders } from "axios";
+import type { InternalAxiosRequestConfig } from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -36,6 +37,38 @@ async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(
     screen.getByLabelText("Tags (separadas por vírgula)"),
     "fusca, restauracao",
+  );
+}
+
+async function submitValidForm() {
+  const user = userEvent.setup();
+
+  render(<CreateWorkForm />);
+  await fillValidForm(user);
+  await user.click(screen.getByRole("button", { name: "Criar trabalho" }));
+}
+
+function createAxiosError(
+  status: number,
+  statusText: string,
+  data: { message?: string; stack?: string },
+) {
+  const config: InternalAxiosRequestConfig = {
+    headers: new AxiosHeaders(),
+  };
+
+  return new AxiosError(
+    statusText,
+    status >= 500 ? "ERR_BAD_RESPONSE" : "ERR_BAD_REQUEST",
+    config,
+    undefined,
+    {
+      status,
+      statusText,
+      headers: new AxiosHeaders(),
+      config,
+      data,
+    },
   );
 }
 
@@ -121,12 +154,7 @@ describe("CreateWorkForm", () => {
   it("cria o trabalho com o payload preenchido, invalida o cache e navega para /admin", async () => {
     createWorkMock.mockResolvedValue({ id: "1" });
     revalidateWorksTagMock.mockResolvedValue(undefined);
-    const user = userEvent.setup();
-
-    render(<CreateWorkForm />);
-
-    await fillValidForm(user);
-    await user.click(screen.getByRole("button", { name: "Criar trabalho" }));
+    await submitValidForm();
 
     await waitFor(() =>
       expect(createWorkMock).toHaveBeenCalledWith({
@@ -152,94 +180,50 @@ describe("CreateWorkForm", () => {
     ).toBeLessThan(routerPushMock.mock.invocationCallOrder[0]);
   });
 
-  it("exibe mensagem amigável e não navega quando a API retorna 400", async () => {
-    createWorkMock.mockRejectedValue(
-      new AxiosError("Bad Request", "ERR_BAD_REQUEST", undefined, undefined, {
-        status: 400,
-        statusText: "Bad Request",
-        headers: {},
-        config: {} as never,
-        data: { message: "Título já cadastrado." },
-      }),
-    );
-    const user = userEvent.setup();
+  it.each([
+    {
+      status: 400,
+      statusText: "Bad Request",
+      errorMessage: "Título já cadastrado.",
+      expectedMessage: "Título já cadastrado.",
+    },
+    {
+      status: 401,
+      statusText: "Unauthorized",
+      errorMessage: "Sessão expirada. Faça login novamente.",
+      expectedMessage: "Sessão expirada. Faça login novamente.",
+    },
+    {
+      status: 409,
+      statusText: "Conflict",
+      errorMessage: "Já existe um trabalho com este título.",
+      expectedMessage: "Já existe um trabalho com este título.",
+    },
+  ])(
+    "exibe mensagem amigável e não navega quando a API retorna $status",
+    async ({ status, statusText, errorMessage, expectedMessage }) => {
+      createWorkMock.mockRejectedValue(
+        createAxiosError(status, statusText, { message: errorMessage }),
+      );
 
-    render(<CreateWorkForm />);
+      await submitValidForm();
 
-    await fillValidForm(user);
-    await user.click(screen.getByRole("button", { name: "Criar trabalho" }));
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Título já cadastrado.",
-    );
-    expect(revalidateWorksTagMock).not.toHaveBeenCalled();
-    expect(routerPushMock).not.toHaveBeenCalled();
-  });
-
-  it("exibe mensagem amigável e não navega quando a API retorna 401", async () => {
-    createWorkMock.mockRejectedValue(
-      new AxiosError("Unauthorized", "ERR_BAD_REQUEST", undefined, undefined, {
-        status: 401,
-        statusText: "Unauthorized",
-        headers: {},
-        config: {} as never,
-        data: { message: "Sessão expirada. Faça login novamente." },
-      }),
-    );
-    const user = userEvent.setup();
-
-    render(<CreateWorkForm />);
-
-    await fillValidForm(user);
-    await user.click(screen.getByRole("button", { name: "Criar trabalho" }));
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Sessão expirada. Faça login novamente.",
-    );
-    expect(revalidateWorksTagMock).not.toHaveBeenCalled();
-    expect(routerPushMock).not.toHaveBeenCalled();
-  });
-
-  it("exibe mensagem amigável e não navega quando a API retorna 409", async () => {
-    createWorkMock.mockRejectedValue(
-      new AxiosError("Conflict", "ERR_BAD_REQUEST", undefined, undefined, {
-        status: 409,
-        statusText: "Conflict",
-        headers: {},
-        config: {} as never,
-        data: { message: "Já existe um trabalho com este título." },
-      }),
-    );
-    const user = userEvent.setup();
-
-    render(<CreateWorkForm />);
-
-    await fillValidForm(user);
-    await user.click(screen.getByRole("button", { name: "Criar trabalho" }));
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Já existe um trabalho com este título.",
-    );
-    expect(revalidateWorksTagMock).not.toHaveBeenCalled();
-    expect(routerPushMock).not.toHaveBeenCalled();
-  });
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        expectedMessage,
+      );
+      expect(revalidateWorksTagMock).not.toHaveBeenCalled();
+      expect(routerPushMock).not.toHaveBeenCalled();
+    },
+  );
 
   it("não expõe detalhes internos da API quando a resposta de erro não tem mensagem", async () => {
     createWorkMock.mockRejectedValue(
-      new AxiosError("Internal Server Error", "ERR_BAD_RESPONSE", undefined, undefined, {
-        status: 500,
-        statusText: "Internal Server Error",
-        headers: {},
-        config: {} as never,
-        data: { stack: "internal stack trace" },
+      createAxiosError(500, "Internal Server Error", {
+        stack: "internal stack trace",
       }),
     );
-    const user = userEvent.setup();
 
-    render(<CreateWorkForm />);
-
-    await fillValidForm(user);
-    await user.click(screen.getByRole("button", { name: "Criar trabalho" }));
+    await submitValidForm();
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Ocorreu um erro inesperado. Tente novamente.",
