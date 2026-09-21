@@ -36,11 +36,13 @@ pode prosseguir sem confirmação adicional do usuário.
   - Schema Zod no topo do arquivo (colocation, padrão de
     `app/(admin)/admin/login/page.tsx`), equivalente ao definido na spec
     (seção "Campos do formulário e validação Zod proposta"):
-    `title` (obrigatório, `max(120)` — limite real confirmado no backend),
-    `description` (obrigatório, `max(5000)` — limite real confirmado no
-    backend), `category` (obrigatório), `tags` (`string` único separado por
+    `slug` (obrigatório), `title` (obrigatório, `max(120)` — limite real
+    confirmado no backend), `description` (obrigatório, `max(5000)` — limite
+    real confirmado no backend), `category` (obrigatório), `tags` (`string` único separado por
     vírgula, `.transform()` para `string[]`, `.refine()` garantindo ao menos
     uma tag), `status` (`z.enum(["published", "draft"])`).
+  - Aplicar `.trim()` em `slug`, `title`, `description` e `category` antes
+    da validação de obrigatoriedade.
   - `useForm` com `zodResolver(createWorkSchema)`; `defaultValues.status = "draft"`.
   - `<form noValidate>`; cada campo com `aria-invalid` e
     `aria-describedby` apontando para `<p id="...-error">` quando houver erro
@@ -56,13 +58,12 @@ pode prosseguir sem confirmação adicional do usuário.
   - Erro de submit: capturado com `getApiErrorMessage(error)` de
     `lib/api/auth.client.ts`, exibido em `<p role="alert">`, cobrindo 400,
     401 e 409 sem vazar corpo bruto da resposta.
-  - Sucesso: `await revalidateWorksTag()` (Server Action existente,
-    importada de `../../../actions.ts`, mesma usada hoje em
-    `create-work-form.tsx` e `work-list-item.tsx`), depois
-    `router.push("/admin")` (ou `redirect`, conforme padrão já em uso no
-    projeto para navegação client-side pós-mutação). Não usar Server Action
-    como proxy do backend — `createWork()` continua sendo chamada
-    diretamente do cliente via Axios.
+  - Sucesso: invalidar `adminWorksQueryKey`, tentar
+    `revalidateWorksTag()` e depois chamar `router.push("/admin")`. As
+    invalidações ficam fora do `try/catch` da criação para que uma falha de
+    cache não apresente um POST já concluído como malsucedido. Não usar
+    Server Action como proxy do backend — `createWork()` continua sendo
+    chamada diretamente do cliente via Axios.
   - Opcional: `toast.success(...)` (sonner) antes/durante a navegação, como
     já ocorre em outros fluxos admin (ex.: login).
 
@@ -74,6 +75,7 @@ pode prosseguir sem confirmação adicional do usuário.
   removê-lo), cobrindo:
   - validação client-side: campos obrigatórios vazios não submetem;
     mensagens de erro e `aria-invalid` exibidos;
+  - campos obrigatórios preenchidos apenas com espaços não submetem;
   - fluxo de sucesso: submit válido → `createWork` chamado com o payload
     correto (incluindo `tags` já transformado em array) → `revalidateWorksTag`
     chamado → navegação para `/admin`;
@@ -100,19 +102,23 @@ pode prosseguir sem confirmação adicional do usuário.
 - [ ] Ajustar `app/(admin)/admin/(protected)/page.test.tsx` para refletir a
   remoção do formulário inline e a presença do novo link/botão "Novo
   trabalho" apontando para `/admin/trabalhos/novo`.
+- [ ] Criar `admin-work-list.tsx` como Client Component com TanStack Query,
+  usando `getAdminWorks()` para consultar `GET /works?includeDrafts=true` e
+  renderizar estados de carregamento, erro, vazio e sucesso.
+- [ ] Invalidar `adminWorksQueryKey` após criação, exclusão e mutações de
+  imagem; manter `getWorks()` exclusivamente público/ISR.
 
 ### 6. Validação final (checagem cruzada com a spec/DoD)
 
 - [ ] Rota `/admin/trabalhos/novo` protegida via herança do layout
   `(protected)` (sem lógica de proteção duplicada).
 - [ ] Formulário usa exatamente os campos do contrato real
-  (`title, description, category, tags, status`), sem `slug` e sem campos
-  inventados.
+  (`slug, title, description, category, tags, status`), sem campos inventados.
 - [ ] Nenhum header de autenticação/CSRF é anexado manualmente no
   formulário.
-- [ ] Sucesso cria um work real, invalida o cache via `revalidateWorksTag()`
-  e redireciona para `/admin`, onde o work aparece na listagem com upload de
-  imagem já disponível (fora de escopo, CARSHOP-33).
+- [ ] Sucesso cria um work real, sincroniza os caches e redireciona para
+  `/admin`, onde a listagem autenticada inclui rascunhos e mantém o upload
+  de imagem disponível (fora de escopo, CARSHOP-33).
 - [ ] Erros 400/401/409 tratados com mensagens amigáveis, sem vazar detalhes
   internos.
 - [ ] Testes cobrindo validação, sucesso e os três cenários de erro
@@ -141,6 +147,5 @@ pode prosseguir sem confirmação adicional do usuário.
 
 - Upload de imagens de work (CARSHOP-33).
 - Página de edição individual de work (`/admin/trabalhos/[id]` ou similar).
-- Campo `slug` no formulário.
 - Qualquer alteração no contrato real de `/works`
   (`lib/api/works.ts`, `lib/api/works.client.ts`).

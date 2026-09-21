@@ -2,31 +2,37 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { createWork } from "@/lib/api/works.client";
+import {
+  adminWorksQueryKey,
+  createWork,
+} from "@/lib/api/works.client";
 import { getApiErrorMessage } from "@/lib/api/auth.client";
+import { revalidateWorksTag } from "@/app/(admin)/admin/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { revalidateWorksTag } from "../../../actions";
-
 // Limites de `title`/`description` refletem as restrições reais já
 // validadas pelo backend (`carshop-backend`) — não são valores inventados.
 const createWorkSchema = z.object({
+  slug: z.string().trim().min(1, "Informe o slug."),
   title: z
     .string()
+    .trim()
     .min(1, "Informe o título.")
     .max(120, "O título deve ter no máximo 120 caracteres."),
   description: z
     .string()
+    .trim()
     .min(1, "Informe a descrição.")
     .max(5000, "A descrição deve ter no máximo 5000 caracteres."),
-  category: z.string().min(1, "Informe a categoria."),
+  category: z.string().trim().min(1, "Informe a categoria."),
   tags: z
     .string()
     .min(1, "Informe ao menos uma tag.")
@@ -46,14 +52,14 @@ type CreateWorkFormInput = z.input<typeof createWorkSchema>;
 type CreateWorkFormOutput = z.output<typeof createWorkSchema>;
 
 /**
- * Mutação client-side (Axios) seguida da Server Action de invalidação de
- * cache (`revalidateWorksTag`), depois navegação para `/admin` — ordem:
- * mutação -> invalidação -> navegação (nunca invalida antes de confirmar
- * sucesso da mutação). O work recém-criado aparece na listagem de `/admin`,
- * onde o upload de imagem já está disponível (fora de escopo, CARSHOP-33).
+ * Após a mutação Axios, sincroniza de forma independente a query
+ * administrativa e o cache público. Falhas nessas invalidações não revertem
+ * uma criação já confirmada nem incentivam um segundo POST. A listagem de
+ * `/admin` inclui rascunhos e mantém o upload disponível (CARSHOP-33).
  */
 export function CreateWorkForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
@@ -63,6 +69,7 @@ export function CreateWorkForm() {
   } = useForm<CreateWorkFormInput, unknown, CreateWorkFormOutput>({
     resolver: zodResolver(createWorkSchema),
     defaultValues: {
+      slug: "",
       title: "",
       description: "",
       category: "",
@@ -76,12 +83,21 @@ export function CreateWorkForm() {
 
     try {
       await createWork(values);
-      await revalidateWorksTag();
-      toast.success("Trabalho criado com sucesso.");
-      router.push("/admin");
     } catch (error) {
       setSubmitError(getApiErrorMessage(error));
+      return;
     }
+
+    await Promise.allSettled([
+      queryClient.invalidateQueries({
+        queryKey: adminWorksQueryKey,
+        refetchType: "none",
+      }),
+      revalidateWorksTag(),
+    ]);
+
+    toast.success("Trabalho criado com sucesso.");
+    router.push("/admin");
   };
 
   return (
@@ -90,6 +106,21 @@ export function CreateWorkForm() {
       noValidate
       onSubmit={(event) => void handleSubmit(onSubmit)(event)}
     >
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="work-slug">Slug</Label>
+        <Input
+          id="work-slug"
+          aria-invalid={errors.slug ? "true" : "false"}
+          aria-describedby={errors.slug ? "work-slug-error" : undefined}
+          {...register("slug")}
+        />
+        {errors.slug && (
+          <p id="work-slug-error" className="text-body-sm text-destructive-text">
+            {errors.slug.message}
+          </p>
+        )}
+      </div>
+
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="work-title">Título</Label>
         <Input

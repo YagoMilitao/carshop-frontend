@@ -6,15 +6,21 @@ import userEvent from "@testing-library/user-event";
 
 const createWorkMock = vi.fn();
 const revalidateWorksTagMock = vi.fn();
+const invalidateQueriesMock = vi.fn();
 const routerPushMock = vi.fn();
 const toastSuccessMock = vi.fn();
 
 vi.mock("@/lib/api/works.client", () => ({
+  adminWorksQueryKey: ["admin", "works"],
   createWork: (payload: unknown) => createWorkMock(payload),
 }));
 
-vi.mock("../../../actions", () => ({
+vi.mock("@/app/(admin)/admin/actions", () => ({
   revalidateWorksTag: () => revalidateWorksTagMock(),
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ invalidateQueries: invalidateQueriesMock }),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -28,12 +34,13 @@ vi.mock("sonner", () => ({
 import { CreateWorkForm } from "./create-work-form";
 
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText("Título"), "Restauração Fusca");
+  await user.type(screen.getByLabelText("Slug"), " restauracao-fusca ");
+  await user.type(screen.getByLabelText("Título"), " Restauração Fusca ");
   await user.type(
     screen.getByLabelText("Descrição"),
-    "Descrição completa do serviço.",
+    " Descrição completa do serviço. ",
   );
-  await user.type(screen.getByLabelText("Categoria"), "Estofamento");
+  await user.type(screen.getByLabelText("Categoria"), " Estofamento ");
   await user.type(
     screen.getByLabelText("Tags (separadas por vírgula)"),
     "fusca, restauracao",
@@ -75,6 +82,7 @@ function createAxiosError(
 describe("CreateWorkForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    invalidateQueriesMock.mockResolvedValue(undefined);
   });
 
   it("não submete e exibe erros de validação quando campos obrigatórios estão vazios", async () => {
@@ -85,6 +93,7 @@ describe("CreateWorkForm", () => {
     await user.click(screen.getByRole("button", { name: "Criar trabalho" }));
 
     expect(await screen.findByText("Informe o título.")).toBeInTheDocument();
+    expect(screen.getByText("Informe o slug.")).toBeInTheDocument();
     expect(screen.getByText("Informe a descrição.")).toBeInTheDocument();
     expect(screen.getByText("Informe a categoria.")).toBeInTheDocument();
     expect(screen.getByText("Informe ao menos uma tag.")).toBeInTheDocument();
@@ -96,11 +105,42 @@ describe("CreateWorkForm", () => {
     expect(createWorkMock).not.toHaveBeenCalled();
   });
 
+  it("não submete campos obrigatórios preenchidos apenas com espaços", async () => {
+    const user = userEvent.setup();
+
+    render(<CreateWorkForm />);
+
+    fireEvent.change(screen.getByLabelText("Slug"), {
+      target: { value: "   " },
+    });
+    fireEvent.change(screen.getByLabelText("Título"), {
+      target: { value: "   " },
+    });
+    fireEvent.change(screen.getByLabelText("Descrição"), {
+      target: { value: "   " },
+    });
+    fireEvent.change(screen.getByLabelText("Categoria"), {
+      target: { value: "   " },
+    });
+    fireEvent.change(screen.getByLabelText("Tags (separadas por vírgula)"), {
+      target: { value: "   " },
+    });
+    await user.click(screen.getByRole("button", { name: "Criar trabalho" }));
+
+    expect(await screen.findByText("Informe o slug.")).toBeInTheDocument();
+    expect(screen.getByText("Informe o título.")).toBeInTheDocument();
+    expect(screen.getByText("Informe a descrição.")).toBeInTheDocument();
+    expect(screen.getByText("Informe a categoria.")).toBeInTheDocument();
+    expect(screen.getByText("Informe ao menos uma tag.")).toBeInTheDocument();
+    expect(createWorkMock).not.toHaveBeenCalled();
+  });
+
   it("não submete e exibe erro quando o título excede 120 caracteres", async () => {
     const user = userEvent.setup();
 
     render(<CreateWorkForm />);
 
+    await user.type(screen.getByLabelText("Slug"), "restauracao-fusca");
     await user.type(screen.getByLabelText("Título"), "a".repeat(121));
     await user.type(
       screen.getByLabelText("Descrição"),
@@ -128,6 +168,7 @@ describe("CreateWorkForm", () => {
 
     render(<CreateWorkForm />);
 
+    await user.type(screen.getByLabelText("Slug"), "restauracao-fusca");
     await user.type(screen.getByLabelText("Título"), "Restauração Fusca");
     fireEvent.change(screen.getByLabelText("Descrição"), {
       target: { value: "a".repeat(5001) },
@@ -158,6 +199,7 @@ describe("CreateWorkForm", () => {
 
     await waitFor(() =>
       expect(createWorkMock).toHaveBeenCalledWith({
+        slug: "restauracao-fusca",
         title: "Restauração Fusca",
         description: "Descrição completa do serviço.",
         category: "Estofamento",
@@ -168,6 +210,10 @@ describe("CreateWorkForm", () => {
 
     // Ordem: mutação Axios -> invalidação de cache -> navegação.
     expect(revalidateWorksTagMock).toHaveBeenCalledTimes(1);
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["admin", "works"],
+      refetchType: "none",
+    });
     expect(routerPushMock).toHaveBeenCalledWith("/admin");
     expect(toastSuccessMock).toHaveBeenCalledWith(
       "Trabalho criado com sucesso.",
@@ -178,6 +224,21 @@ describe("CreateWorkForm", () => {
     expect(
       revalidateWorksTagMock.mock.invocationCallOrder[0],
     ).toBeLessThan(routerPushMock.mock.invocationCallOrder[0]);
+  });
+
+  it("navega após a criação mesmo quando a invalidação do cache público falha", async () => {
+    createWorkMock.mockResolvedValue({ id: "1" });
+    revalidateWorksTagMock.mockRejectedValue(new Error("cache unavailable"));
+
+    await submitValidForm();
+
+    await waitFor(() =>
+      expect(routerPushMock).toHaveBeenCalledWith("/admin"),
+    );
+    expect(toastSuccessMock).toHaveBeenCalledWith(
+      "Trabalho criado com sucesso.",
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it.each([

@@ -1,25 +1,54 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const getMock = vi.fn();
 const postMock = vi.fn();
 const deleteMock = vi.fn();
 
 vi.mock("@/lib/api/http", () => ({
   http: {
+    get: (...args: unknown[]) => getMock(...args),
     post: (...args: unknown[]) => postMock(...args),
     delete: (...args: unknown[]) => deleteMock(...args),
   },
 }));
 
-import { createWork, deleteWork, type CreateWorkPayload } from "./works.client";
+import {
+  createWork,
+  deleteWork,
+  getAdminWorks,
+  type CreateWorkPayload,
+} from "./works.client";
 
 describe("lib/api/works.client", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
+  describe("getAdminWorks", () => {
+    it("busca trabalhos publicados e rascunhos pela rota autenticada", async () => {
+      const works = [{ id: "1", status: "draft" }];
+      getMock.mockResolvedValue({ data: works });
+
+      const result = await getAdminWorks();
+
+      expect(getMock).toHaveBeenCalledWith("/works", {
+        params: { includeDrafts: true },
+      });
+      expect(result).toEqual(works);
+    });
+
+    it("propaga o erro da API quando a listagem administrativa falha", async () => {
+      const apiError = { response: { status: 401 } };
+      getMock.mockRejectedValue(apiError);
+
+      await expect(getAdminWorks()).rejects.toBe(apiError);
+    });
+  });
+
   describe("createWork", () => {
     it("chama POST /works com o payload e retorna o work criado", async () => {
       const payload: CreateWorkPayload = {
+        slug: "restauracao-fusca",
         title: "Restauração",
         description: "Descrição",
         category: "Estofamento",
@@ -41,6 +70,7 @@ describe("lib/api/works.client", () => {
 
       await expect(
         createWork({
+          slug: "",
           title: "",
           description: "",
           category: "",

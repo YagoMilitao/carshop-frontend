@@ -9,25 +9,20 @@ define o escopo executável.
 
 ## Conflitos entre Notion e o repositório real (já resolvidos)
 
-1. **Campo `slug`**: a Notion pede um campo `slug` no formulário. O contrato
-   real de criação (`CreateWorkPayload` em `lib/api/works.client.ts:10-16`)
-   é `{ title, description, category, tags, status }`, **sem** `slug` (gerado
-   pelo backend). Pela hierarquia de fontes de verdade do projeto (código
-   real > Notion), **o formulário NÃO terá campo `slug`**. Decisão já
-   tomada, documentada aqui, não é uma pergunta em aberto.
-2. **CARSHOP-124 (contrato documentado)**: não existe essa tarefa nem
-   Swagger/OpenAPI local no repositório. A única fonte de contrato
-   disponível e válida é o código (`lib/api/works.ts` e
-   `lib/api/works.client.ts`). Isso é registrado como observação, não como
-   bloqueio — o código já é suficiente como fonte de verdade.
+1. **Campo `slug`**: o contrato HTTP versionado do backend confirma que
+   `POST /works` exige `slug`. O formulário e `CreateWorkPayload` incluem o
+   campo, alinhados também à descrição original da tarefa no Notion.
+2. **Contrato versionado**: `docs/api-contract.md` do backend é a fonte de
+   verdade para `POST /works` e `GET /works?includeDrafts=true`, conforme
+   `docs/context/notion.md`.
 3. **"Continuar para gerenciamento/upload de imagens" após sucesso**: não
    existe (e não será criada) uma página de edição individual de work. O
    upload/remoção de imagem de um work já existe hoje, implementado inline
    em `app/(admin)/admin/(protected)/work-list-item.tsx`, dentro da própria
    listagem em `/admin`. Portanto, "continuar para gerenciamento de imagens"
-   é satisfeito por **redirecionar para `/admin` após o sucesso**, onde o
-   work recém-criado aparece na listagem com os controles de imagem já
-   existentes (fora de escopo desta tarefa, CARSHOP-33).
+   é satisfeito por **redirecionar para `/admin` após o sucesso**, onde a
+   listagem autenticada inclui rascunhos e mostra o work recém-criado com os
+   controles de imagem já existentes (fora de escopo, CARSHOP-33).
 
 ## Escopo incluído
 
@@ -40,6 +35,7 @@ define o escopo executável.
    React Hook Form + Zod, seguindo o padrão já estabelecido em
    `app/(admin)/admin/login/page.tsx`:
    - `zodResolver`;
+   - normalização com `.trim()` antes da validação de obrigatoriedade;
    - `noValidate` no `<form>`;
    - `aria-invalid` e `aria-describedby` por campo;
    - mensagens de erro de campo em `<p id="...-error">`;
@@ -53,10 +49,9 @@ define o escopo executável.
    `lib/api/auth.client.ts` (mesmo padrão já usado em `create-work-form.tsx`
    atual), cobrindo 400 (validação), 401 (sessão expirada/token inválido) e
    409 (conflito, ex.: duplicidade), sem expor detalhes internos da API.
-5. Pós-sucesso: chamar `revalidateWorksTag()` (Server Action de
-   `../../../actions.ts`, mesma já usada por `create-work-form.tsx` e
-   `work-list-item.tsx`) e depois `router.push("/admin")` (o work criado
-   aparece na listagem existente, com upload de imagem disponível ali).
+5. Pós-sucesso: invalidar a query administrativa, tentar
+   `revalidateWorksTag()` e navegar para `/admin`. Falhas de sincronização
+   de cache não transformam um POST já confirmado em erro de criação.
 6. Remoção do formulário inline "Novo work" da página `/admin`:
    - remover a seção `"Novo work"` e `<CreateWorkForm />` de
      `app/(admin)/admin/(protected)/page.tsx`;
@@ -78,6 +73,9 @@ define o escopo executável.
 8. Ajuste do teste de `page.tsx`
    (`app/(admin)/admin/(protected)/page.test.tsx`) para refletir a remoção
    do formulário inline e a presença do novo link/botão.
+9. Listagem administrativa client-side via TanStack Query e
+   `getAdminWorks()` (`GET /works?includeDrafts=true`), mantendo
+   `getWorks()` exclusivamente público/ISR.
 
 ## Escopo explicitamente excluído
 
@@ -86,7 +84,6 @@ define o escopo executável.
 - Qualquer página de edição individual de work (`/admin/trabalhos/[id]` ou
   similar) — não existe hoje e não será criada aqui.
 - Alterações no backend ou no contrato de `/works`.
-- Campo `slug` no formulário (ver seção de conflitos).
 
 ## Campos do formulário e validação Zod proposta
 
@@ -94,9 +91,10 @@ Baseado estritamente em `CreateWorkPayload` (`lib/api/works.client.ts`):
 
 ```ts
 const createWorkSchema = z.object({
-  title: z.string().min(1, "Informe o título."),
-  description: z.string().min(1, "Informe a descrição."),
-  category: z.string().min(1, "Informe a categoria."),
+  slug: z.string().trim().min(1, "Informe o slug."),
+  title: z.string().trim().min(1, "Informe o título."),
+  description: z.string().trim().min(1, "Informe a descrição."),
+  category: z.string().trim().min(1, "Informe a categoria."),
   tags: z
     .string()
     .min(1, "Informe ao menos uma tag.")
@@ -132,8 +130,10 @@ Observações:
 ## Contrato de API usado
 
 - `createWork(payload: CreateWorkPayload): Promise<Work>` — POST `/works`,
-  `lib/api/works.client.ts`. Nenhum campo além de
-  `title, description, category, tags, status` é enviado.
+  `lib/api/works.client.ts`. O payload contém exatamente
+  `slug, title, description, category, tags, status`.
+- `getAdminWorks(): Promise<Work[]>` — GET
+  `/works?includeDrafts=true`, autenticado via Axios/interceptor.
 - Autenticação e CSRF são responsabilidade do interceptor Axios em
   `lib/api/http.ts` — o formulário não manipula headers manualmente.
 
@@ -142,6 +142,8 @@ Observações:
 - `app/(admin)/admin/(protected)/trabalhos/novo/page.tsx`
 - `app/(admin)/admin/(protected)/trabalhos/novo/create-work-form.tsx`
 - `app/(admin)/admin/(protected)/trabalhos/novo/create-work-form.test.tsx`
+- `app/(admin)/admin/(protected)/admin-work-list.tsx`
+- `app/(admin)/admin/(protected)/admin-work-list.test.tsx`
 - (opcional, se a página tiver lógica própria além de renderizar o
   formulário) `app/(admin)/admin/(protected)/trabalhos/novo/page.test.tsx`
 
@@ -150,6 +152,8 @@ Observações:
 - `app/(admin)/admin/(protected)/page.tsx` (remove seção "Novo work",
   adiciona link/botão "Novo trabalho")
 - `app/(admin)/admin/(protected)/page.test.tsx` (ajusta expectativas)
+- `lib/api/works.client.ts` e `lib/api/works.client.test.ts`
+- `app/(admin)/admin/(protected)/work-list-item.tsx` e seu teste
 
 ## Arquivos a remover
 

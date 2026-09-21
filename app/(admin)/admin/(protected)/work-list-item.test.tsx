@@ -1,4 +1,5 @@
-import { AxiosError } from "axios";
+import { AxiosError, AxiosHeaders } from "axios";
+import type { InternalAxiosRequestConfig } from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -9,10 +10,16 @@ const deleteWorkMock = vi.fn();
 const deleteWorkImageMock = vi.fn();
 const uploadWorkImageMock = vi.fn();
 const revalidateWorksTagMock = vi.fn();
+const invalidateQueriesMock = vi.fn();
 const routerRefreshMock = vi.fn();
 
 vi.mock("@/lib/api/works.client", () => ({
+  adminWorksQueryKey: ["admin", "works"],
   deleteWork: (workId: string) => deleteWorkMock(workId),
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ invalidateQueries: invalidateQueriesMock }),
 }));
 
 vi.mock("@/lib/api/images.client", () => ({
@@ -59,9 +66,30 @@ const work: Work = {
   deletedAt: null,
 };
 
+function createAxiosError(message: string) {
+  const config: InternalAxiosRequestConfig = {
+    headers: new AxiosHeaders(),
+  };
+
+  return new AxiosError(
+    "Internal Server Error",
+    "ERR_BAD_RESPONSE",
+    config,
+    undefined,
+    {
+      status: 500,
+      statusText: "Internal Server Error",
+      headers: new AxiosHeaders(),
+      config,
+      data: { message },
+    },
+  );
+}
+
 describe("WorkListItem", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    invalidateQueriesMock.mockResolvedValue(undefined);
   });
 
   it("exibe o título e o status do work em um Badge", () => {
@@ -85,18 +113,15 @@ describe("WorkListItem", () => {
 
     await waitFor(() => expect(deleteWorkMock).toHaveBeenCalledWith("work-1"));
     expect(revalidateWorksTagMock).toHaveBeenCalledTimes(1);
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["admin", "works"],
+    });
     expect(routerRefreshMock).toHaveBeenCalledTimes(1);
   });
 
   it("exibe erro da API quando a exclusão do work falha, sem invalidar o cache", async () => {
     deleteWorkMock.mockRejectedValue(
-      new AxiosError("Bad Request", "ERR_BAD_REQUEST", undefined, undefined, {
-        status: 500,
-        statusText: "Internal Server Error",
-        headers: {},
-        config: {} as never,
-        data: { message: "Falha ao excluir work." },
-      }),
+      createAxiosError("Falha ao excluir work."),
     );
     const user = userEvent.setup();
 
@@ -108,6 +133,21 @@ describe("WorkListItem", () => {
       "Falha ao excluir work.",
     );
     expect(revalidateWorksTagMock).not.toHaveBeenCalled();
+    expect(invalidateQueriesMock).not.toHaveBeenCalled();
+  });
+
+  it("não apresenta a exclusão como falha quando a sincronização de cache falha", async () => {
+    deleteWorkMock.mockResolvedValue(undefined);
+    revalidateWorksTagMock.mockRejectedValue(new Error("cache unavailable"));
+    invalidateQueriesMock.mockRejectedValue(new Error("query unavailable"));
+    const user = userEvent.setup();
+
+    render(<WorkListItem work={work} />);
+
+    await user.click(screen.getByRole("button", { name: "Excluir work" }));
+
+    await waitFor(() => expect(routerRefreshMock).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("remove uma imagem, invalida o cache e atualiza a listagem", async () => {
