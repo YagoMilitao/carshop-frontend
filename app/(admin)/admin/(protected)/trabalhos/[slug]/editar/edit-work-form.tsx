@@ -1,16 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { getApiErrorMessage } from "@/lib/api/auth.client";
 import {
   adminWorksQueryKey,
   findAdminWorkBySlug,
   getAdminWorks,
+  updateWork,
 } from "@/lib/api/works.client";
+import { revalidateWorksTag } from "@/app/(admin)/admin/actions";
 import { Button } from "@/components/ui/button";
 
 import { WorkFormFields } from "../../work-form-fields";
@@ -28,12 +33,15 @@ type EditWorkFormProps = {
 /**
  * Carrega o work pelo `slug` a partir de `getAdminWorks()` (já inclui
  * rascunhos), evitando uma nova chamada HTTP dedicada a busca por slug
- * (que não existe no backend). O submit real (`updateWork`) está
- * bloqueado pela CARSHOP-135 — ver `lib/api/works.client.ts` — por isso o
- * botão "Salvar" nasce desabilitado, mesmo com formulário/validação/
- * carregamento totalmente funcionais.
+ * (que não existe no backend). O submit chama `updateWork(work.id, ...)`
+ * — o path param do `PATCH /admin/works/:workId` é o UUID (`work.id`), não
+ * o `slug` usado para localizar o work nesta tela.
  */
 export function EditWorkForm({ slug }: Readonly<EditWorkFormProps>) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const {
     data: work,
     error,
@@ -46,11 +54,38 @@ export function EditWorkForm({ slug }: Readonly<EditWorkFormProps>) {
 
   const {
     register,
-    formState: { errors },
+    handleSubmit,
+    formState: { errors, isSubmitting },
   } = useForm<WorkFormInput, unknown, WorkFormOutput>({
     resolver: zodResolver(workFormSchema),
     values: work ? mapWorkToFormValues(work) : undefined,
   });
+
+  const onSubmit = async (values: WorkFormOutput) => {
+    if (!work) {
+      return;
+    }
+
+    setSubmitError(null);
+
+    try {
+      await updateWork(work.id, values);
+    } catch (submitCatchError) {
+      setSubmitError(getApiErrorMessage(submitCatchError));
+      return;
+    }
+
+    await Promise.allSettled([
+      queryClient.invalidateQueries({
+        queryKey: adminWorksQueryKey,
+        refetchType: "none",
+      }),
+      revalidateWorksTag(),
+    ]);
+
+    toast.success("Trabalho atualizado com sucesso.");
+    router.push("/admin/trabalhos");
+  };
 
   if (isPending) {
     return (
@@ -85,16 +120,21 @@ export function EditWorkForm({ slug }: Readonly<EditWorkFormProps>) {
   }
 
   return (
-    <form className="flex flex-col gap-4" noValidate>
+    <form
+      className="flex flex-col gap-4"
+      noValidate
+      onSubmit={(event) => void handleSubmit(onSubmit)(event)}
+    >
       <WorkFormFields register={register} errors={errors} />
 
-      <Button
-        type="submit"
-        disabled
-        aria-disabled="true"
-        title="Disponível em breve"
-      >
-        Salvar
+      {submitError && (
+        <p role="alert" className="text-body-sm text-destructive-text">
+          {submitError}
+        </p>
+      )}
+
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Salvando..." : "Salvar"}
       </Button>
     </form>
   );

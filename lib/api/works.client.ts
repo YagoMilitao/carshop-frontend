@@ -40,6 +40,29 @@ export async function deleteWork(workId: string): Promise<void> {
 }
 
 /**
+ * Payload de atualização de `Work` (`PATCH /admin/works/:workId`,
+ * CARSHOP-135): subconjunto opcional dos campos aceitos por criação. Não
+ * inclui `images`/`metadata`/`seo`, que não são editáveis por este
+ * endpoint.
+ */
+export type UpdateWorkPayload = Partial<
+  Pick<
+    CreateWorkPayload,
+    "slug" | "title" | "description" | "category" | "tags" | "status"
+  >
+>;
+
+/** `PATCH /admin/works/:workId` (admin, autenticado). */
+export async function updateWork(
+  workId: string,
+  payload: UpdateWorkPayload,
+): Promise<Work> {
+  const response = await http.patch<Work>(`/admin/works/${workId}`, payload);
+
+  return response.data;
+}
+
+/**
  * Localiza um `Work` pelo `slug` dentro de uma listagem já carregada
  * (função pura, sem I/O). Usada pela edição admin (CARSHOP-32) sobre o
  * resultado de `getAdminWorks()` — que já inclui rascunhos — em vez de uma
@@ -52,32 +75,3 @@ export function findAdminWorkBySlug(
   return works.find((work) => work.slug === slug);
 }
 
-/**
- * Payload de atualização de `Work`, a confirmar/ajustar quando o contrato
- * real de `PATCH` (CARSHOP-135) for documentado. Hoje reaproveita a mesma
- * forma do payload de criação porque não há contrato real ainda.
- */
-export type UpdateWorkPayload = CreateWorkPayload;
-
-/**
- * Atualização de `Work` (CARSHOP-32) está bloqueada: a CARSHOP-135, que
- * definiria o contrato real de `PATCH` de update, não está implementada
- * nem documentada em nenhum lugar do repositório (sem
- * `docs/api-contract.md`, sem Swagger consultável, sem código de backend
- * disponível). Por regra do CLAUDE.md ("backend contract rule"), nenhum
- * contrato pode ser inventado — por isso esta função não realiza nenhuma
- * chamada HTTP e apenas lança um erro explicativo. Deve ser implementada
- * de fato somente quando a CARSHOP-135 for confirmada/documentada.
- */
-export function updateWork(
-  workId: string,
-  payload: UpdateWorkPayload,
-): Promise<Work> {
-  return Promise.reject(
-    new Error(
-      `Atualização de trabalhos indisponível (work "${workId}", payload com ${
-        Object.keys(payload).length
-      } campos): aguardando contrato real da CARSHOP-135 (PATCH de update de Work).`,
-    ),
-  );
-}

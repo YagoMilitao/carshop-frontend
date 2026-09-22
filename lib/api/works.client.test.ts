@@ -2,12 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getMock = vi.fn();
 const postMock = vi.fn();
+const patchMock = vi.fn();
 const deleteMock = vi.fn();
 
 vi.mock("@/lib/api/http", () => ({
   http: {
     get: (...args: unknown[]) => getMock(...args),
     post: (...args: unknown[]) => postMock(...args),
+    patch: (...args: unknown[]) => patchMock(...args),
     delete: (...args: unknown[]) => deleteMock(...args),
   },
 }));
@@ -21,6 +23,7 @@ import {
   getAdminWorks,
   updateWork,
   type CreateWorkPayload,
+  type UpdateWorkPayload,
 } from "./works.client";
 
 function buildWork(overrides: Partial<Work> = {}): Work {
@@ -122,23 +125,30 @@ describe("lib/api/works.client", () => {
   });
 
   describe("updateWork", () => {
-    it("rejeita com um erro explicando o bloqueio da CARSHOP-135, sem chamar a API", async () => {
-      const payload: CreateWorkPayload = {
-        slug: "restauracao-fusca",
-        title: "Restauração",
-        description: "Descrição",
-        category: "Estofamento",
-        tags: ["fusca"],
-        status: "draft",
+    it("chama PATCH /admin/works/:workId com o payload e retorna o work atualizado", async () => {
+      const payload: UpdateWorkPayload = {
+        title: "Restauração Fusca (atualizada)",
+        status: "published",
       };
+      const updated = buildWork({ ...payload });
+      patchMock.mockResolvedValue({ data: updated });
 
-      await expect(updateWork("work-1", payload)).rejects.toThrow(
-        /CARSHOP-135/,
+      const result = await updateWork("work-1", payload);
+
+      expect(patchMock).toHaveBeenCalledWith(
+        "/admin/works/work-1",
+        payload,
       );
+      expect(result).toEqual(updated);
+    });
 
-      expect(getMock).not.toHaveBeenCalled();
-      expect(postMock).not.toHaveBeenCalled();
-      expect(deleteMock).not.toHaveBeenCalled();
+    it("propaga o erro da API quando a mutação falha", async () => {
+      const apiError = { response: { data: { message: "Slug já em uso." } } };
+      patchMock.mockRejectedValue(apiError);
+
+      await expect(
+        updateWork("work-1", { slug: "duplicado" }),
+      ).rejects.toBe(apiError);
     });
   });
 
