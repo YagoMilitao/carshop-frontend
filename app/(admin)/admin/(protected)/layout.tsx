@@ -1,8 +1,15 @@
 import type { ReactNode } from "react";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/api/auth.server";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
+import {
+  DEFAULT_ADMIN_PATH,
+  REDIRECT_PATHNAME_HEADER,
+  REDIRECT_SEARCH_HEADER,
+  buildLoginUrlWithRedirect,
+} from "@/lib/auth/redirect";
 
 import { AdminShell } from "./_components/admin-shell";
 
@@ -25,7 +32,12 @@ export default async function ProtectedAdminLayout({
   const session = await getSession();
 
   if (!session) {
-    redirect("/admin/login");
+    const requestHeaders = await headers();
+    const pathname =
+      requestHeaders.get(REDIRECT_PATHNAME_HEADER) ?? DEFAULT_ADMIN_PATH;
+    const search = requestHeaders.get(REDIRECT_SEARCH_HEADER) ?? "";
+
+    redirect(buildLoginUrlWithRedirect(pathname, search));
   }
 
   return (

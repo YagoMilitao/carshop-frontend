@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
   getSession,
@@ -19,6 +19,10 @@ import {
 } from "@/lib/api/auth.client";
 import type { User } from "@/lib/api/auth.server";
 import { onAuthFailure, setAccessToken } from "@/lib/api/http";
+import {
+  buildLoginUrlWithRedirect,
+  LOGIN_PATH,
+} from "@/lib/auth/redirect";
 
 type AuthContextValue = {
   user: User | null;
@@ -41,6 +45,8 @@ export function AuthProvider({
 }: Readonly<{ initialUser: User | null; children: ReactNode }>) {
   const [user, setUser] = useState<User | null>(initialUser);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const login = useCallback(async (payload: LoginPayload) => {
     const session = await loginRequest(payload);
@@ -62,9 +68,18 @@ export function AuthProvider({
     onAuthFailure(() => {
       setAccessToken(null);
       setUser(null);
-      router.push("/admin/login");
+
+      if (pathname === LOGIN_PATH) {
+        return;
+      }
+
+      const search = searchParams.toString();
+
+      router.push(
+        buildLoginUrlWithRedirect(pathname, search ? `?${search}` : ""),
+      );
     });
-  }, [router]);
+  }, [router, pathname, searchParams]);
 
   useEffect(() => {
     // Re-bootstrap ao montar no cliente: apenas sincroniza `user`, já que

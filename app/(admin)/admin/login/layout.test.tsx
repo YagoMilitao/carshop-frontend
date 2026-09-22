@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
@@ -18,12 +19,14 @@ vi.mock("@/lib/auth/AuthProvider", () => ({
 import AdminLoginLayout from "./layout";
 
 describe("AdminLoginLayout", () => {
-  it("monta AuthProvider com initialUser: null e renderiza os children", () => {
-    render(
-      <AdminLoginLayout>
-        <p>formulário de login</p>
-      </AdminLoginLayout>,
-    );
+  it("mantém o AuthProvider sob Suspense, com initialUser: null, e renderiza os children", () => {
+    const layout = AdminLoginLayout({
+      children: <p>formulário de login</p>,
+    });
+
+    expect(layout.type).toBe(Suspense);
+
+    render(layout);
 
     const provider = screen.getByTestId("auth-provider");
     expect(provider).toHaveAttribute("data-initial-user", "null");

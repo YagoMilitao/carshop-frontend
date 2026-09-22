@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { useAuth } from "@/lib/auth/AuthProvider";
+import {
+  DEFAULT_ADMIN_PATH,
+  REDIRECT_QUERY_PARAM,
+  isSafeInternalRedirectPath,
+} from "@/lib/auth/redirect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,10 +27,22 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const INVALID_CREDENTIALS_MESSAGE = "E-mail ou senha inválidos.";
 
-export default function AdminLoginPage() {
+/**
+ * Formulário de login admin propriamente dito. Extraído de
+ * `AdminLoginPage` para isolar o uso de `useSearchParams()` (necessário
+ * para ler `?redirect=`) sob um boundary de `<Suspense>`, evitando CSR
+ * bailout da rota em produção.
+ */
+function LoginForm() {
   const router = useRouter();
   const { login } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+
+  const redirectParam = searchParams.get(REDIRECT_QUERY_PARAM);
+  const redirectTarget = isSafeInternalRedirectPath(redirectParam)
+    ? redirectParam
+    : DEFAULT_ADMIN_PATH;
 
   const {
     register,
@@ -41,7 +58,7 @@ export default function AdminLoginPage() {
     try {
       await login(values);
       toast.success("Admin logado");
-      router.push("/admin");
+      router.push(redirectTarget);
     } catch {
       setFormError(INVALID_CREDENTIALS_MESSAGE);
     }
@@ -105,5 +122,13 @@ export default function AdminLoginPage() {
         </form>
       </Container>
     </main>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
