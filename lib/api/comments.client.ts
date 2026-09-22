@@ -1,5 +1,5 @@
 import { http } from "@/lib/api/http";
-import type { Comment } from "@/lib/api/comments";
+import type { Comment, CommentStatus } from "@/lib/api/comments";
 
 /**
  * Camada de acesso a dados de mutações de `Comment` (Axios, via instância
@@ -57,4 +57,44 @@ export async function updateComment(
 /** `DELETE /admin/comments/:commentId` (admin, autenticado). */
 export async function deleteComment(commentId: string): Promise<void> {
   await http.delete(`/admin/comments/${commentId}`);
+}
+
+/**
+ * Resposta paginada de `GET /admin/comments`, conforme
+ * `AdminCommentListResponse` (contrato confirmado em
+ * `carshop-backend/src/infra/docs/admin-comments.swagger.ts` e
+ * `list-comments-for-moderation.use-case.ts` — envelope com `items` +
+ * metadados de paginação, nunca array simples).
+ */
+export type AdminCommentListResponse = {
+  items: Comment[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+export type GetAdminCommentsParams = {
+  status?: CommentStatus;
+  page?: number;
+  limit?: number;
+};
+
+export const adminCommentsQueryKey = (status?: CommentStatus) =>
+  ["admin", "comments", status] as const;
+
+/**
+ * `GET /admin/comments` (admin, autenticado). Lista comentários para
+ * moderação, com filtro opcional por `status` e paginação
+ * (`page`/`limit`, padrão 1/20 no backend).
+ */
+export async function getAdminComments(
+  params: GetAdminCommentsParams = {},
+): Promise<AdminCommentListResponse> {
+  const response = await http.get<AdminCommentListResponse>(
+    "/admin/comments",
+    { params },
+  );
+
+  return response.data;
 }

@@ -16,16 +16,12 @@ import { Label } from "@/components/ui/label";
 import { revalidateCommentsTag } from "../actions";
 
 /**
- * O contrato da API (spec CARSHOP-122) não define um endpoint de listagem
- * de comentários para o admin (`GET /admin/comments` não existe nas Notas
- * Técnicas) — apenas `PATCH .../approve`, `PATCH .../:commentId` e
- * `DELETE .../:commentId`, todos por `commentId`. Sem endpoint de listagem
- * não é possível construir uma fila de moderação navegável nesta task sem
- * inventar um endpoint inexistente (proibido por docs/rules/api.md).
- * Este formulário opera por `commentId` conhecido (ex.: recebido por
- * notificação/e-mail externo) como solução pragmática dentro do contrato
- * real — sinalizado ao usuário como gap de backend a resolver em task
- * futura (endpoint de listagem admin de comentários).
+ * `GET /admin/comments` agora existe (CARSHOP-152) e alimenta
+ * `PendingCommentsList`, que exibe a fila de comentários `PENDING` na
+ * página `/admin`. Este formulário continua operando por `commentId`/
+ * `workId` informados manualmente — mantém as ações de moderação
+ * (`approveComment`/`updateComment`/`deleteComment`) desacopladas da
+ * listagem, sem mudança de contrato do componente.
  */
 export function CommentModerationForm() {
   const router = useRouter();

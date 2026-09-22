@@ -35,6 +35,15 @@ vi.mock("@/lib/auth/AuthProvider", () => ({
   ),
 }));
 
+// `AdminShell` (sidebar/header/AdminAccountMenu, CARSHOP-152) é testado
+// isoladamente em `_components/admin-shell.test.tsx` — aqui mockado para
+// isolar apenas a lógica de redirect/render deste Server Component.
+vi.mock("./_components/admin-shell", () => ({
+  AdminShell: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="admin-shell">{children}</div>
+  ),
+}));
+
 describe("ProtectedAdminLayout", () => {
   it("redireciona para /admin/login e não renderiza children quando nunca houve sessão (acesso não autenticado)", async () => {
     // Cenário "nunca autenticado": getSession() retorna null porque não
