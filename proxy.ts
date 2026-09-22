@@ -1,6 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { serverEnv } from "@/lib/env/server";
+import {
+  REDIRECT_PATHNAME_HEADER,
+  REDIRECT_SEARCH_HEADER,
+  buildLoginUrlWithRedirect,
+} from "@/lib/auth/redirect";
 
 /**
  * Header interno (não exposto ao navegador) usado para repassar o access
@@ -14,26 +19,40 @@ const ACCESS_TOKEN_HEADER = "x-carshop-access-token";
  * Camada 1 de proteção das rotas `/admin/*` (defesa em profundidade,
  * complementar à camada 2 em `app/(admin)/admin/(protected)/layout.tsx`).
  *
- * Responsabilidade real (CARSHOP-152 fix): o backend (`GET /auth/session`)
- * só aceita `Authorization: Bearer <accessToken>` — nunca cookie — e o
- * `access_token` só existe em memória no navegador, então um Server
- * Component nunca teve como enviá-lo. `proxy.ts` é a única camada do
- * pipeline Next que roda antes do render e pode legitimamente setar
- * `Set-Cookie` de resposta, então é aqui que o access token é mintado
- * (via `POST /auth/refresh`, usando o cookie HttpOnly `refresh_token`) e
- * repassado internamente para o render via `ACCESS_TOKEN_HEADER`.
- * `getSession()` deixa de chamar `/auth/refresh` e passa a só ler esse
- * header interno.
+ * Responsabilidades:
+ * - Propaga o pathname/search reais da request (nunca confiando em headers
+ *   vindos do client) via `REDIRECT_PATHNAME_HEADER`/`REDIRECT_SEARCH_HEADER`,
+ *   incondicionalmente e antes de qualquer `return`, para que
+ *   `(protected)/layout.tsx` consiga montar o `?redirect=` mesmo sem receber
+ *   `searchParams` nativamente.
+ * - Mint do access token (CARSHOP-152 fix): o backend (`GET /auth/session`)
+ *   só aceita `Authorization: Bearer <accessToken>` — nunca cookie — e o
+ *   `access_token` só existe em memória no navegador, então um Server
+ *   Component nunca teve como enviá-lo. `proxy.ts` é a única camada do
+ *   pipeline Next que roda antes do render e pode legitimamente setar
+ *   `Set-Cookie` de resposta, então é aqui que o access token é mintado
+ *   (via `POST /auth/refresh`, usando o cookie HttpOnly `refresh_token`) e
+ *   repassado internamente para o render via `ACCESS_TOKEN_HEADER`.
+ *   `getSession()` não chama `/auth/refresh` — só lê esse header interno.
  */
 export async function proxy(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(REDIRECT_PATHNAME_HEADER, request.nextUrl.pathname);
+  requestHeaders.set(REDIRECT_SEARCH_HEADER, request.nextUrl.search);
+
   if (request.nextUrl.pathname === "/admin/login") {
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   const refreshToken = request.cookies.get("refresh_token")?.value;
 
   if (!refreshToken) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    const loginTarget = buildLoginUrlWithRedirect(
+      request.nextUrl.pathname,
+      request.nextUrl.search,
+    );
+
+    return NextResponse.redirect(new URL(loginTarget, request.url));
   }
 
   const csrfToken = request.cookies.get("csrf_token")?.value;
@@ -49,12 +68,21 @@ export async function proxy(request: NextRequest) {
       cache: "no-store",
     });
   } catch {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    const loginTarget = buildLoginUrlWithRedirect(
+      request.nextUrl.pathname,
+      request.nextUrl.search,
+    );
+
+    return NextResponse.redirect(new URL(loginTarget, request.url));
   }
 
   if (!refreshResponse.ok) {
+    const loginTarget = buildLoginUrlWithRedirect(
+      request.nextUrl.pathname,
+      request.nextUrl.search,
+    );
     const redirectResponse = NextResponse.redirect(
-      new URL("/admin/login", request.url),
+      new URL(loginTarget, request.url),
     );
     redirectResponse.cookies.delete("refresh_token");
     redirectResponse.cookies.delete("csrf_token");
@@ -65,7 +93,7 @@ export async function proxy(request: NextRequest) {
     accessToken: string;
   };
 
-  const forwardedHeaders = new Headers(request.headers);
+  const forwardedHeaders = new Headers(requestHeaders);
   forwardedHeaders.set(ACCESS_TOKEN_HEADER, accessToken);
 
   const response = NextResponse.next({

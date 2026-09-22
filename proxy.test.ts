@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
+import { REDIRECT_PATHNAME_HEADER, REDIRECT_SEARCH_HEADER } from "@/lib/auth/redirect";
+
 /**
  * `proxy.ts` importa `serverEnv` (server-only), que por sua vez lê
  * `clientEnv` — mockamos `@/lib/env/server` diretamente para controlar
@@ -11,9 +13,18 @@ vi.mock("@/lib/env/server", () => ({
   serverEnv: { apiUrl: "https://api.carshop.test" },
 }));
 
-function buildRequest(pathname: string, cookieHeader?: string): NextRequest {
+function buildRequest(
+  pathname: string,
+  options?: { cookieHeader?: string; extraHeaders?: Record<string, string> },
+): NextRequest {
+  const headers: Record<string, string> = { ...options?.extraHeaders };
+
+  if (options?.cookieHeader) {
+    headers.cookie = options.cookieHeader;
+  }
+
   return new NextRequest(`http://localhost:3000${pathname}`, {
-    headers: cookieHeader ? { cookie: cookieHeader } : undefined,
+    headers,
   });
 }
 
@@ -24,37 +35,60 @@ describe("proxy (camada 1 de proteção /admin/* + mint do access token)", () =>
     vi.clearAllMocks();
   });
 
-  it("não intercepta /admin/login mesmo sem o cookie refresh_token (evita loop de redirect)", async () => {
+  it("não intercepta /admin/login mesmo sem o cookie refresh_token (evita loop de redirect), propagando os headers de pathname/search", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
     const { proxy } = await import("./proxy");
-    const request = buildRequest("/admin/login");
+    const request = buildRequest("/admin/login?redirect=%2Fadmin%2Ftrabalhos%2F1");
 
     const response = await proxy(request);
 
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      response.headers.get(`x-middleware-request-${REDIRECT_PATHNAME_HEADER}`),
+    ).toBe("/admin/login");
+    expect(
+      response.headers.get(`x-middleware-request-${REDIRECT_SEARCH_HEADER}`),
+    ).toBe("?redirect=%2Fadmin%2Ftrabalhos%2F1");
   });
 
-  it("redireciona para /admin/login sem chamar /auth/refresh quando o cookie refresh_token está ausente", async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-
-    const { proxy } = await import("./proxy");
-    const request = buildRequest("/admin");
-
-    const response = await proxy(request);
-
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe(
+  it.each([
+    [
+      "sem ?redirect= quando a rota original já é /admin",
+      "/admin",
       "http://localhost:3000/admin/login",
-    );
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
+    ],
+    [
+      "com ?redirect= incluindo a rota original quando não é /admin",
+      "/admin/trabalhos/123",
+      "http://localhost:3000/admin/login?redirect=%2Fadmin%2Ftrabalhos%2F123",
+    ],
+    [
+      "com ?redirect= incluindo pathname + search original",
+      "/admin/trabalhos/123?tab=fotos",
+      "http://localhost:3000/admin/login?redirect=%2Fadmin%2Ftrabalhos%2F123%3Ftab%3Dfotos",
+    ],
+  ])(
+    "redireciona para /admin/login %s sem chamar /auth/refresh quando o cookie refresh_token está ausente",
+    async (_description, requestPath, expectedLocation) => {
+      const fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
 
-  it("mint bem-sucedido: repassa Set-Cookie rotacionado e injeta o header interno do access token", async () => {
+      const { proxy } = await import("./proxy");
+      const request = buildRequest(requestPath);
+
+      const response = await proxy(request);
+
+      expect(response.status).toBe(307);
+      expect(response.headers.get("location")).toBe(expectedLocation);
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("mint bem-sucedido: repassa Set-Cookie rotacionado, injeta o header interno do access token e propaga os headers de pathname/search", async () => {
     const responseHeaders = new Headers();
     responseHeaders.append(
       "set-cookie",
@@ -70,10 +104,9 @@ describe("proxy (camada 1 de proteção /admin/* + mint do access token)", () =>
     vi.stubGlobal("fetch", fetchMock);
 
     const { proxy } = await import("./proxy");
-    const request = buildRequest(
-      "/admin",
-      "refresh_token=rt-1; csrf_token=csrf-1",
-    );
+    const request = buildRequest("/admin/trabalhos/123", {
+      cookieHeader: "refresh_token=rt-1; csrf_token=csrf-1",
+    });
 
     const response = await proxy(request);
 
@@ -99,6 +132,13 @@ describe("proxy (camada 1 de proteção /admin/* + mint do access token)", () =>
     // O header interno do access token nunca deve ser exposto na resposta
     // real enviada ao navegador.
     expect(response.headers.get("x-carshop-access-token")).toBeNull();
+
+    expect(
+      response.headers.get(`x-middleware-request-${REDIRECT_PATHNAME_HEADER}`),
+    ).toBe("/admin/trabalhos/123");
+    expect(
+      response.headers.get(`x-middleware-request-${REDIRECT_SEARCH_HEADER}`),
+    ).toBe("");
   });
 
   it("mint sem csrf_token no cookie: não envia X-CSRF-Token", async () => {
@@ -110,7 +150,7 @@ describe("proxy (camada 1 de proteção /admin/* + mint do access token)", () =>
     vi.stubGlobal("fetch", fetchMock);
 
     const { proxy } = await import("./proxy");
-    const request = buildRequest("/admin", "refresh_token=rt-1");
+    const request = buildRequest("/admin", { cookieHeader: "refresh_token=rt-1" });
 
     await proxy(request);
 
@@ -131,10 +171,9 @@ describe("proxy (camada 1 de proteção /admin/* + mint do access token)", () =>
     vi.stubGlobal("fetch", fetchMock);
 
     const { proxy } = await import("./proxy");
-    const request = buildRequest(
-      "/admin",
-      "refresh_token=expired-rt; csrf_token=csrf-1",
-    );
+    const request = buildRequest("/admin", {
+      cookieHeader: "refresh_token=expired-rt; csrf_token=csrf-1",
+    });
 
     const response = await proxy(request);
 
@@ -155,7 +194,7 @@ describe("proxy (camada 1 de proteção /admin/* + mint do access token)", () =>
     vi.stubGlobal("fetch", fetchMock);
 
     const { proxy } = await import("./proxy");
-    const request = buildRequest("/admin", "refresh_token=rt-1");
+    const request = buildRequest("/admin", { cookieHeader: "refresh_token=rt-1" });
 
     const response = await proxy(request);
 
@@ -181,7 +220,7 @@ describe("proxy (camada 1 de proteção /admin/* + mint do access token)", () =>
     vi.stubGlobal("fetch", fetchMock);
 
     const { proxy } = await import("./proxy");
-    const request = buildRequest("/admin", "refresh_token=rt-1");
+    const request = buildRequest("/admin", { cookieHeader: "refresh_token=rt-1" });
 
     const response = await proxy(request);
 
@@ -189,5 +228,32 @@ describe("proxy (camada 1 de proteção /admin/* + mint do access token)", () =>
     expect(response.headers.get("set-cookie")).toBe(
       "refresh_token=rt-2; HttpOnly; Path=/",
     );
+  });
+
+  it("nunca confia em x-carshop-pathname/x-carshop-search enviados pelo client como header de entrada", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: new Headers(),
+      json: async () => ({ accessToken: "access-token-1" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { proxy } = await import("./proxy");
+    const request = buildRequest("/admin/trabalhos/123", {
+      cookieHeader: "refresh_token=rt-1",
+      extraHeaders: {
+        [REDIRECT_PATHNAME_HEADER]: "/forjado",
+        [REDIRECT_SEARCH_HEADER]: "?forjado=1",
+      },
+    });
+
+    const response = await proxy(request);
+
+    expect(
+      response.headers.get(`x-middleware-request-${REDIRECT_PATHNAME_HEADER}`),
+    ).toBe("/admin/trabalhos/123");
+    expect(
+      response.headers.get(`x-middleware-request-${REDIRECT_SEARCH_HEADER}`),
+    ).toBe("");
   });
 });

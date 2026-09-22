@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 
@@ -11,5 +11,9 @@ import { AuthProvider } from "@/lib/auth/AuthProvider";
 export default function AdminLoginLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
-  return <AuthProvider initialUser={null}>{children}</AuthProvider>;
+  return (
+    <Suspense fallback={null}>
+      <AuthProvider initialUser={null}>{children}</AuthProvider>
+    </Suspense>
+  );
 }
