@@ -38,3 +38,40 @@ export async function createWork(payload: CreateWorkPayload): Promise<Work> {
 export async function deleteWork(workId: string): Promise<void> {
   await http.delete(`/admin/works/${workId}`);
 }
+
+/**
+ * Payload de atualização de `Work` (`PATCH /admin/works/:workId`,
+ * CARSHOP-135): subconjunto opcional dos campos aceitos por criação. Não
+ * inclui `images`/`metadata`/`seo`, que não são editáveis por este
+ * endpoint.
+ */
+export type UpdateWorkPayload = Partial<
+  Pick<
+    CreateWorkPayload,
+    "slug" | "title" | "description" | "category" | "tags" | "status"
+  >
+>;
+
+/** `PATCH /admin/works/:workId` (admin, autenticado). */
+export async function updateWork(
+  workId: string,
+  payload: UpdateWorkPayload,
+): Promise<Work> {
+  const response = await http.patch<Work>(`/admin/works/${workId}`, payload);
+
+  return response.data;
+}
+
+/**
+ * Localiza um `Work` pelo `slug` dentro de uma listagem já carregada
+ * (função pura, sem I/O). Usada pela edição admin (CARSHOP-32) sobre o
+ * resultado de `getAdminWorks()` — que já inclui rascunhos — em vez de uma
+ * nova chamada HTTP dedicada a busca por slug (que não existe no backend).
+ */
+export function findAdminWorkBySlug(
+  works: Work[],
+  slug: string,
+): Work | undefined {
+  return works.find((work) => work.slug === slug);
+}
+

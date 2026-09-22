@@ -102,13 +102,16 @@ describe("WorkListItem", () => {
     expect(statusBadge).toHaveAttribute("data-slot", "badge");
   });
 
-  it("exibe um botão 'Editar' desabilitado (fluxo CARSHOP-32 pendente)", () => {
+  it("exibe um link 'Editar' habilitado apontando para a rota de edição (CARSHOP-32)", () => {
     render(<WorkListItem work={work} />);
 
-    const editButton = screen.getByRole("button", { name: "Editar" });
-    expect(editButton).toBeDisabled();
-    expect(editButton).toHaveAttribute("aria-disabled", "true");
-    expect(editButton).toHaveAttribute("title", "Disponível em breve");
+    const editLink = screen.getByRole("link", { name: "Editar" });
+    expect(editLink).toHaveAttribute(
+      "href",
+      "/admin/trabalhos/restauracao-fusca/editar",
+    );
+    expect(editLink).not.toHaveAttribute("aria-disabled");
+    expect(editLink).not.toHaveAttribute("title");
   });
 
   it("não chama deleteWork apenas ao clicar em 'Excluir work' (exige confirmação)", async () => {
