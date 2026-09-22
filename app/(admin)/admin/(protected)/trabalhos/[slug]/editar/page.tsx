@@ -20,7 +20,7 @@ type EditWorkPageProps = {
 
 // Server Component fino: Axios é client-only (ADR-001), então o
 // carregamento do work por slug acontece inteiramente em `EditWorkForm`.
-export default async function EditWorkPage({ params }: EditWorkPageProps) {
+export default async function EditWorkPage({ params }: Readonly<EditWorkPageProps>) {
   const { slug } = await params;
 
   return (
