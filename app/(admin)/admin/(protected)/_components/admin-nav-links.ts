@@ -10,5 +10,6 @@ export type AdminNavLinkItem = {
 
 export const adminNavLinks: readonly AdminNavLinkItem[] = [
   { href: "/admin", label: "Dashboard" },
+  { href: "/admin/trabalhos", label: "Trabalhos" },
   { href: "/admin/trabalhos/novo", label: "Novo trabalho" },
 ];

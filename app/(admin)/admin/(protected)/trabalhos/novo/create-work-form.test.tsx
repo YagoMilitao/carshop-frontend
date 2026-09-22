@@ -34,7 +34,7 @@ vi.mock("sonner", () => ({
 import { CreateWorkForm } from "./create-work-form";
 
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText("Slug"), " restauracao-fusca ");
+  await user.type(screen.getByLabelText("Identificador da URL"), " restauracao-fusca ");
   await user.type(screen.getByLabelText("Título"), " Restauração Fusca ");
   await user.type(
     screen.getByLabelText("Descrição"),
@@ -93,7 +93,7 @@ describe("CreateWorkForm", () => {
     await user.click(screen.getByRole("button", { name: "Criar trabalho" }));
 
     expect(await screen.findByText("Informe o título.")).toBeInTheDocument();
-    expect(screen.getByText("Informe o slug.")).toBeInTheDocument();
+    expect(screen.getByText("Informe o identificador da URL.")).toBeInTheDocument();
     expect(screen.getByText("Informe a descrição.")).toBeInTheDocument();
     expect(screen.getByText("Informe a categoria.")).toBeInTheDocument();
     expect(screen.getByText("Informe ao menos uma tag.")).toBeInTheDocument();
@@ -110,7 +110,7 @@ describe("CreateWorkForm", () => {
 
     render(<CreateWorkForm />);
 
-    fireEvent.change(screen.getByLabelText("Slug"), {
+    fireEvent.change(screen.getByLabelText("Identificador da URL"), {
       target: { value: "   " },
     });
     fireEvent.change(screen.getByLabelText("Título"), {
@@ -127,7 +127,7 @@ describe("CreateWorkForm", () => {
     });
     await user.click(screen.getByRole("button", { name: "Criar trabalho" }));
 
-    expect(await screen.findByText("Informe o slug.")).toBeInTheDocument();
+    expect(await screen.findByText("Informe o identificador da URL.")).toBeInTheDocument();
     expect(screen.getByText("Informe o título.")).toBeInTheDocument();
     expect(screen.getByText("Informe a descrição.")).toBeInTheDocument();
     expect(screen.getByText("Informe a categoria.")).toBeInTheDocument();
@@ -140,7 +140,7 @@ describe("CreateWorkForm", () => {
 
     render(<CreateWorkForm />);
 
-    await user.type(screen.getByLabelText("Slug"), "restauracao-fusca");
+    await user.type(screen.getByLabelText("Identificador da URL"), "restauracao-fusca");
     await user.type(screen.getByLabelText("Título"), "a".repeat(121));
     await user.type(
       screen.getByLabelText("Descrição"),
@@ -168,7 +168,7 @@ describe("CreateWorkForm", () => {
 
     render(<CreateWorkForm />);
 
-    await user.type(screen.getByLabelText("Slug"), "restauracao-fusca");
+    await user.type(screen.getByLabelText("Identificador da URL"), "restauracao-fusca");
     await user.type(screen.getByLabelText("Título"), "Restauração Fusca");
     fireEvent.change(screen.getByLabelText("Descrição"), {
       target: { value: "a".repeat(5001) },

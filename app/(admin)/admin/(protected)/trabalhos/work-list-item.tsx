@@ -20,7 +20,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Work } from "@/lib/api/works";
 
-import { revalidateWorksTag } from "../actions";
+import { revalidateWorksTag } from "../../actions";
+import { DeleteWorkDialog } from "./_components/delete-work-dialog";
 
 function formatBytes(bytes: number): string {
   return `${Math.round(bytes / (1024 * 1024))}MB`;
@@ -32,6 +33,9 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeletePending, setIsDeletePending] = useState(false);
 
   const runMutation = async (mutation: () => Promise<void>) => {
     setError(null);
@@ -51,8 +55,25 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
     }
   };
 
-  const onDeleteWork = () => {
-    void runMutation(() => deleteWork(work.id));
+  const onConfirmDeleteWork = () => {
+    setDeleteError(null);
+    setIsDeletePending(true);
+
+    void (async () => {
+      try {
+        await deleteWork(work.id);
+        await Promise.allSettled([
+          queryClient.invalidateQueries({ queryKey: adminWorksQueryKey }),
+          revalidateWorksTag(),
+        ]);
+        setIsDeleteDialogOpen(false);
+        router.refresh();
+      } catch (mutationError) {
+        setDeleteError(getApiErrorMessage(mutationError));
+      } finally {
+        setIsDeletePending(false);
+      }
+    })();
   };
 
   const onDeleteImage = (imageId: string) => {
@@ -102,14 +123,26 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
                 {work.status}
               </Badge>
             </div>
-            <Button
-              type="button"
-              variant="destructive"
-              disabled={isPending}
-              onClick={onDeleteWork}
-            >
-              Excluir work
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled
+                aria-disabled="true"
+                title="Disponível em breve"
+              >
+                Editar
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={isPending}
+                onClick={() => setIsDeleteDialogOpen(true)}
+              >
+                Excluir work
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -151,6 +184,20 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
           )}
         </CardContent>
       </Card>
+
+      <DeleteWorkDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={(open) => {
+          setIsDeleteDialogOpen(open);
+          if (!open) {
+            setDeleteError(null);
+          }
+        }}
+        workTitle={work.title}
+        onConfirm={onConfirmDeleteWork}
+        isPending={isDeletePending}
+        error={deleteError}
+      />
     </li>
   );
 }

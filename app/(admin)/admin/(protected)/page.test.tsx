@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
-vi.mock("./admin-work-list", () => ({
-  AdminWorkList: () => <div data-testid="admin-work-list" />,
-}));
-
 vi.mock("./comment-moderation-form", () => ({
   CommentModerationForm: () => <div data-testid="comment-moderation-form" />,
 }));
@@ -24,7 +20,7 @@ describe("AdminPage (protegida)", () => {
     expect(metadata.robots).toEqual({ index: false, follow: false });
   });
 
-  it("renderiza o título 'Dashboard' e delega a listagem autenticada ao AdminWorkList", async () => {
+  it("renderiza o título 'Dashboard' e o CommentModerationForm", async () => {
     const { default: AdminPage } = await import("./page");
 
     render(<AdminPage />);
@@ -32,18 +28,18 @@ describe("AdminPage (protegida)", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Dashboard" }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("admin-work-list")).toBeInTheDocument();
+    expect(screen.getByTestId("comment-moderation-form")).toBeInTheDocument();
   });
 
-  it("renderiza o link para /admin/trabalhos/novo e o CommentModerationForm", async () => {
+  it("não duplica mais a listagem de works (movida para /admin/trabalhos)", async () => {
     const { default: AdminPage } = await import("./page");
 
     render(<AdminPage />);
 
+    expect(screen.queryByTestId("admin-work-list")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Novo trabalho" }),
-    ).toHaveAttribute("href", "/admin/trabalhos/novo");
-    expect(screen.getByTestId("comment-moderation-form")).toBeInTheDocument();
+      screen.queryByRole("link", { name: "Novo trabalho" }),
+    ).not.toBeInTheDocument();
   });
 
   it("renderiza DashboardSummary (visão geral) e PendingCommentsList (comentários pendentes)", async () => {
