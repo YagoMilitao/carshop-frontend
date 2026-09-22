@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type ChangeEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -124,15 +125,10 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
               </Badge>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled
-                aria-disabled="true"
-                title="Disponível em breve"
-              >
-                Editar
+              <Button type="button" variant="outline" size="sm" asChild>
+                <Link href={`/admin/trabalhos/${work.slug}/editar`}>
+                  Editar
+                </Link>
               </Button>
               <Button
                 type="button"

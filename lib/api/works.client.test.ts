@@ -12,12 +12,33 @@ vi.mock("@/lib/api/http", () => ({
   },
 }));
 
+import type { Work } from "@/lib/api/works";
+
 import {
   createWork,
   deleteWork,
+  findAdminWorkBySlug,
   getAdminWorks,
+  updateWork,
   type CreateWorkPayload,
 } from "./works.client";
+
+function buildWork(overrides: Partial<Work> = {}): Work {
+  return {
+    id: "1",
+    slug: "restauracao-fusca",
+    title: "Restauração Fusca",
+    description: "Descrição",
+    category: "Estofamento",
+    tags: ["fusca"],
+    images: [],
+    status: "draft",
+    createdAt: "2024-01-01T00:00:00.000Z",
+    updatedAt: "2024-01-01T00:00:00.000Z",
+    deletedAt: null,
+    ...overrides,
+  };
+}
 
 describe("lib/api/works.client", () => {
   beforeEach(() => {
@@ -78,6 +99,46 @@ describe("lib/api/works.client", () => {
           status: "draft",
         }),
       ).rejects.toBe(apiError);
+    });
+  });
+
+  describe("findAdminWorkBySlug", () => {
+    it("retorna o work correspondente ao slug informado", () => {
+      const target = buildWork({ id: "2", slug: "banco-couro" });
+      const works = [buildWork({ id: "1", slug: "restauracao-fusca" }), target];
+
+      expect(findAdminWorkBySlug(works, "banco-couro")).toEqual(target);
+    });
+
+    it("retorna undefined quando nenhum work corresponde ao slug", () => {
+      const works = [buildWork({ id: "1", slug: "restauracao-fusca" })];
+
+      expect(findAdminWorkBySlug(works, "inexistente")).toBeUndefined();
+    });
+
+    it("retorna undefined para uma listagem vazia", () => {
+      expect(findAdminWorkBySlug([], "restauracao-fusca")).toBeUndefined();
+    });
+  });
+
+  describe("updateWork", () => {
+    it("rejeita com um erro explicando o bloqueio da CARSHOP-135, sem chamar a API", async () => {
+      const payload: CreateWorkPayload = {
+        slug: "restauracao-fusca",
+        title: "Restauração",
+        description: "Descrição",
+        category: "Estofamento",
+        tags: ["fusca"],
+        status: "draft",
+      };
+
+      await expect(updateWork("work-1", payload)).rejects.toThrow(
+        /CARSHOP-135/,
+      );
+
+      expect(getMock).not.toHaveBeenCalled();
+      expect(postMock).not.toHaveBeenCalled();
+      expect(deleteMock).not.toHaveBeenCalled();
     });
   });
 
