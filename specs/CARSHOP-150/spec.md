@@ -3,10 +3,10 @@
 ## Origem
 
 Task Notion CARSHOP-150 (Stack: Frontend · Component: Admin UI, Auth ·
-Priority: High · Sprint 6 · Status: To Do · Type: Bug). Ver
+Priority: High · Sprint 6 · Status: Review · Type: Bug). Ver
 Description/DoD/Technical Notes originais no Notion — não duplicados aqui.
 
-## CONFLITO A SINALIZAR AO USUÁRIO (bloqueante para seguir sem validação)
+## Conflito identificado durante a especificação
 
 A causa raiz descrita na Description do Notion **não corresponde mais ao
 estado atual do código**:
@@ -28,10 +28,11 @@ Ou seja, o mecanismo exato descrito como causa raiz na task já foi
 substituído por outro fluxo (Bearer token mintado por camada de borda), numa
 correção anterior (CARSHOP-152) que nem cita CARSHOP-150 no seu histórico.
 
-**Isso não significa que o bug relatado (loop em `/admin/login`) esteja
-resolvido** — apenas que o mecanismo mudou de lugar. Ver próxima seção.
+Naquele momento, isso não significava que o bug relatado (loop em
+`/admin/login`) estivesse resolvido — apenas que o mecanismo havia mudado de
+lugar. O diagnóstico pré-implementação é registrado na próxima seção.
 
-## Estado atual real do fluxo de sessão (confirmado no repositório)
+## Diagnóstico pré-implementação (confirmado no repositório)
 
 - `proxy.ts` (Edge, camada 1, `matcher: ["/admin/:path*"]`): lê o cookie
   `refresh_token` da requisição recebida pelo Next.js. Se ausente, redireciona
@@ -41,16 +42,17 @@ resolvido** — apenas que o mecanismo mudou de lugar. Ver próxima seção.
 - `app/(admin)/admin/(protected)/layout.tsx` (camada 2): chama
   `getSession()`, que só lê esse header interno e chama
   `GET /auth/session` com `Authorization: Bearer`. Nunca envia cookie.
-- `lib/api/http.ts` (client-side, Axios): `baseURL` é
+- Antes da CARSHOP-150, `lib/api/http.ts` (client-side, Axios) usava
+  `baseURL` igual a
   `NEXT_PUBLIC_API_PROXY_PATH` (se definida) ou, caso contrário,
-  `NEXT_PUBLIC_API_URL` direto. `NEXT_PUBLIC_API_PROXY_PATH` é **opcional e
+  `NEXT_PUBLIC_API_URL` direto. `NEXT_PUBLIC_API_PROXY_PATH` era **opcional e
   vazia por padrão** (ver `.env.example`).
-- `next.config.mjs` já implementa um proxy de `rewrites()` (`/api-proxy/:path*`
-  → backend), mas é **dev-only** (`if (process.env.NODE_ENV !== "development") return []`)
-  e só entra em ação se `NEXT_PUBLIC_API_PROXY_PATH` estiver configurada para
-  apontar para esse caminho — não é o comportamento padrão.
+- Antes da CARSHOP-150, `next.config.mjs` já implementava um proxy de
+  `rewrites()` (`/api-proxy/:path*` → backend), mas era **dev-only**
+  (`if (process.env.NODE_ENV !== "development") return []`) e só era usado
+  pelo cliente se `NEXT_PUBLIC_API_PROXY_PATH` apontasse para esse caminho.
 
-### Onde o loop cross-origin ainda ocorre de fato hoje
+### Como o loop cross-origin ocorria antes do fix
 
 1. **Dev local sem `NEXT_PUBLIC_API_PROXY_PATH` configurada** (comportamento
    padrão do `.env.example`, ex. frontend em `:3000` e backend em `:3333`):
@@ -60,34 +62,35 @@ resolvido** — apenas que o mecanismo mudou de lugar. Ver próxima seção.
    (`proxy.ts`, rodando na origem do frontend) tenta ler
    `request.cookies.get("refresh_token")`, o cookie está ausente →
    redireciona para `/admin/login` mesmo com login bem-sucedido → loop.
-2. **Produção sem domínio compartilhado nem proxy reverso equivalente**: o
-   `rewrites()` de `next.config.mjs` é explicitamente dev-only; não há
-   nenhuma configuração equivalente para produção nem evidência de domínio
-   compartilhado com `Set-Cookie: Domain=...` apropriado. Se frontend e
-   backend de produção estiverem em origens diferentes, o mesmo problema se
-   repete.
+2. **Produção sem proxy reverso equivalente**: o `rewrites()` de
+   `next.config.mjs` era explicitamente dev-only. O contrato confirmado do
+   backend não define `Domain`, portanto os cookies são host-only. Se
+   frontend e backend de produção estiverem em origens diferentes, o mesmo
+   problema se repete.
 
-Ou seja: o sintoma relatado no DoD ("login bem-sucedido... redireciona
-corretamente... sem loop, tanto em dev local quanto no ambiente hospedado")
-**ainda é um problema real e reproduzível**, mas a causa raiz técnica exata e
-o ponto de código afetado mudaram desde que a Description foi escrita — a
-causa agora está em `proxy.ts` (leitura de `refresh_token` bruto da
-requisição do navegador) e na configuração de proxy/domínio ser opcional e
-dev-only, não em `getSession()` repassando cookie ao backend.
+Ou seja: antes da implementação, o sintoma relatado no DoD ("login
+bem-sucedido... redireciona corretamente... sem loop, tanto em dev local
+quanto no ambiente hospedado") era real e reproduzível, mas a causa raiz
+técnica havia mudado desde que a Description foi escrita. O problema estava
+na combinação entre `proxy.ts` ler o `refresh_token` recebido pelo frontend e
+o proxy same-origin ser opcional/dev-only, não em `getSession()` repassar
+cookie ao backend.
 
-## `docs/api-contract.md` / ADR-018 / ADR-016 (fonte preferencial indicada)
+## Contrato de cookies do backend (confirmado)
 
-Conforme `docs/context/notion.md`, o contrato real de cookies/CSRF/SameSite
-do `carshop-backend` (`docs/api-contract.md`, ADR-018/ADR-016) deveria ser
-preferido às Technical Notes em caso de conflito. **Esses arquivos não foram
-encontrados neste repositório** (busca por `**/api-contract.md`, `**/ADR-018*`,
-`**/ADR-016*` não retornou resultados). Não há como confirmar atributos reais
-de cookie (`SameSite`, `Domain`, `Secure`) do backend a partir deste
-repositório frontend. Isso é uma dependência/bloqueio a registrar: a decisão
-do `architect` entre as abordagens (a)/(b)/(c) do Technical Notes depende de
-confirmar esses atributos no repositório/documentação do `carshop-backend`
-(fora do escopo deste repo), ou de uma fonte equivalente confirmada com o
-usuário.
+Conforme `docs/context/notion.md`, o contrato real do `carshop-backend` foi
+consultado remotamente em seu `docs/api-contract.md` versionado e cruzado
+com `src/presentation/helpers/auth.cookies.ts` em 2026-09-22. O contrato
+confirmado é:
+
+- `refresh_token`: `HttpOnly`, `Secure`, `SameSite=None`, `Path=/`;
+- `csrf_token`: não `HttpOnly`, `Secure`, `SameSite=None`, `Path=/`;
+- nenhum dos cookies define `Domain`, portanto ambos são host-only.
+
+Esses atributos são compatíveis com o rewrite same-origin adotado: como a
+resposta chega ao navegador pela origem do frontend e não carrega `Domain`,
+os cookies pertencem ao host do frontend e ficam disponíveis em `/admin`.
+Não é necessário normalizar atributos de `Set-Cookie` em um proxy customizado.
 
 ## Relação com tasks correlatas já implementadas
 
@@ -104,27 +107,21 @@ usuário.
   leitura de código atual) — candidatas a contexto histórico via
   `knowledge-reader` no Obsidian.
 
-## Escopo (decisão de arquitetura obrigatória — não implementar sem `architect`)
+## Decisão de arquitetura concluída
 
-Conforme o próprio Technical Notes, há três abordagens possíveis e nenhuma
-deve ser adotada unilateralmente:
+O `architect` avaliou as três abordagens das Technical Notes:
 
 - **(a)** Proxy reverso/rewrites tornando as chamadas de auth same-origin —
-  já existe uma variante *parcial e opcional* disso hoje
-  (`NEXT_PUBLIC_API_PROXY_PATH` + `rewrites()` dev-only). Uma decisão possível
-  é tornar esse padrão obrigatório/default em vez de opt-in, e estendê-lo
-  (ou um equivalente) para produção.
+  **selecionada e implementada** como padrão obrigatório em todos os
+  ambientes, com `baseURL` fixo `/api-proxy` no cliente.
 - **(b)** Domínio compartilhado com `Set-Cookie: Domain=` apropriado em
-  produção — depende de confirmar o contrato real do backend
-  (`docs/api-contract.md`/ADRs do `carshop-backend`, não encontrados neste
-  repo) e de decisão de infraestrutura/deploy fora do escopo deste
-  repositório frontend isolado.
-- **(c)** Revisão mais ampla do fluxo de sessão, potencialmente envolvendo
-  CARSHOP-2/29/122.
+  produção — descartado porque o contrato confirmado usa cookies host-only
+  e essa opção exigiria mudança coordenada de backend/infraestrutura.
+- **(c)** Revisão mais ampla do fluxo de sessão — descartada porque a
+  arquitetura de duas camadas da CARSHOP-152 permanece válida.
 
-O `architect` decide qual abordagem seguir (ou combinação), considerando o
-que já existe (`proxy.ts`, `next.config.mjs`, `lib/env/client.ts`,
-`lib/api/http.ts`) para evitar duplicar mecanismos equivalentes.
+O plano correspondente está persistido em `plan.md` e não altera a lógica de
+`proxy.ts`, `lib/api/auth.server.ts` nem o contrato HTTP do backend.
 
 ## Escopo explicitamente fora desta spec
 
@@ -134,15 +131,14 @@ que já existe (`proxy.ts`, `next.config.mjs`, `lib/env/client.ts`,
 - Migração do backend Express para Next.js Route Handlers — proibido sem
   tarefa arquitetural explícita/aprovação do usuário.
 
-## Arquivos potencialmente afetados (a confirmar pelo `architect`/`plan-writer`)
+## Arquivos definidos no plano
 
-- `proxy.ts`
 - `next.config.mjs`
-- `lib/env/client.ts` (`NEXT_PUBLIC_API_PROXY_PATH`)
+- `lib/env/client.ts`
 - `lib/api/http.ts`
 - `.env.example`
-- Possivelmente `docs/rules/auth.md` (atualização de documentação do fluxo,
-  responsabilidade típica do `developer`/`knowledge-manager` pós-implementação)
+- `docs/rules/auth.md`
+- testes correspondentes.
 
 ## Riscos e dependências
 
@@ -150,13 +146,13 @@ que já existe (`proxy.ts`, `next.config.mjs`, `lib/env/client.ts`,
   explicitamente "nenhuma regressão") — qualquer mudança em `proxy.ts` deve
   manter os testes existentes (`proxy.test.ts`) passando e cobrir os novos
   cenários.
-- Dependência bloqueante: atributos reais de cookie do backend
-  (`SameSite`/`Domain`/`Secure`) não confirmados neste repositório — sem
-  isso, a abordagem (b) não pode ser avaliada com segurança pelo
-  `architect`.
-- Risco de sobreposição com mecanismo já existente
-  (`NEXT_PUBLIC_API_PROXY_PATH`) se a solução for desenhada do zero sem
-  considerar o que já está implementado.
+- Contrato externo: mudanças futuras em `Domain`, `Path`, `SameSite` ou
+  `Secure` no backend precisam ser avaliadas contra o rewrite same-origin;
+  os atributos atuais foram confirmados no contrato versionado e no helper
+  que emite os cookies.
+- Risco de configuração opcional permitir chamadas diretas ao backend —
+  mitigado pela remoção de `NEXT_PUBLIC_API_PROXY_PATH` e pelo `baseURL`
+  fixo `/api-proxy`.
 
 ## Observação de segurança
 
@@ -172,23 +168,16 @@ Justificativa:
   configuração de build (`next.config.mjs`), camada de env/client HTTP
   (`lib/env/client.ts`, `lib/api/http.ts`), e possivelmente configuração de
   infraestrutura/deploy fora deste repositório.
-- Há uma dependência bloqueante não resolvida (contrato real de cookies do
-  backend, `docs/api-contract.md`/ADRs não encontrados neste repo) que afeta
-  diretamente qual abordagem é viável.
+- O contrato de cookies precisou ser validado no repositório remoto do
+  backend por afetar diretamente a viabilidade do proxy same-origin.
 - Risco real de regressão em um fluxo de autenticação já mexido por duas
   tasks recentes (CARSHOP-151, CARSHOP-152), exigindo plano cuidadoso de
   sequenciamento e testes.
 
 ## Próximos agentes necessários
 
-- **`knowledge-reader`**: recomendado, para consultar o vault Obsidian
-  (`/Users/yagomilitao/DEV/YagoMilitao/CarShop`) sobre decisões/histórico
-  prévios do fluxo de sessão (CARSHOP-2, CARSHOP-29, CARSHOP-122) antes da
-  decisão do `architect`.
-- **`architect`** (obrigatório): decidir entre as abordagens (a)/(b)/(c) (ou
-  combinação), considerando o mecanismo `NEXT_PUBLIC_API_PROXY_PATH` já
-  existente e a dependência bloqueante de contrato de cookie do backend.
-- **`plan-writer`** (obrigatório, task NON-TRIVIAL): persistir `plan.md` com
-  base na decisão do `architect`, sequenciando mudanças em `proxy.ts`,
-  configuração de env/build e testes, sem regressão na proteção de rota
-  `/admin/*`.
+- **`architect`**: decisão concluída pela abordagem (a), proxy same-origin
+  obrigatório em todos os ambientes.
+- **`plan-writer`**: plano persistido em `plan.md` e implementado.
+- **`tester`/`reviewer`**: validar a implementação e os follow-ups do review,
+  incluindo URL do backend com barra final e o contrato confirmado de cookies.

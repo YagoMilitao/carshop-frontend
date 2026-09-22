@@ -51,6 +51,19 @@ describe("next.config.mjs — rewrites (CARSHOP-150, proxy same-origin obrigató
     ]);
   });
 
+  it("remove barras finais da URL do backend antes de montar o destino", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "https://api.carshop.example.com///";
+
+    const rewrites = await nextConfig.rewrites!();
+
+    expect(rewrites).toEqual([
+      {
+        source: "/api-proxy/:path*",
+        destination: "https://api.carshop.example.com/:path*",
+      },
+    ]);
+  });
+
   it("retorna lista vazia quando NEXT_PUBLIC_API_URL não está definida, independente do ambiente", async () => {
     vi.stubEnv("NODE_ENV", "production");
     delete process.env.NEXT_PUBLIC_API_URL;

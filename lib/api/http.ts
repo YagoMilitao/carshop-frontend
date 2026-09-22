@@ -3,9 +3,10 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 /**
  * Caminho relativo same-origin fixo, obrigatório em qualquer ambiente
  * (dev e produção). Repassado pelo proxy de `rewrites()` em
- * `next.config.mjs` (mesmo prefixo `/api-proxy`), para que cookies HttpOnly
- * host-bound (refresh_token/csrf_token) do backend remoto sejam gravados
- * sob o host do frontend — nunca depende de nenhuma env client-side.
+ * `next.config.mjs` (mesmo prefixo `/api-proxy`), para que os cookies
+ * host-bound do backend remoto (`refresh_token` HttpOnly e `csrf_token`
+ * legível pelo JS) sejam gravados sob o host do frontend — nunca depende
+ * de nenhuma env client-side.
  */
 const API_PROXY_BASE_PATH = "/api-proxy";
 

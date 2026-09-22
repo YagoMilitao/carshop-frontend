@@ -10,7 +10,7 @@ import { z } from "zod";
  * aplicação deve ler essas variáveis diretamente. `next.config.mjs` é uma
  * exceção documentada (roda fora do runtime Next/React, na camada de
  * configuração/build) — usa `process.env.NEXT_PUBLIC_API_URL` diretamente
- * para montar o proxy de dev em `rewrites()`.
+ * para montar o proxy same-origin de todos os ambientes em `rewrites()`.
  */
 const clientEnvSchema = z.object({
   NEXT_PUBLIC_API_URL: z.string().url(),
