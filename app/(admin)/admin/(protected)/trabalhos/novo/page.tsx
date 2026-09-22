@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function NewWorkPage() {
   return (
-    <PageSection as="main" spacing="compact" container="none">
+    <PageSection spacing="compact" container="none">
       <Container variant="reading" className="flex flex-col gap-10">
         <h1 className="text-heading-2 text-foreground">Novo trabalho</h1>
 

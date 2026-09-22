@@ -45,6 +45,15 @@ vi.mock("@/lib/auth/AuthProvider", () => ({
   ),
 }));
 
+// `AdminShell` (sidebar/header/AdminAccountMenu, CARSHOP-152) é testado
+// isoladamente em `_components/admin-shell.test.tsx` — aqui mockado para
+// isolar apenas a lógica de redirect/render deste Server Component.
+vi.mock("./_components/admin-shell", () => ({
+  AdminShell: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="admin-shell">{children}</div>
+  ),
+}));
+
 function buildHeaders(entries: Record<string, string>): Headers {
   return new Headers(entries);
 }
@@ -100,8 +109,11 @@ describe("ProtectedAdminLayout", () => {
   );
 
   it("renderiza AuthProvider com initialUser e os children quando getSession() tem sucesso, sem chamar redirect", async () => {
-    const user = { id: "1", email: "admin@carshop.com", name: "Admin" };
-    getSessionMock.mockResolvedValue({ user });
+    const user = { id: "session-1", email: "admin@carshop.com" };
+    getSessionMock.mockResolvedValue({
+      user,
+      expiresAt: "2026-03-30T12:00:00.000Z",
+    });
     const { default: ProtectedAdminLayout } = await import("./layout");
 
     render(await ProtectedAdminLayout({ children: <p>painel admin</p> }));

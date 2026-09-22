@@ -11,6 +11,8 @@ import {
   buildLoginUrlWithRedirect,
 } from "@/lib/auth/redirect";
 
+import { AdminShell } from "./_components/admin-shell";
+
 // Dados de sessão (`getSession()`) nunca podem ser estáticos/cacheados —
 // dependem do cookie da request atual.
 export const dynamic = "force-dynamic";
@@ -19,6 +21,10 @@ export const dynamic = "force-dynamic";
  * Camada 2 de proteção das rotas `/admin/*` (complementar ao `proxy`,
  * camada 1). Engloba todas as rotas admin exceto `/admin/login`, que vive
  * fora deste grupo de rota — ver `app/(admin)/admin/layout.tsx`.
+ *
+ * Extensão CARSHOP-152: passa a envolver `children` em `<AdminShell>`
+ * (sidebar + header do dashboard admin), mantendo `getSession()`/
+ * `redirect`/`AuthProvider` inalterados.
  */
 export default async function ProtectedAdminLayout({
   children,
@@ -34,5 +40,9 @@ export default async function ProtectedAdminLayout({
     redirect(buildLoginUrlWithRedirect(pathname, search));
   }
 
-  return <AuthProvider initialUser={session.user}>{children}</AuthProvider>;
+  return (
+    <AuthProvider initialUser={session.user}>
+      <AdminShell>{children}</AdminShell>
+    </AuthProvider>
+  );
 }

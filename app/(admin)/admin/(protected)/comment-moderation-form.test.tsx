@@ -7,21 +7,22 @@ const approveCommentMock = vi.fn();
 const updateCommentMock = vi.fn();
 const deleteCommentMock = vi.fn();
 const revalidateCommentsTagMock = vi.fn();
-const routerRefreshMock = vi.fn();
+const invalidateQueriesMock = vi.fn();
 
 vi.mock("@/lib/api/comments.client", () => ({
+  adminCommentsQueryKey: (status?: string) => ["admin", "comments", status],
   approveComment: (commentId: string) => approveCommentMock(commentId),
   updateComment: (commentId: string, payload: unknown) =>
     updateCommentMock(commentId, payload),
   deleteComment: (commentId: string) => deleteCommentMock(commentId),
 }));
 
-vi.mock("../actions", () => ({
-  revalidateCommentsTag: (workId: string) => revalidateCommentsTagMock(workId),
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ invalidateQueries: invalidateQueriesMock }),
 }));
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: routerRefreshMock }),
+vi.mock("../actions", () => ({
+  revalidateCommentsTag: (workId: string) => revalidateCommentsTagMock(workId),
 }));
 
 import { CommentModerationForm } from "./comment-moderation-form";
@@ -40,6 +41,7 @@ async function fillIds(
 describe("CommentModerationForm (opera por commentId/workId conhecidos — sem endpoint de listagem)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    invalidateQueriesMock.mockResolvedValue(undefined);
   });
 
   it("exige commentId e workId antes de qualquer ação (não chama a API sem eles)", async () => {
@@ -68,7 +70,9 @@ describe("CommentModerationForm (opera por commentId/workId conhecidos — sem e
       expect(approveCommentMock).toHaveBeenCalledWith("c-1"),
     );
     expect(revalidateCommentsTagMock).toHaveBeenCalledWith("work-1");
-    expect(routerRefreshMock).toHaveBeenCalledTimes(1);
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["admin", "comments", "PENDING"],
+    });
   });
 
   it("edita o conteúdo do comentário via submit do formulário e invalida o cache", async () => {
@@ -91,6 +95,9 @@ describe("CommentModerationForm (opera por commentId/workId conhecidos — sem e
       }),
     );
     expect(revalidateCommentsTagMock).toHaveBeenCalledWith("work-1");
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["admin", "comments", "PENDING"],
+    });
   });
 
   it("exclui o comentário e invalida o cache", async () => {
@@ -107,6 +114,9 @@ describe("CommentModerationForm (opera por commentId/workId conhecidos — sem e
       expect(deleteCommentMock).toHaveBeenCalledWith("c-1"),
     );
     expect(revalidateCommentsTagMock).toHaveBeenCalledWith("work-1");
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["admin", "comments", "PENDING"],
+    });
   });
 
   it("exibe a mensagem de erro da API quando a moderação falha, sem invalidar o cache", async () => {
@@ -130,5 +140,6 @@ describe("CommentModerationForm (opera por commentId/workId conhecidos — sem e
       "Comentário não encontrado.",
     );
     expect(revalidateCommentsTagMock).not.toHaveBeenCalled();
+    expect(invalidateQueriesMock).not.toHaveBeenCalled();
   });
 });

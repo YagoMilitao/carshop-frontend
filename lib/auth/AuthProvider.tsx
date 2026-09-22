@@ -17,7 +17,7 @@ import {
   logout as logoutRequest,
   type LoginPayload,
 } from "@/lib/api/auth.client";
-import type { User } from "@/lib/api/auth.server";
+import type { User } from "@/lib/api/auth";
 import { onAuthFailure, setAccessToken } from "@/lib/api/http";
 import {
   buildLoginUrlWithRedirect,

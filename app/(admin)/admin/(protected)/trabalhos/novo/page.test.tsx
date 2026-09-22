@@ -19,5 +19,6 @@ describe("NewWorkPage (protegida)", () => {
       screen.getByRole("heading", { name: "Novo trabalho" }),
     ).toBeInTheDocument();
     expect(screen.getByTestId("create-work-form")).toBeInTheDocument();
+    expect(screen.queryByRole("main")).not.toBeInTheDocument();
   });
 });

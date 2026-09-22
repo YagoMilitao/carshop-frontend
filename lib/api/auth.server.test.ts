@@ -2,16 +2,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 /**
  * `lib/api/auth.server.ts` declara `import "server-only"` — mockado como
- * no-op, mesmo padrão de `lib/api/works.test.ts`. `next/headers` (`cookies`)
- * é mockado para controlar o `Cookie` header repassado manualmente ao
- * backend. `fetch` é mockado — nenhuma chamada de rede real.
+ * no-op, mesmo padrão de `lib/api/works.test.ts`. `next/headers` (`headers`)
+ * é mockado para controlar o header interno `x-carshop-access-token`
+ * (injetado por `proxy.ts` antes do render — ver CARSHOP-152).
+ * `fetch` é mockado — nenhuma chamada de rede real.
  */
 vi.mock("server-only", () => ({}));
 
-const cookiesMock = vi.fn();
+const headersMock = vi.fn();
 
 vi.mock("next/headers", () => ({
-  cookies: () => cookiesMock(),
+  headers: () => headersMock(),
 }));
 
 describe("lib/api/auth.server", () => {
@@ -21,18 +22,34 @@ describe("lib/api/auth.server", () => {
     vi.clearAllMocks();
   });
 
-  it("repassa o header Cookie da request atual para GET /auth/session", async () => {
-    cookiesMock.mockResolvedValue({
-      toString: () => "refresh_token=rt-1; csrf_token=csrf-1",
-    });
+  it("retorna null quando o header interno x-carshop-access-token está ausente (proxy não mintou access token)", async () => {
+    headersMock.mockResolvedValue(new Headers());
 
-    const session = {
-      user: { id: "1", email: "admin@carshop.com", name: "Admin" },
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { getSession } = await import("./auth.server");
+
+    const result = await getSession();
+
+    expect(result).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("envia Authorization: Bearer <accessToken> para GET /auth/session quando o header interno está presente", async () => {
+    headersMock.mockResolvedValue(
+      new Headers({ "x-carshop-access-token": "access-token-1" }),
+    );
+
+    const sessionResponse = {
+      sessionId: "session-1",
+      email: "admin@carshop.com",
+      expiresAt: "2026-03-30T12:00:00.000Z",
     };
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => session,
+      json: async () => sessionResponse,
     });
     vi.stubGlobal("fetch", fetchMock);
 
@@ -40,70 +57,42 @@ describe("lib/api/auth.server", () => {
 
     const result = await getSession();
 
-    expect(result).toEqual(session);
+    expect(result).toEqual({
+      user: { id: "session-1", email: "admin@carshop.com" },
+      expiresAt: "2026-03-30T12:00:00.000Z",
+    });
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/auth/session"),
       expect.objectContaining({
-        headers: { Cookie: "refresh_token=rt-1; csrf_token=csrf-1" },
+        headers: { Authorization: "Bearer access-token-1" },
         cache: "no-store",
       }),
     );
   });
 
-  it("não envia header Cookie quando não há cookies na request", async () => {
-    cookiesMock.mockResolvedValue({ toString: () => "" });
-
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ user: { id: "1", email: "a@a.com", name: "A" } }),
-    });
-    vi.stubGlobal("fetch", fetchMock);
+  it("retorna null quando o backend responde um shape de sessão inválido", async () => {
+    headersMock.mockResolvedValue(
+      new Headers({ "x-carshop-access-token": "access-token-1" }),
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ user: { email: "shape-antigo@carshop.com" } }),
+      }),
+    );
 
     const { getSession } = await import("./auth.server");
 
-    await getSession();
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/auth/session"),
-      expect.objectContaining({ headers: undefined }),
-    );
+    await expect(getSession()).resolves.toBeNull();
   });
 
-  it("retorna null quando nunca houve sessão (nenhum cookie enviado, backend responde 401)", async () => {
-    // Cenário "nunca autenticado": nenhum cookie de sessão/refresh presente
-    // na request original repassada ao backend.
-    cookiesMock.mockResolvedValue({ toString: () => "" });
-
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue({ ok: false, status: 401 });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const { getSession } = await import("./auth.server");
-
-    const result = await getSession();
-
-    expect(result).toBeNull();
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/auth/session"),
-      expect.objectContaining({ headers: undefined }),
+  it("retorna null quando o backend responde não-ok (access token inválido/expirado)", async () => {
+    headersMock.mockResolvedValue(
+      new Headers({ "x-carshop-access-token": "expired-access-token" }),
     );
-  });
 
-  it("retorna null quando a sessão existente expirou (refresh_token presente, backend responde 401)", async () => {
-    // Cenário "sessão expirada": diferente do anterior, aqui existe um
-    // `refresh_token` sendo repassado ao backend, mas a sessão associada a
-    // ele não é mais válida (expirada/revogada) — o backend responde 401
-    // mesmo com o cookie presente. `getSession()` trata o resultado da
-    // mesma forma (`null`), mas o cenário de entrada é semanticamente
-    // distinto do "nunca autenticado" acima.
-    cookiesMock.mockResolvedValue({
-      toString: () => "refresh_token=expired-rt; csrf_token=csrf-1",
-    });
-
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue({ ok: false, status: 401 });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 401 });
     vi.stubGlobal("fetch", fetchMock);
 
     const { getSession } = await import("./auth.server");
@@ -114,14 +103,16 @@ describe("lib/api/auth.server", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/auth/session"),
       expect.objectContaining({
-        headers: { Cookie: "refresh_token=expired-rt; csrf_token=csrf-1" },
+        headers: { Authorization: "Bearer expired-access-token" },
         cache: "no-store",
       }),
     );
   });
 
   it("retorna null quando o fetch lança (erro de rede)", async () => {
-    cookiesMock.mockResolvedValue({ toString: () => "" });
+    headersMock.mockResolvedValue(
+      new Headers({ "x-carshop-access-token": "access-token-1" }),
+    );
 
     vi.stubGlobal(
       "fetch",

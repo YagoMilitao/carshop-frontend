@@ -3,19 +3,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const postMock = vi.fn();
 const patchMock = vi.fn();
 const deleteMock = vi.fn();
+const getMock = vi.fn();
 
 vi.mock("@/lib/api/http", () => ({
   http: {
     post: (...args: unknown[]) => postMock(...args),
     patch: (...args: unknown[]) => patchMock(...args),
     delete: (...args: unknown[]) => deleteMock(...args),
+    get: (...args: unknown[]) => getMock(...args),
   },
 }));
 
 import {
+  adminCommentsQueryKey,
   approveComment,
   createComment,
   deleteComment,
+  getAdminComments,
   updateComment,
 } from "./comments.client";
 
@@ -121,6 +125,66 @@ describe("lib/api/comments.client", () => {
       deleteMock.mockRejectedValue(apiError);
 
       await expect(deleteComment("c-x")).rejects.toBe(apiError);
+    });
+  });
+
+  describe("adminCommentsQueryKey", () => {
+    it("inclui o status no array da query key quando informado", () => {
+      expect(adminCommentsQueryKey("PENDING")).toEqual([
+        "admin",
+        "comments",
+        "PENDING",
+      ]);
+    });
+
+    it("mantém status undefined quando nenhum filtro é informado", () => {
+      expect(adminCommentsQueryKey()).toEqual(["admin", "comments", undefined]);
+    });
+
+    it("inclui paginação para diferenciar cada página no cache", () => {
+      expect(adminCommentsQueryKey("PENDING", 2, 20)).toEqual([
+        "admin",
+        "comments",
+        "PENDING",
+        { page: 2, limit: 20 },
+      ]);
+    });
+  });
+
+  describe("getAdminComments", () => {
+    it("chama GET /admin/comments com status/page/limit e retorna a resposta paginada", async () => {
+      const paginated = {
+        items: [comment],
+        page: 1,
+        limit: 20,
+        total: 1,
+        totalPages: 1,
+      };
+      getMock.mockResolvedValue({ data: paginated });
+
+      const result = await getAdminComments({ status: "PENDING", page: 1 });
+
+      expect(getMock).toHaveBeenCalledWith("/admin/comments", {
+        params: { status: "PENDING", page: 1 },
+      });
+      expect(result).toEqual(paginated);
+    });
+
+    it("chama GET /admin/comments sem parâmetros quando nenhum filtro é informado", async () => {
+      getMock.mockResolvedValue({
+        data: { items: [], page: 1, limit: 20, total: 0, totalPages: 1 },
+      });
+
+      await getAdminComments();
+
+      expect(getMock).toHaveBeenCalledWith("/admin/comments", { params: {} });
+    });
+
+    it("propaga o erro da API quando a listagem falha", async () => {
+      const apiError = { response: { data: { message: "Not found." } } };
+      getMock.mockRejectedValue(apiError);
+
+      await expect(getAdminComments()).rejects.toBe(apiError);
     });
   });
 });

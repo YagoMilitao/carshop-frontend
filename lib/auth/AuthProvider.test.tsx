@@ -39,7 +39,7 @@ vi.mock("next/navigation", () => ({
 
 import { AuthProvider, useAuth } from "./AuthProvider";
 
-const user = { id: "1", email: "admin@carshop.com", name: "Admin" };
+const user = { id: "session-1", email: "admin@carshop.com" };
 
 function Consumer() {
   const { user: currentUser, isAuthenticated, login, logout } = useAuth();
@@ -47,7 +47,7 @@ function Consumer() {
   return (
     <div>
       <p data-testid="is-authenticated">{String(isAuthenticated)}</p>
-      <p data-testid="user-name">{currentUser?.name ?? "sem-usuario"}</p>
+      <p data-testid="user-email">{currentUser?.email ?? "sem-usuario"}</p>
       <button
         onClick={() =>
           void login({ email: "admin@carshop.com", password: "123456" })
@@ -79,7 +79,9 @@ describe("AuthProvider / useAuth", () => {
     );
 
     expect(screen.getByTestId("is-authenticated")).toHaveTextContent("true");
-    expect(screen.getByTestId("user-name")).toHaveTextContent("Admin");
+    expect(screen.getByTestId("user-email")).toHaveTextContent(
+      "admin@carshop.com",
+    );
 
     await waitFor(() => expect(getSessionMock).toHaveBeenCalled());
   });
@@ -94,7 +96,7 @@ describe("AuthProvider / useAuth", () => {
     );
 
     expect(screen.getByTestId("is-authenticated")).toHaveTextContent("false");
-    expect(screen.getByTestId("user-name")).toHaveTextContent("sem-usuario");
+    expect(screen.getByTestId("user-email")).toHaveTextContent("sem-usuario");
   });
 
   it("login() chama auth.client#login, grava o token via setAccessToken e atualiza isAuthenticated", async () => {
@@ -121,7 +123,9 @@ describe("AuthProvider / useAuth", () => {
       password: "123456",
     });
     expect(setAccessTokenMock).toHaveBeenCalledWith("novo-token");
-    expect(screen.getByTestId("user-name")).toHaveTextContent("Admin");
+    expect(screen.getByTestId("user-email")).toHaveTextContent(
+      "admin@carshop.com",
+    );
   });
 
   it("logout() chama auth.client#logout, limpa o token via setAccessToken(null) e zera isAuthenticated", async () => {
@@ -240,8 +244,11 @@ describe("AuthProvider / useAuth", () => {
   });
 
   it("re-bootstrap ao montar: sincroniza user a partir de getSession() no cliente", async () => {
-    const refreshedUser = { id: "2", email: "outro@carshop.com", name: "Outro" };
-    getSessionMock.mockResolvedValue({ user: refreshedUser });
+    const refreshedUser = { id: "session-2", email: "outro@carshop.com" };
+    getSessionMock.mockResolvedValue({
+      user: refreshedUser,
+      expiresAt: "2026-03-30T12:00:00.000Z",
+    });
 
     render(
       <AuthProvider initialUser={user}>
@@ -250,7 +257,9 @@ describe("AuthProvider / useAuth", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByTestId("user-name")).toHaveTextContent("Outro"),
+      expect(screen.getByTestId("user-email")).toHaveTextContent(
+        "outro@carshop.com",
+      ),
     );
   });
 
@@ -265,7 +274,9 @@ describe("AuthProvider / useAuth", () => {
 
     await waitFor(() => expect(getSessionMock).toHaveBeenCalled());
     expect(screen.getByTestId("is-authenticated")).toHaveTextContent("true");
-    expect(screen.getByTestId("user-name")).toHaveTextContent("Admin");
+    expect(screen.getByTestId("user-email")).toHaveTextContent(
+      "admin@carshop.com",
+    );
   });
 
   it("useAuth() fora de um AuthProvider lança erro", () => {

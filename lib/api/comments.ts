@@ -11,7 +11,7 @@ import { withRetryBackoff } from "./retry";
  * `lib/api/http.ts` (client-side only, ADR-001).
  */
 
-export type CommentStatus = "PENDING" | "APPROVED";
+export type CommentStatus = "PENDING" | "APPROVED" | "HIDDEN";
 
 export type Comment = {
   id: string;
