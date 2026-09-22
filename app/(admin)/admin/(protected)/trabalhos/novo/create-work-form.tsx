@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 // Limites de `title`/`description` refletem as restrições reais já
 // validadas pelo backend (`carshop-backend`) — não são valores inventados.
 const createWorkSchema = z.object({
-  slug: z.string().trim().min(1, "Informe o slug."),
+  slug: z.string().trim().min(1, "Informe o identificador da URL."),
   title: z
     .string()
     .trim()
@@ -107,13 +107,20 @@ export function CreateWorkForm() {
       onSubmit={(event) => void handleSubmit(onSubmit)(event)}
     >
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="work-slug">Slug</Label>
+        <Label htmlFor="work-slug">Identificador da URL</Label>
         <Input
           id="work-slug"
           aria-invalid={errors.slug ? "true" : "false"}
-          aria-describedby={errors.slug ? "work-slug-error" : undefined}
+          aria-describedby={
+            errors.slug ? "work-slug-error" : "work-slug-hint"
+          }
           {...register("slug")}
         />
+        {!errors.slug && (
+          <p id="work-slug-hint" className="text-body-sm text-muted-foreground">
+            Usado na URL pública do trabalho, ex.: /portfolio/restauracao-banco-couro.
+          </p>
+        )}
         {errors.slug && (
           <p id="work-slug-error" className="text-body-sm text-destructive-text">
             {errors.slug.message}

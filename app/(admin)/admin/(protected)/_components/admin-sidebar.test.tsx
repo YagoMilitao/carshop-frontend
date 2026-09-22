@@ -8,7 +8,7 @@ vi.mock("next/navigation", () => ({
 import { AdminSidebar } from "./admin-sidebar";
 
 describe("AdminSidebar", () => {
-  it("renderiza apenas os 2 itens reais de navegação (Dashboard e Novo trabalho)", () => {
+  it("renderiza os 3 itens reais de navegação (Dashboard, Trabalhos e Novo trabalho)", () => {
     render(<AdminSidebar />);
 
     const nav = screen.getByRole("navigation", {
@@ -17,8 +17,9 @@ describe("AdminSidebar", () => {
     const links = screen.getAllByRole("link");
 
     expect(nav).toBeInTheDocument();
-    expect(links).toHaveLength(2);
+    expect(links).toHaveLength(3);
     expect(links[0]).toHaveAttribute("href", "/admin");
-    expect(links[1]).toHaveAttribute("href", "/admin/trabalhos/novo");
+    expect(links[1]).toHaveAttribute("href", "/admin/trabalhos");
+    expect(links[2]).toHaveAttribute("href", "/admin/trabalhos/novo");
   });
 });

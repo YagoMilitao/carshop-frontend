@@ -31,7 +31,7 @@ vi.mock("@/lib/api/images.client", () => ({
     uploadWorkImageMock(workId, file),
 }));
 
-vi.mock("../actions", () => ({
+vi.mock("../../actions", () => ({
   revalidateWorksTag: () => revalidateWorksTagMock(),
 }));
 
@@ -102,7 +102,29 @@ describe("WorkListItem", () => {
     expect(statusBadge).toHaveAttribute("data-slot", "badge");
   });
 
-  it("exclui o work, invalida o cache e atualiza a listagem", async () => {
+  it("exibe um botão 'Editar' desabilitado (fluxo CARSHOP-32 pendente)", () => {
+    render(<WorkListItem work={work} />);
+
+    const editButton = screen.getByRole("button", { name: "Editar" });
+    expect(editButton).toBeDisabled();
+    expect(editButton).toHaveAttribute("aria-disabled", "true");
+    expect(editButton).toHaveAttribute("title", "Disponível em breve");
+  });
+
+  it("não chama deleteWork apenas ao clicar em 'Excluir work' (exige confirmação)", async () => {
+    const user = userEvent.setup();
+
+    render(<WorkListItem work={work} />);
+
+    await user.click(screen.getByRole("button", { name: "Excluir work" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Excluir work" }),
+    ).toBeInTheDocument();
+    expect(deleteWorkMock).not.toHaveBeenCalled();
+  });
+
+  it("exclui o work ao confirmar no diálogo, invalida o cache e atualiza a listagem", async () => {
     deleteWorkMock.mockResolvedValue(undefined);
     revalidateWorksTagMock.mockResolvedValue(undefined);
     const user = userEvent.setup();
@@ -110,6 +132,7 @@ describe("WorkListItem", () => {
     render(<WorkListItem work={work} />);
 
     await user.click(screen.getByRole("button", { name: "Excluir work" }));
+    await user.click(await screen.findByRole("button", { name: "Excluir" }));
 
     await waitFor(() => expect(deleteWorkMock).toHaveBeenCalledWith("work-1"));
     expect(revalidateWorksTagMock).toHaveBeenCalledTimes(1);
@@ -119,7 +142,23 @@ describe("WorkListItem", () => {
     expect(routerRefreshMock).toHaveBeenCalledTimes(1);
   });
 
-  it("exibe erro da API quando a exclusão do work falha, sem invalidar o cache", async () => {
+  it("cancela a exclusão sem chamar deleteWork", async () => {
+    const user = userEvent.setup();
+
+    render(<WorkListItem work={work} />);
+
+    await user.click(screen.getByRole("button", { name: "Excluir work" }));
+    await user.click(await screen.findByRole("button", { name: "Cancelar" }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Excluir work" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(deleteWorkMock).not.toHaveBeenCalled();
+  });
+
+  it("exibe erro da API no diálogo quando a exclusão do work falha, sem invalidar o cache", async () => {
     deleteWorkMock.mockRejectedValue(
       createAxiosError("Falha ao excluir work."),
     );
@@ -128,6 +167,7 @@ describe("WorkListItem", () => {
     render(<WorkListItem work={work} />);
 
     await user.click(screen.getByRole("button", { name: "Excluir work" }));
+    await user.click(await screen.findByRole("button", { name: "Excluir" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Falha ao excluir work.",
@@ -145,6 +185,7 @@ describe("WorkListItem", () => {
     render(<WorkListItem work={work} />);
 
     await user.click(screen.getByRole("button", { name: "Excluir work" }));
+    await user.click(await screen.findByRole("button", { name: "Excluir" }));
 
     await waitFor(() => expect(routerRefreshMock).toHaveBeenCalledTimes(1));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
