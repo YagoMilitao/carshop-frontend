@@ -1,6 +1,13 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
-import { clientEnv } from "@/lib/env/client";
+/**
+ * Caminho relativo same-origin fixo, obrigatório em qualquer ambiente
+ * (dev e produção). Repassado pelo proxy de `rewrites()` em
+ * `next.config.mjs` (mesmo prefixo `/api-proxy`), para que cookies HttpOnly
+ * host-bound (refresh_token/csrf_token) do backend remoto sejam gravados
+ * sob o host do frontend — nunca depende de nenhuma env client-side.
+ */
+const API_PROXY_BASE_PATH = "/api-proxy";
 
 /**
  * Instância única do Axios para chamadas HTTP client-side (ADR-001):
@@ -9,12 +16,7 @@ import { clientEnv } from "@/lib/env/client";
  * usam `fetch` nativo do Next, fora deste módulo.
  */
 export const http = axios.create({
-  // NEXT_PUBLIC_API_PROXY_PATH (opcional, dev-only — ver .env.example) tem
-  // prioridade: faz o Axios chamar um caminho relativo same-origin,
-  // repassado pelo proxy de rewrites() em next.config.mjs, para que
-  // cookies HttpOnly host-bound (refresh_token/csrf_token) do backend
-  // remoto sejam gravados sob o host do frontend.
-  baseURL: clientEnv.NEXT_PUBLIC_API_PROXY_PATH ?? clientEnv.NEXT_PUBLIC_API_URL,
+  baseURL: API_PROXY_BASE_PATH,
   withCredentials: true,
 });
 

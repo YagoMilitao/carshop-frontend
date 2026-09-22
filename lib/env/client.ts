@@ -15,11 +15,6 @@ import { z } from "zod";
 const clientEnvSchema = z.object({
   NEXT_PUBLIC_API_URL: z.string().url(),
   NEXT_PUBLIC_SITE_URL: z.string().url(),
-  // Opcional, dev-only: ver .env.example. Quando definida, o Axios
-  // client-side (lib/api/http.ts) usa esse caminho relativo (mesma origem
-  // do frontend) no lugar de NEXT_PUBLIC_API_URL, para que o proxy de
-  // rewrites() em next.config.mjs entre em ação.
-  NEXT_PUBLIC_API_PROXY_PATH: z.string().startsWith("/").optional(),
 });
 
 // Parse no top-level: falha rápido (build/runtime) se a env estiver
@@ -27,7 +22,6 @@ const clientEnvSchema = z.object({
 export const clientEnv = clientEnvSchema.parse({
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
-  NEXT_PUBLIC_API_PROXY_PATH: process.env.NEXT_PUBLIC_API_PROXY_PATH,
 });
 
 export type ClientEnv = z.infer<typeof clientEnvSchema>;

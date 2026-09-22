@@ -51,3 +51,28 @@ Because response `Set-Cookie` headers can only be set from `proxy.ts`,
 `refresh_token`/`csrf_token` rotation must stay there; do not attempt to
 rotate cookies from a Server Component or Route Handler downstream of the
 render.
+
+## Same-origin proxy for client-side auth calls (CARSHOP-150 fix)
+
+All client-side auth calls (`lib/api/http.ts`, e.g. `POST /auth/login`,
+`POST /auth/refresh` triggered from the browser) go through a same-origin
+proxy in **every environment** (dev and production), not only in dev:
+
+- `next.config.mjs#rewrites()` maps `/api-proxy/:path*` to
+  `${NEXT_PUBLIC_API_URL}/:path*`. This mapping is unconditional (no
+  `NODE_ENV` guard) — it is only skipped when `NEXT_PUBLIC_API_URL` is
+  absent.
+- `lib/api/http.ts` always uses the fixed relative `baseURL` `/api-proxy`.
+  There is no environment variable that can opt out of this behavior — the
+  previous `NEXT_PUBLIC_API_PROXY_PATH` was removed to eliminate the risk of
+  forgetting to configure same-origin proxying in production.
+
+This matters because `Set-Cookie: refresh_token=...`/`csrf_token=...` are
+HttpOnly, host-bound cookies (RFC 6265): the browser never sends them back
+to a different origin than the one that issued them. If the browser called
+the backend origin directly for `/auth/login`, the resulting cookies would
+never reach `proxy.ts` (which reads them from the origin the browser is
+actually on), causing a login redirect loop. Routing every client-side auth
+call through the frontend's own origin (via this proxy) ensures the cookies
+are always issued under the frontend's host, in dev and in production
+alike.
