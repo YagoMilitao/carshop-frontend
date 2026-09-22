@@ -1,6 +1,6 @@
 import { AxiosError, AxiosHeaders } from "axios";
 import type { InternalAxiosRequestConfig } from "axios";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -86,10 +86,27 @@ function createAxiosError(message: string) {
   );
 }
 
+// jsdom não implementa `URL.createObjectURL`/`URL.revokeObjectURL`, usados
+// pelo preview de `WorkImageUpload` — stubamos para os testes que
+// exercitam o fluxo de upload.
+const createObjectURLMock = vi.fn(() => "blob:mock-1");
+const revokeObjectURLMock = vi.fn();
+
 describe("WorkListItem", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     invalidateQueriesMock.mockResolvedValue(undefined);
+    createObjectURLMock.mockClear();
+    revokeObjectURLMock.mockClear();
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: createObjectURLMock,
+      revokeObjectURL: revokeObjectURLMock,
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("exibe o título e o status do work em um Badge", () => {
@@ -220,7 +237,7 @@ describe("WorkListItem", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("faz upload de uma imagem válida (tipo/tamanho aceitos)", async () => {
+  it("faz upload de uma imagem válida somente após confirmação explícita (preview + 'Enviar imagem')", async () => {
     uploadWorkImageMock.mockResolvedValue({});
     revalidateWorksTagMock.mockResolvedValue(undefined);
     const user = userEvent.setup();
@@ -232,10 +249,69 @@ describe("WorkListItem", () => {
 
     await user.upload(input, file);
 
+    // Seleção por si só não deve disparar upload — exige preview visível
+    // e confirmação explícita do usuário.
+    expect(
+      await screen.findByAltText("Pré-visualização de foto.png"),
+    ).toBeInTheDocument();
+    expect(uploadWorkImageMock).not.toHaveBeenCalled();
+
+    await user.click(
+      screen.getByRole("button", { name: "Enviar imagem" }),
+    );
+
     await waitFor(() =>
       expect(uploadWorkImageMock).toHaveBeenCalledWith("work-1", file),
     );
     expect(revalidateWorksTagMock).toHaveBeenCalledTimes(1);
+    await waitFor(() =>
+      expect(
+        screen.queryByAltText("Pré-visualização de foto.png"),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  it("cancela a seleção de imagem sem chamar a API", async () => {
+    const user = userEvent.setup();
+
+    render(<WorkListItem work={work} />);
+
+    const file = new File(["conteudo"], "foto.png", { type: "image/png" });
+    await user.upload(screen.getByLabelText("Adicionar imagem"), file);
+
+    expect(
+      await screen.findByAltText("Pré-visualização de foto.png"),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(
+      screen.queryByAltText("Pré-visualização de foto.png"),
+    ).not.toBeInTheDocument();
+    expect(uploadWorkImageMock).not.toHaveBeenCalled();
+  });
+
+  it("exibe erro da API quando o upload falha, mantendo o preview para nova tentativa", async () => {
+    uploadWorkImageMock.mockRejectedValue(
+      createAxiosError("Falha ao enviar imagem."),
+    );
+    const user = userEvent.setup();
+
+    render(<WorkListItem work={work} />);
+
+    const file = new File(["conteudo"], "foto.png", { type: "image/png" });
+    await user.upload(screen.getByLabelText("Adicionar imagem"), file);
+    await user.click(
+      await screen.findByRole("button", { name: "Enviar imagem" }),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Falha ao enviar imagem.",
+    );
+    expect(revalidateWorksTagMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByAltText("Pré-visualização de foto.png"),
+    ).toBeInTheDocument();
   });
 
   it("rejeita upload de tipo de arquivo inválido sem chamar a API", async () => {
@@ -246,7 +322,7 @@ describe("WorkListItem", () => {
     // componente) — usamos `fireEvent.change` para simular a seleção real
     // de um arquivo fora do `accept` (ex.: usuário força via drag-and-drop
     // ou navegador não filtra), garantindo cobertura do branch de
-    // validação de tipo em `onUploadImage`.
+    // validação de tipo em `WorkImageUpload`.
     const file = new File(["conteudo"], "arquivo.pdf", {
       type: "application/pdf",
     });
