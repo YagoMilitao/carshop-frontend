@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   approveComment,
+  adminCommentsQueryKey,
   deleteComment,
   updateComment,
 } from "@/lib/api/comments.client";
@@ -24,7 +25,7 @@ import { revalidateCommentsTag } from "../actions";
  * listagem, sem mudança de contrato do componente.
  */
 export function CommentModerationForm() {
-  const router = useRouter();
+  const queryClient = useQueryClient();
   const [commentId, setCommentId] = useState("");
   const [workId, setWorkId] = useState("");
   const [content, setContent] = useState("");
@@ -42,8 +43,12 @@ export function CommentModerationForm() {
 
     try {
       await mutation();
-      await revalidateCommentsTag(workId);
-      router.refresh();
+      await Promise.all([
+        revalidateCommentsTag(workId),
+        queryClient.invalidateQueries({
+          queryKey: adminCommentsQueryKey("PENDING"),
+        }),
+      ]);
     } catch (mutationError) {
       setError(getApiErrorMessage(mutationError));
     } finally {

@@ -109,8 +109,11 @@ describe("ProtectedAdminLayout", () => {
   );
 
   it("renderiza AuthProvider com initialUser e os children quando getSession() tem sucesso, sem chamar redirect", async () => {
-    const user = { id: "1", email: "admin@carshop.com", name: "Admin" };
-    getSessionMock.mockResolvedValue({ user });
+    const user = { id: "session-1", email: "admin@carshop.com" };
+    getSessionMock.mockResolvedValue({
+      user,
+      expiresAt: "2026-03-30T12:00:00.000Z",
+    });
     const { default: ProtectedAdminLayout } = await import("./layout");
 
     render(await ProtectedAdminLayout({ children: <p>painel admin</p> }));

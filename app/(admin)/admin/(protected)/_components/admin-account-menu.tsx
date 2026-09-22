@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { getApiErrorMessage } from "@/lib/api/auth.client";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { LOGIN_PATH } from "@/lib/auth/redirect";
 
 /**
  * Client Component: exibe o e-mail do usuário autenticado e permite logout
@@ -14,20 +17,24 @@ import { useAuth } from "@/lib/auth/AuthProvider";
  */
 export function AdminAccountMenu() {
   const { user, logout } = useAuth();
+  const queryClient = useQueryClient();
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
-  const onLogout = () => {
+  const onLogout = async () => {
     setError(null);
     setIsPending(true);
 
-    logout()
-      .catch((logoutError: unknown) => {
-        setError(getApiErrorMessage(logoutError));
-      })
-      .finally(() => {
-        setIsPending(false);
-      });
+    try {
+      await logout();
+      queryClient.removeQueries({ queryKey: ["admin"] });
+      router.replace(LOGIN_PATH);
+    } catch (logoutError) {
+      setError(getApiErrorMessage(logoutError));
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -42,7 +49,7 @@ export function AdminAccountMenu() {
         variant="outline"
         size="sm"
         disabled={isPending}
-        onClick={onLogout}
+        onClick={() => void onLogout()}
       >
         Sair
       </Button>

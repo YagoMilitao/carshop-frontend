@@ -41,13 +41,15 @@ describe("lib/api/auth.server", () => {
       new Headers({ "x-carshop-access-token": "access-token-1" }),
     );
 
-    const session = {
-      user: { id: "1", email: "admin@carshop.com", name: "Admin" },
+    const sessionResponse = {
+      sessionId: "session-1",
+      email: "admin@carshop.com",
+      expiresAt: "2026-03-30T12:00:00.000Z",
     };
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => session,
+      json: async () => sessionResponse,
     });
     vi.stubGlobal("fetch", fetchMock);
 
@@ -55,7 +57,10 @@ describe("lib/api/auth.server", () => {
 
     const result = await getSession();
 
-    expect(result).toEqual(session);
+    expect(result).toEqual({
+      user: { id: "session-1", email: "admin@carshop.com" },
+      expiresAt: "2026-03-30T12:00:00.000Z",
+    });
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/auth/session"),
       expect.objectContaining({
@@ -63,6 +68,23 @@ describe("lib/api/auth.server", () => {
         cache: "no-store",
       }),
     );
+  });
+
+  it("retorna null quando o backend responde um shape de sessão inválido", async () => {
+    headersMock.mockResolvedValue(
+      new Headers({ "x-carshop-access-token": "access-token-1" }),
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ user: { email: "shape-antigo@carshop.com" } }),
+      }),
+    );
+
+    const { getSession } = await import("./auth.server");
+
+    await expect(getSession()).resolves.toBeNull();
   });
 
   it("retorna null quando o backend responde não-ok (access token inválido/expirado)", async () => {

@@ -7,7 +7,13 @@ import type { AdminCommentListResponse } from "@/lib/api/comments.client";
 
 const getAdminWorksMock = vi.fn<() => Promise<Work[]>>();
 const getAdminCommentsMock =
-  vi.fn<(params: { status?: string }) => Promise<AdminCommentListResponse>>();
+  vi.fn<
+    (params: {
+      status?: string;
+      page?: number;
+      limit?: number;
+    }) => Promise<AdminCommentListResponse>
+  >();
 
 vi.mock("@/lib/api/works.client", () => ({
   adminWorksQueryKey: ["admin", "works"],
@@ -15,8 +21,17 @@ vi.mock("@/lib/api/works.client", () => ({
 }));
 
 vi.mock("@/lib/api/comments.client", () => ({
-  adminCommentsQueryKey: (status?: string) => ["admin", "comments", status],
-  getAdminComments: (params: { status?: string }) =>
+  adminCommentsQueryKey: (status?: string, page?: number, limit?: number) => [
+    "admin",
+    "comments",
+    status,
+    { page, limit },
+  ],
+  getAdminComments: (params: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) =>
     getAdminCommentsMock(params),
 }));
 
@@ -72,6 +87,11 @@ describe("DashboardSummary", () => {
     expect(await screen.findByText("3")).toBeInTheDocument();
     expect(screen.getByText("1 / 2")).toBeInTheDocument();
     expect(screen.getByText("4")).toBeInTheDocument();
+    expect(getAdminCommentsMock).toHaveBeenCalledWith({
+      status: "PENDING",
+      page: 1,
+      limit: 20,
+    });
   });
 
   it("exibe mensagem de erro no card quando a busca de works falha", async () => {

@@ -4,9 +4,19 @@ import userEvent from "@testing-library/user-event";
 
 const logoutMock = vi.fn();
 const useAuthMock = vi.fn();
+const removeQueriesMock = vi.fn();
+const routerReplaceMock = vi.fn();
 
 vi.mock("@/lib/auth/AuthProvider", () => ({
   useAuth: () => useAuthMock(),
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ removeQueries: removeQueriesMock }),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: routerReplaceMock }),
 }));
 
 import { AdminAccountMenu } from "./admin-account-menu";
@@ -15,7 +25,7 @@ describe("AdminAccountMenu", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useAuthMock.mockReturnValue({
-      user: { id: "1", email: "admin@carshop.com", name: "Admin" },
+      user: { id: "session-1", email: "admin@carshop.com" },
       isAuthenticated: true,
       login: vi.fn(),
       logout: logoutMock,
@@ -28,7 +38,7 @@ describe("AdminAccountMenu", () => {
     expect(screen.getByText("admin@carshop.com")).toBeInTheDocument();
   });
 
-  it("chama useAuth().logout() ao clicar em Sair", async () => {
+  it("remove o cache admin e redireciona ao login após o logout", async () => {
     logoutMock.mockResolvedValue(undefined);
     const user = userEvent.setup();
 
@@ -37,6 +47,8 @@ describe("AdminAccountMenu", () => {
     await user.click(screen.getByRole("button", { name: "Sair" }));
 
     await waitFor(() => expect(logoutMock).toHaveBeenCalledTimes(1));
+    expect(removeQueriesMock).toHaveBeenCalledWith({ queryKey: ["admin"] });
+    expect(routerReplaceMock).toHaveBeenCalledWith("/admin/login");
   });
 
   it("exibe mensagem de erro quando o logout falha", async () => {
@@ -50,5 +62,7 @@ describe("AdminAccountMenu", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Ocorreu um erro inesperado. Tente novamente.",
     );
+    expect(removeQueriesMock).not.toHaveBeenCalled();
+    expect(routerReplaceMock).not.toHaveBeenCalled();
   });
 });

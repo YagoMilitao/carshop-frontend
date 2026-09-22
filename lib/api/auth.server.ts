@@ -2,7 +2,10 @@ import "server-only";
 
 import { headers } from "next/headers";
 
+import { parseSessionResponse, type Session } from "@/lib/api/auth";
 import { serverEnv } from "@/lib/env/server";
+
+export type { Session, User } from "@/lib/api/auth";
 
 /**
  * Camada de acesso a dados de sessão (`GET /auth/session`) usada
@@ -20,16 +23,6 @@ import { serverEnv } from "@/lib/env/server";
  */
 
 const ACCESS_TOKEN_HEADER = "x-carshop-access-token";
-
-export type User = {
-  id: string;
-  email: string;
-  name: string;
-};
-
-export type Session = {
-  user: User;
-};
 
 /**
  * Busca a sessão atual usando o access token já mintado por `proxy.ts` e
@@ -57,7 +50,9 @@ export async function getSession(): Promise<Session | null> {
       return null;
     }
 
-    return (await response.json()) as Session;
+    const payload: unknown = await response.json();
+
+    return parseSessionResponse(payload);
   } catch {
     return null;
   }

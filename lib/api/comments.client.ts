@@ -80,8 +80,17 @@ export type GetAdminCommentsParams = {
   limit?: number;
 };
 
-export const adminCommentsQueryKey = (status?: CommentStatus) =>
-  ["admin", "comments", status] as const;
+export const adminCommentsQueryKey = (
+  status?: CommentStatus,
+  page?: number,
+  limit?: number,
+) => {
+  const prefix = ["admin", "comments", status] as const;
+
+  return page === undefined && limit === undefined
+    ? prefix
+    : ([...prefix, { page, limit }] as const);
+};
 
 /**
  * `GET /admin/comments` (admin, autenticado). Lista comentários para

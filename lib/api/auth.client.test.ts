@@ -32,11 +32,13 @@ describe("lib/api/auth.client", () => {
 
   describe("login", () => {
     it("chama POST /auth/login com o payload e retorna os dados da resposta", async () => {
-      const authSession = {
+      const authResponse = {
         accessToken: "token-1",
-        user: { id: "1", email: "a@a.com", name: "A" },
+        csrfToken: "csrf-1",
+        sessionId: "session-1",
+        tokenType: "Bearer",
       };
-      postMock.mockResolvedValue({ data: authSession });
+      postMock.mockResolvedValue({ data: authResponse });
 
       const result = await login({ email: "a@a.com", password: "123456" });
 
@@ -44,22 +46,27 @@ describe("lib/api/auth.client", () => {
         email: "a@a.com",
         password: "123456",
       });
-      expect(result).toEqual(authSession);
+      expect(result).toEqual({
+        accessToken: "token-1",
+        user: { id: "session-1", email: "a@a.com" },
+      });
     });
   });
 
   describe("refresh", () => {
     it("chama POST /auth/refresh sem payload e retorna os dados da resposta", async () => {
-      const authSession = {
+      const authResponse = {
         accessToken: "token-2",
-        user: { id: "1", email: "a@a.com", name: "A" },
+        csrfToken: "csrf-2",
+        sessionId: "session-2",
+        tokenType: "Bearer",
       };
-      postMock.mockResolvedValue({ data: authSession });
+      postMock.mockResolvedValue({ data: authResponse });
 
       const result = await refresh();
 
       expect(postMock).toHaveBeenCalledWith("/auth/refresh");
-      expect(result).toEqual(authSession);
+      expect(result).toEqual(authResponse);
     });
   });
 
@@ -74,14 +81,30 @@ describe("lib/api/auth.client", () => {
   });
 
   describe("getSession", () => {
-    it("chama GET /auth/session e retorna os dados da resposta", async () => {
-      const session = { user: { id: "1", email: "a@a.com", name: "A" } };
-      getMock.mockResolvedValue({ data: session });
+    it("chama GET /auth/session e adapta o contrato ao modelo do AuthProvider", async () => {
+      getMock.mockResolvedValue({
+        data: {
+          sessionId: "session-1",
+          email: "a@a.com",
+          expiresAt: "2026-03-30T12:00:00.000Z",
+        },
+      });
 
       const result = await getSession();
 
       expect(getMock).toHaveBeenCalledWith("/auth/session");
-      expect(result).toEqual(session);
+      expect(result).toEqual({
+        user: { id: "session-1", email: "a@a.com" },
+        expiresAt: "2026-03-30T12:00:00.000Z",
+      });
+    });
+
+    it("rejeita quando GET /auth/session devolve um shape inválido", async () => {
+      getMock.mockResolvedValue({ data: { user: { email: "shape-antigo" } } });
+
+      await expect(getSession()).rejects.toThrow(
+        "Resposta inválida de GET /auth/session",
+      );
     });
   });
 

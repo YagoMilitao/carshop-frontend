@@ -53,8 +53,9 @@ export function DashboardSummary() {
   });
 
   const pendingCommentsQuery = useQuery({
-    queryKey: adminCommentsQueryKey("PENDING"),
-    queryFn: () => getAdminComments({ status: "PENDING" }),
+    queryKey: adminCommentsQueryKey("PENDING", 1, 20),
+    queryFn: () =>
+      getAdminComments({ status: "PENDING", page: 1, limit: 20 }),
   });
 
   const { total, published, draft } = useMemo(() => {

@@ -140,6 +140,15 @@ describe("lib/api/comments.client", () => {
     it("mantém status undefined quando nenhum filtro é informado", () => {
       expect(adminCommentsQueryKey()).toEqual(["admin", "comments", undefined]);
     });
+
+    it("inclui paginação para diferenciar cada página no cache", () => {
+      expect(adminCommentsQueryKey("PENDING", 2, 20)).toEqual([
+        "admin",
+        "comments",
+        "PENDING",
+        { page: 2, limit: 20 },
+      ]);
+    });
   });
 
   describe("getAdminComments", () => {

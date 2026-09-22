@@ -1,7 +1,11 @@
 import { AxiosError } from "axios";
 
+import {
+  parseSessionResponse,
+  type Session,
+  type User,
+} from "@/lib/api/auth";
 import { http } from "@/lib/api/http";
-import type { Session, User } from "@/lib/api/auth.server";
 
 /**
  * Camada de acesso a dados de autenticação client-side (Axios, via
@@ -19,6 +23,13 @@ export type LoginPayload = {
 export type AuthSession = {
   accessToken: string;
   user: User;
+};
+
+type AuthResponse = {
+  accessToken: string;
+  csrfToken: string;
+  sessionId: string;
+  tokenType: "Bearer";
 };
 
 /**
@@ -47,17 +58,23 @@ export function getApiErrorMessage(error: unknown): string {
  * não este módulo.
  */
 export async function login(payload: LoginPayload): Promise<AuthSession> {
-  const response = await http.post<AuthSession>("/auth/login", payload);
+  const response = await http.post<AuthResponse>("/auth/login", payload);
 
-  return response.data;
+  return {
+    accessToken: response.data.accessToken,
+    user: {
+      id: response.data.sessionId,
+      email: payload.email,
+    },
+  };
 }
 
 /**
  * `POST /auth/refresh`. Usado tanto pelo interceptor 401 de `http.ts`
  * quanto pelo bootstrap de sessão do `AuthProvider`.
  */
-export async function refresh(): Promise<AuthSession> {
-  const response = await http.post<AuthSession>("/auth/refresh");
+export async function refresh(): Promise<AuthResponse> {
+  const response = await http.post<AuthResponse>("/auth/refresh");
 
   return response.data;
 }
@@ -79,7 +96,12 @@ export async function logout(): Promise<void> {
  * autenticada, não aqui.
  */
 export async function getSession(): Promise<Session> {
-  const response = await http.get<Session>("/auth/session");
+  const response = await http.get<unknown>("/auth/session");
+  const session = parseSessionResponse(response.data);
 
-  return response.data;
+  if (!session) {
+    throw new Error("Resposta inválida de GET /auth/session");
+  }
+
+  return session;
 }

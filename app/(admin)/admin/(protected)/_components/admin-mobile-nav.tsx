@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,21 @@ import { AdminNavLink } from "./admin-nav-link";
  */
 export function AdminMobileNav() {
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const desktopMediaQuery = window.matchMedia("(min-width: 64rem)");
+    const closeOnDesktop = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        setIsOpen(false);
+      }
+    };
+
+    desktopMediaQuery.addEventListener("change", closeOnDesktop);
+
+    return () => {
+      desktopMediaQuery.removeEventListener("change", closeOnDesktop);
+    };
+  }, []);
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
