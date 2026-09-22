@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import type { Work } from "@/lib/api/works";
+import { workFormSchema } from "@/schemas/work";
 
-import { mapWorkToFormValues, workFormSchema } from "./work-form-schema";
+import { mapWorkToFormValues } from "./work-form-values";
 
 function buildWork(overrides: Partial<Work> = {}): Work {
   return {

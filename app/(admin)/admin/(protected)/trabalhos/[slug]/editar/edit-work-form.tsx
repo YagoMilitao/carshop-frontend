@@ -16,15 +16,15 @@ import {
   updateWork,
 } from "@/lib/api/works.client";
 import { revalidateWorksTag } from "@/app/(admin)/admin/actions";
+import { WorkFormFields } from "@/app/(admin)/admin/(protected)/trabalhos/work-form-fields";
 import { Button } from "@/components/ui/button";
-
-import { WorkFormFields } from "../../work-form-fields";
 import {
-  mapWorkToFormValues,
   workFormSchema,
   type WorkFormInput,
   type WorkFormOutput,
-} from "../../work-form-schema";
+} from "@/schemas/work";
+
+import { mapWorkToFormValues } from "./work-form-values";
 
 type EditWorkFormProps = {
   slug: string;
@@ -45,6 +45,7 @@ export function EditWorkForm({ slug }: Readonly<EditWorkFormProps>) {
   const {
     data: work,
     error,
+    isFetching,
     isPending,
   } = useQuery({
     queryKey: adminWorksQueryKey,
@@ -87,7 +88,7 @@ export function EditWorkForm({ slug }: Readonly<EditWorkFormProps>) {
     router.push("/admin/trabalhos");
   };
 
-  if (isPending) {
+  if (isPending || (!work && isFetching)) {
     return (
       <output className="text-body-sm text-muted-foreground">
         Carregando trabalho...

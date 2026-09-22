@@ -14,13 +14,13 @@ import {
 import { getApiErrorMessage } from "@/lib/api/auth.client";
 import { revalidateWorksTag } from "@/app/(admin)/admin/actions";
 import { Button } from "@/components/ui/button";
-
-import { WorkFormFields } from "../work-form-fields";
 import {
   workFormSchema,
   type WorkFormInput,
   type WorkFormOutput,
-} from "../work-form-schema";
+} from "@/schemas/work";
+
+import { WorkFormFields } from "../work-form-fields";
 
 /**
  * Após a mutação Axios, sincroniza de forma independente a query

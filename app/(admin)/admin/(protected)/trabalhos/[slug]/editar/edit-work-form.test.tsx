@@ -69,12 +69,29 @@ describe("EditWorkForm", () => {
     useQueryMock.mockReturnValue({
       data: undefined,
       error: null,
+      isFetching: true,
       isPending: true,
     });
 
     render(<EditWorkForm slug="restauracao-fusca" />);
 
     expect(screen.getByText("Carregando trabalho...")).toBeInTheDocument();
+  });
+
+  it("mantém o loading durante refetch quando o cache ainda não contém o work", () => {
+    useQueryMock.mockReturnValue({
+      data: undefined,
+      error: null,
+      isFetching: true,
+      isPending: false,
+    });
+
+    render(<EditWorkForm slug="trabalho-criado-em-outra-sessao" />);
+
+    expect(screen.getByText("Carregando trabalho...")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Nenhum trabalho encontrado para este identificador."),
+    ).not.toBeInTheDocument();
   });
 
   it("exibe erro de fetch com role=alert usando getApiErrorMessage", () => {
@@ -146,6 +163,20 @@ describe("EditWorkForm", () => {
         error: null,
         isPending: false,
       });
+    });
+
+    it("valida campos obrigatórios pelo submit antes de chamar a API", async () => {
+      const user = userEvent.setup();
+
+      render(<EditWorkForm slug="restauracao-fusca" />);
+
+      const titleInput = screen.getByLabelText("Título");
+      await user.clear(titleInput);
+      await user.click(screen.getByRole("button", { name: "Salvar" }));
+
+      expect(await screen.findByText("Informe o título.")).toBeInTheDocument();
+      expect(titleInput).toHaveAttribute("aria-invalid", "true");
+      expect(updateWorkMock).not.toHaveBeenCalled();
     });
 
     it("atualiza o trabalho com work.id e o payload do formulário, invalida o cache e navega para /admin/trabalhos", async () => {

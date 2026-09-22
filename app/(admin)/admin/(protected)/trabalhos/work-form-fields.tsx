@@ -2,8 +2,7 @@ import type { FieldErrors, UseFormRegister } from "react-hook-form";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-import type { WorkFormInput } from "./work-form-schema";
+import type { WorkFormInput } from "@/schemas/work";
 
 type WorkFormFieldsProps = {
   register: UseFormRegister<WorkFormInput>;
