@@ -1,16 +1,25 @@
 import "server-only";
 
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 
 import { serverEnv } from "@/lib/env/server";
 
 /**
  * Camada de acesso a dados de sessão (`GET /auth/session`) usada
- * exclusivamente por `app/(admin)/admin/layout.tsx` (Server Component).
- * Usa `fetch` nativo do Next, repassando manualmente os cookies HttpOnly
- * da request recebida — Server Components não têm acesso ao `accessToken`
- * em memória do cliente (ver ADR/spec de CARSHOP-122).
+ * exclusivamente por `app/(admin)/admin/(protected)/layout.tsx` (Server
+ * Component).
+ *
+ * O backend só aceita `Authorization: Bearer <accessToken>` (nunca
+ * cookie) em `GET /auth/session`. O access token é mintado em `proxy.ts`
+ * (única camada do pipeline Next que roda antes do render e pode
+ * legitimamente setar `Set-Cookie`/rotacionar `refresh_token` via
+ * `POST /auth/refresh`) e repassado a este render via o header interno
+ * `x-carshop-access-token` — nunca exposto ao navegador. `getSession()`
+ * apenas lê esse header e valida a sessão junto ao backend; não chama
+ * `/auth/refresh` (ver ADR/spec de CARSHOP-152).
  */
+
+const ACCESS_TOKEN_HEADER = "x-carshop-access-token";
 
 export type User = {
   id: string;
@@ -23,19 +32,24 @@ export type Session = {
 };
 
 /**
- * Busca a sessão atual repassando o header `Cookie` da request recebida.
- * `cache: 'no-store'`: dado de sessão nunca é cacheado pelo Next Data
- * Cache. Retorna `null` em qualquer falha (sessão ausente/expirada/erro de
- * rede) — o chamador (`admin/layout.tsx`) interpreta `null` como "não
- * autenticado" e redireciona para `/admin/login`.
+ * Busca a sessão atual usando o access token já mintado por `proxy.ts` e
+ * repassado via header interno. `cache: 'no-store'`: dado de sessão nunca
+ * é cacheado pelo Next Data Cache. Retorna `null` em qualquer falha
+ * (header ausente, sessão inválida/expirada, erro de rede) — o chamador
+ * (`app/(admin)/admin/(protected)/layout.tsx`) interpreta `null` como
+ * "não autenticado" e redireciona para `/admin/login`.
  */
 export async function getSession(): Promise<Session | null> {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
+  const headerStore = await headers();
+  const accessToken = headerStore.get(ACCESS_TOKEN_HEADER);
+
+  if (!accessToken) {
+    return null;
+  }
 
   try {
     const response = await fetch(`${serverEnv.apiUrl}/auth/session`, {
-      headers: cookieHeader ? { Cookie: cookieHeader } : undefined,
+      headers: { Authorization: `Bearer ${accessToken}` },
       cache: "no-store",
     });
 
