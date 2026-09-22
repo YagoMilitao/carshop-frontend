@@ -3,11 +3,11 @@ import { AxiosError, AxiosHeaders } from "axios";
 import type { InternalAxiosRequestConfig } from "axios";
 
 /**
- * `lib/api/http.ts` lê `clientEnv` no top-level (fail-fast), que por sua
- * vez exige `NEXT_PUBLIC_API_URL` e `NEXT_PUBLIC_SITE_URL`. Usamos import
- * dinâmico + `vi.resetModules()` para isolar cada teste do estado
- * module-level do `http.ts` (accessToken, authFailureCallback,
- * refreshPromise), mesmo padrão de `lib/env/client.test.ts`.
+ * Usamos import dinâmico + `vi.resetModules()` para isolar cada teste do
+ * estado module-level do `http.ts` (accessToken, authFailureCallback,
+ * refreshPromise), mesmo padrão de `lib/env/client.test.ts`. `http.ts` não
+ * lê nenhuma env — o `baseURL` é o caminho relativo fixo `/api-proxy`
+ * (CARSHOP-150).
  *
  * `refresh()` é mockado via `vi.mock("./auth.client")` para não depender
  * do módulo real (que por sua vez importa `http` de volta — ciclo
@@ -102,10 +102,10 @@ describe("lib/api/http", () => {
     vi.restoreAllMocks();
   });
 
-  it("cria uma instância única do Axios com baseURL a partir de clientEnv e withCredentials: true", async () => {
+  it("cria uma instância única do Axios com baseURL fixo /api-proxy (same-origin, sem depender de env) e withCredentials: true", async () => {
     const { http } = await import("./http");
 
-    expect(http.defaults.baseURL).toBe("http://localhost:3333");
+    expect(http.defaults.baseURL).toBe("/api-proxy");
     expect(http.defaults.withCredentials).toBe(true);
   });
 

@@ -13,18 +13,15 @@ const nextConfig = {
     ];
   },
   async rewrites() {
-    // Proxy dev-only: existe só para permitir rodar o frontend em localhost
-    // autenticando contra um backend remoto já deployado (ex.: Render) sem
-    // quebrar cookies HttpOnly host-bound (refresh_token/csrf_token), que o
-    // navegador nunca envia de volta a um domínio de frontend diferente do
-    // domínio que os emitiu (RFC 6265). Nunca ativo em produção: `next build`
-    // / `next start` rodam com NODE_ENV === "production", então este bloco
-    // sempre retorna [] nesse caso.
-    if (process.env.NODE_ENV !== "development") {
-      return [];
-    }
-
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL;
+    // Proxy same-origin obrigatório em qualquer ambiente (dev e produção):
+    // faz o Axios client-side (lib/api/http.ts) chamar sempre um caminho
+    // relativo à origem do frontend, para que os cookies host-bound do
+    // backend remoto (refresh_token HttpOnly e csrf_token legível pelo JS)
+    // sejam gravados sob o host do frontend — o navegador nunca envia esses
+    // cookies de volta a outro domínio (RFC 6265). A única
+    // condição para o rewrite existir é `NEXT_PUBLIC_API_URL` estar
+    // definida (necessária para montar o destino do proxy).
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
 
     if (!backendUrl) {
       return [];
