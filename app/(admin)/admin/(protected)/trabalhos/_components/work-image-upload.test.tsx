@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ComponentProps } from "react";
+import { StrictMode, type ComponentProps } from "react";
 
 import { WorkImageUpload } from "./work-image-upload";
 
@@ -77,6 +77,46 @@ describe("WorkImageUpload", () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
+  it("cria uma única blob URL para cada seleção no Strict Mode", async () => {
+    const onConfirm = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    const file = createValidImage();
+
+    render(
+      <StrictMode>
+        <WorkImageUpload disabled={false} onConfirm={onConfirm} />
+      </StrictMode>,
+    );
+
+    await user.upload(screen.getByLabelText("Adicionar imagem"), file);
+
+    expect(createObjectURLMock).toHaveBeenCalledTimes(1);
+    expect(createObjectURLMock).toHaveBeenCalledWith(file);
+  });
+
+  it("revoga a blob URL anterior na troca e a atual ao desmontar", async () => {
+    const onConfirm = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    const { unmount } = renderUpload(onConfirm);
+    const input = screen.getByLabelText("Adicionar imagem");
+
+    await user.upload(input, createValidImage());
+    await user.upload(
+      input,
+      new File(["outro conteúdo"], "outra-foto.webp", {
+        type: "image/webp",
+      }),
+    );
+
+    expect(revokeObjectURLMock).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURLMock).toHaveBeenLastCalledWith("blob:mock-1");
+
+    unmount();
+
+    expect(revokeObjectURLMock).toHaveBeenCalledTimes(2);
+    expect(revokeObjectURLMock).toHaveBeenLastCalledWith("blob:mock-2");
+  });
+
   it("exibe erro inline para tipo de arquivo inválido sem chamar onConfirm", () => {
     const onConfirm = vi.fn();
 
@@ -87,9 +127,14 @@ describe("WorkImageUpload", () => {
     });
     selectFileIgnoringAccept(file);
 
-    expect(
-      screen.getByText("Formato de imagem inválido (aceita JPEG, PNG ou WebP)."),
-    ).toBeInTheDocument();
+    const error = screen.getByRole("alert");
+    const input = screen.getByLabelText("Adicionar imagem");
+
+    expect(error).toHaveTextContent(
+      "Formato de imagem inválido (aceita JPEG, PNG ou WebP).",
+    );
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).toHaveAttribute("aria-describedby", error.id);
     expect(onConfirm).not.toHaveBeenCalled();
     expect(screen.queryByAltText(/Pré-visualização/)).not.toBeInTheDocument();
   });
@@ -129,6 +174,7 @@ describe("WorkImageUpload", () => {
       ).not.toBeInTheDocument(),
     );
     expect(revokeObjectURLMock).toHaveBeenCalled();
+    expect(screen.getByLabelText("Adicionar imagem")).toHaveFocus();
   });
 
   it("mantém o preview quando onConfirm falha, permitindo tentar novamente", async () => {
@@ -150,9 +196,10 @@ describe("WorkImageUpload", () => {
     ).not.toBeInTheDocument();
     expect(onConfirm).not.toHaveBeenCalled();
     expect(revokeObjectURLMock).toHaveBeenCalled();
+    expect(screen.getByLabelText("Adicionar imagem")).toHaveFocus();
   });
 
-  it("desabilita input e botões quando disabled=true", async () => {
+  it("mantém o rótulo neutro quando outra mutação desabilita os controles", async () => {
     const onConfirm = vi.fn().mockResolvedValue(undefined);
     const { rerender } = await renderWithSelectedImage(onConfirm);
 
@@ -160,8 +207,32 @@ describe("WorkImageUpload", () => {
 
     expect(screen.getByLabelText("Adicionar imagem")).toBeDisabled();
     expect(
-      screen.getByRole("button", { name: "Enviando..." }),
+      screen.getByRole("button", { name: "Enviar imagem" }),
     ).toBeDisabled();
     expect(screen.getByRole("button", { name: "Cancelar" })).toBeDisabled();
+  });
+
+  it("exibe 'Enviando...' somente enquanto o upload está pendente", async () => {
+    let resolveConfirm = () => {};
+    const onConfirm = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveConfirm = resolve;
+        }),
+    );
+    const { user } = await renderWithSelectedImage(onConfirm);
+
+    await submitImage(user);
+
+    expect(screen.getByRole("button", { name: "Enviando..." })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cancelar" })).toBeDisabled();
+
+    resolveConfirm();
+
+    await waitFor(() =>
+      expect(
+        screen.queryByAltText(VALID_IMAGE_PREVIEW_ALT),
+      ).not.toBeInTheDocument(),
+    );
   });
 });

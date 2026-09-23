@@ -226,6 +226,40 @@ describe("WorkListItem", () => {
     expect(revalidateWorksTagMock).toHaveBeenCalledTimes(1);
   });
 
+  it("não sinaliza upload enquanto uma imagem existente está sendo removida", async () => {
+    let resolveDeleteImage = () => {};
+    deleteWorkImageMock.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDeleteImage = resolve;
+        }),
+    );
+    revalidateWorksTagMock.mockResolvedValue(undefined);
+    const user = userEvent.setup();
+
+    render(<WorkListItem work={work} />);
+
+    const file = new File(["conteudo"], "foto.png", { type: "image/png" });
+    await user.upload(screen.getByLabelText("Adicionar imagem"), file);
+    await user.click(screen.getByRole("button", { name: "Remover imagem" }));
+
+    await waitFor(() => expect(deleteWorkImageMock).toHaveBeenCalledTimes(1));
+    expect(
+      screen.getByRole("button", { name: "Enviar imagem" }),
+    ).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: "Enviando..." }),
+    ).not.toBeInTheDocument();
+
+    resolveDeleteImage();
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Enviar imagem" }),
+      ).toBeEnabled(),
+    );
+  });
+
   it("não faz nada quando o input de arquivo dispara change sem arquivo selecionado", () => {
     render(<WorkListItem work={work} />);
 
@@ -269,6 +303,7 @@ describe("WorkListItem", () => {
         screen.queryByAltText("Pré-visualização de foto.png"),
       ).not.toBeInTheDocument(),
     );
+    expect(input).toHaveFocus();
   });
 
   it("cancela a seleção de imagem sem chamar a API", async () => {

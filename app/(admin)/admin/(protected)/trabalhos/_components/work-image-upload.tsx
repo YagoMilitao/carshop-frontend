@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 
 import {
   ACCEPTED_IMAGE_MIME_TYPES,
@@ -24,9 +30,13 @@ function formatBytes(bytes: number): string {
 // confirmação explícita ("Enviar imagem") ou "Cancelar".
 export function WorkImageUpload({ disabled, onConfirm }: WorkImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const shouldRestoreFocusRef = useRef(false);
+  const validationErrorId = useId();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const isInteractionDisabled = disabled || isUploading;
 
   // Revoga a URL de preview anterior sempre que ela muda ou o componente
   // desmonta — `URL.createObjectURL` mantém o blob vivo até
@@ -41,12 +51,7 @@ export function WorkImageUpload({ disabled, onConfirm }: WorkImageUploadProps) {
   }, [previewUrl]);
 
   const clearPreview = () => {
-    setPreviewUrl((current) => {
-      if (current) {
-        URL.revokeObjectURL(current);
-      }
-      return null;
-    });
+    setPreviewUrl(null);
   };
 
   const resetSelection = () => {
@@ -56,7 +61,22 @@ export function WorkImageUpload({ disabled, onConfirm }: WorkImageUploadProps) {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    shouldRestoreFocusRef.current = true;
   };
+
+  useEffect(() => {
+    if (
+      !shouldRestoreFocusRef.current ||
+      selectedFile ||
+      previewUrl ||
+      isInteractionDisabled
+    ) {
+      return;
+    }
+
+    shouldRestoreFocusRef.current = false;
+    fileInputRef.current?.focus();
+  }, [isInteractionDisabled, previewUrl, selectedFile]);
 
   const onSelectFile = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -89,25 +109,26 @@ export function WorkImageUpload({ disabled, onConfirm }: WorkImageUploadProps) {
 
     setValidationError(null);
     setSelectedFile(file);
-    setPreviewUrl((current) => {
-      if (current) {
-        URL.revokeObjectURL(current);
-      }
-      return URL.createObjectURL(file);
-    });
+    const nextPreviewUrl = URL.createObjectURL(file);
+    setPreviewUrl(nextPreviewUrl);
   };
 
   const onSend = () => {
-    if (!selectedFile) {
+    if (!selectedFile || isInteractionDisabled) {
       return;
     }
+
+    setIsUploading(true);
 
     // Em sucesso, limpa preview/input. Em erro, mantém a seleção (permite
     // tentar novamente) — o feedback de erro é responsabilidade do
     // componente pai, que controla `onConfirm` e a prop `disabled`.
     onConfirm(selectedFile).then(
-      () => resetSelection(),
-      () => {},
+      () => {
+        resetSelection();
+        setIsUploading(false);
+      },
+      () => setIsUploading(false),
     );
   };
 
@@ -123,13 +144,19 @@ export function WorkImageUpload({ disabled, onConfirm }: WorkImageUploadProps) {
           ref={fileInputRef}
           type="file"
           accept={ACCEPTED_IMAGE_MIME_TYPES.join(",")}
-          disabled={disabled}
+          disabled={isInteractionDisabled}
+          aria-invalid={validationError ? true : undefined}
+          aria-describedby={validationError ? validationErrorId : undefined}
           onChange={onSelectFile}
         />
       </label>
 
       {validationError && (
-        <p role="alert" className="text-body-sm text-destructive-text">
+        <p
+          id={validationErrorId}
+          role="alert"
+          className="text-body-sm text-destructive-text"
+        >
           {validationError}
         </p>
       )}
@@ -149,16 +176,16 @@ export function WorkImageUpload({ disabled, onConfirm }: WorkImageUploadProps) {
             <Button
               type="button"
               size="sm"
-              disabled={disabled}
+              disabled={isInteractionDisabled}
               onClick={onSend}
             >
-              {disabled ? "Enviando..." : "Enviar imagem"}
+              {isUploading ? "Enviando..." : "Enviar imagem"}
             </Button>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              disabled={disabled}
+              disabled={isInteractionDisabled}
               onClick={onCancel}
             >
               Cancelar
