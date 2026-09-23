@@ -1,3 +1,13 @@
+function removeTrailingSlashes(value) {
+  let endIndex = value.length;
+
+  while (endIndex > 0 && value[endIndex - 1] === "/") {
+    endIndex -= 1;
+  }
+
+  return value.slice(0, endIndex);
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -21,7 +31,10 @@ const nextConfig = {
     // cookies de volta a outro domínio (RFC 6265). A única
     // condição para o rewrite existir é `NEXT_PUBLIC_API_URL` estar
     // definida (necessária para montar o destino do proxy).
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
+    const configuredBackendUrl = process.env.NEXT_PUBLIC_API_URL;
+    const backendUrl = configuredBackendUrl
+      ? removeTrailingSlashes(configuredBackendUrl)
+      : configuredBackendUrl;
 
     if (!backendUrl) {
       return [];

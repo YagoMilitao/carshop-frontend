@@ -1,8 +1,47 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ComponentProps } from "react";
 
 import { WorkImageUpload } from "./work-image-upload";
+
+type OnConfirm = ComponentProps<typeof WorkImageUpload>["onConfirm"];
+type User = ReturnType<typeof userEvent.setup>;
+
+const VALID_IMAGE_NAME = "foto.png";
+const VALID_IMAGE_PREVIEW_ALT = `Pré-visualização de ${VALID_IMAGE_NAME}`;
+
+function createValidImage() {
+  return new File(["conteudo"], VALID_IMAGE_NAME, { type: "image/png" });
+}
+
+function renderUpload(onConfirm: OnConfirm, disabled = false) {
+  return render(
+    <WorkImageUpload disabled={disabled} onConfirm={onConfirm} />,
+  );
+}
+
+async function renderWithSelectedImage(onConfirm: OnConfirm) {
+  const user = userEvent.setup();
+  const renderResult = renderUpload(onConfirm);
+  const file = createValidImage();
+
+  await user.upload(screen.getByLabelText("Adicionar imagem"), file);
+
+  return { ...renderResult, file, user };
+}
+
+async function submitImage(user: User) {
+  await user.click(
+    await screen.findByRole("button", { name: "Enviar imagem" }),
+  );
+}
+
+function selectFileIgnoringAccept(file: File) {
+  const input = screen.getByLabelText("Adicionar imagem");
+  Object.defineProperty(input, "files", { value: [file] });
+  fireEvent.change(input);
+}
 
 // jsdom não implementa `URL.createObjectURL`/`URL.revokeObjectURL` — o
 // componente depende deles para gerar/limpar o preview local, então
@@ -29,17 +68,10 @@ describe("WorkImageUpload", () => {
 
   it("exibe preview local ao selecionar um arquivo válido", async () => {
     const onConfirm = vi.fn().mockResolvedValue(undefined);
-    const user = userEvent.setup();
-
-    render(<WorkImageUpload disabled={false} onConfirm={onConfirm} />);
-
-    const file = new File(["conteudo"], "foto.png", { type: "image/png" });
-    const input = screen.getByLabelText("Adicionar imagem");
-
-    await user.upload(input, file);
+    const { file } = await renderWithSelectedImage(onConfirm);
 
     expect(
-      await screen.findByAltText("Pré-visualização de foto.png"),
+      await screen.findByAltText(VALID_IMAGE_PREVIEW_ALT),
     ).toBeInTheDocument();
     expect(createObjectURLMock).toHaveBeenCalledWith(file);
     expect(onConfirm).not.toHaveBeenCalled();
@@ -48,14 +80,12 @@ describe("WorkImageUpload", () => {
   it("exibe erro inline para tipo de arquivo inválido sem chamar onConfirm", () => {
     const onConfirm = vi.fn();
 
-    render(<WorkImageUpload disabled={false} onConfirm={onConfirm} />);
+    renderUpload(onConfirm);
 
     const file = new File(["conteudo"], "arquivo.pdf", {
       type: "application/pdf",
     });
-    const input = screen.getByLabelText("Adicionar imagem");
-    Object.defineProperty(input, "files", { value: [file] });
-    fireEvent.change(input);
+    selectFileIgnoringAccept(file);
 
     expect(
       screen.getByText("Formato de imagem inválido (aceita JPEG, PNG ou WebP)."),
@@ -67,15 +97,13 @@ describe("WorkImageUpload", () => {
   it("exibe erro inline para arquivo acima do limite de 5MB sem chamar onConfirm", () => {
     const onConfirm = vi.fn();
 
-    render(<WorkImageUpload disabled={false} onConfirm={onConfirm} />);
+    renderUpload(onConfirm);
 
     const oversizedContent = new Uint8Array(5 * 1024 * 1024 + 1);
     const file = new File([oversizedContent], "grande.png", {
       type: "image/png",
     });
-    const input = screen.getByLabelText("Adicionar imagem");
-    Object.defineProperty(input, "files", { value: [file] });
-    fireEvent.change(input);
+    selectFileIgnoringAccept(file);
 
     expect(screen.getByText(/excede o limite de/)).toBeInTheDocument();
     expect(onConfirm).not.toHaveBeenCalled();
@@ -83,35 +111,21 @@ describe("WorkImageUpload", () => {
 
   it("chama onConfirm com o arquivo correto ao clicar em 'Enviar imagem'", async () => {
     const onConfirm = vi.fn().mockResolvedValue(undefined);
-    const user = userEvent.setup();
+    const { file, user } = await renderWithSelectedImage(onConfirm);
 
-    render(<WorkImageUpload disabled={false} onConfirm={onConfirm} />);
-
-    const file = new File(["conteudo"], "foto.png", { type: "image/png" });
-    await user.upload(screen.getByLabelText("Adicionar imagem"), file);
-
-    await user.click(
-      await screen.findByRole("button", { name: "Enviar imagem" }),
-    );
+    await submitImage(user);
 
     expect(onConfirm).toHaveBeenCalledWith(file);
   });
 
   it("limpa preview e input após sucesso de onConfirm", async () => {
     const onConfirm = vi.fn().mockResolvedValue(undefined);
-    const user = userEvent.setup();
-
-    render(<WorkImageUpload disabled={false} onConfirm={onConfirm} />);
-
-    const file = new File(["conteudo"], "foto.png", { type: "image/png" });
-    await user.upload(screen.getByLabelText("Adicionar imagem"), file);
-    await user.click(
-      await screen.findByRole("button", { name: "Enviar imagem" }),
-    );
+    const { user } = await renderWithSelectedImage(onConfirm);
+    await submitImage(user);
 
     await waitFor(() =>
       expect(
-        screen.queryByAltText("Pré-visualização de foto.png"),
+        screen.queryByAltText(VALID_IMAGE_PREVIEW_ALT),
       ).not.toBeInTheDocument(),
     );
     expect(revokeObjectURLMock).toHaveBeenCalled();
@@ -119,34 +133,20 @@ describe("WorkImageUpload", () => {
 
   it("mantém o preview quando onConfirm falha, permitindo tentar novamente", async () => {
     const onConfirm = vi.fn().mockRejectedValue(new Error("falhou"));
-    const user = userEvent.setup();
-
-    render(<WorkImageUpload disabled={false} onConfirm={onConfirm} />);
-
-    const file = new File(["conteudo"], "foto.png", { type: "image/png" });
-    await user.upload(screen.getByLabelText("Adicionar imagem"), file);
-    await user.click(
-      await screen.findByRole("button", { name: "Enviar imagem" }),
-    );
+    const { user } = await renderWithSelectedImage(onConfirm);
+    await submitImage(user);
 
     await waitFor(() => expect(onConfirm).toHaveBeenCalledTimes(1));
-    expect(
-      screen.getByAltText("Pré-visualização de foto.png"),
-    ).toBeInTheDocument();
+    expect(screen.getByAltText(VALID_IMAGE_PREVIEW_ALT)).toBeInTheDocument();
   });
 
   it("limpa o estado local ao clicar em 'Cancelar', sem chamar onConfirm", async () => {
     const onConfirm = vi.fn();
-    const user = userEvent.setup();
-
-    render(<WorkImageUpload disabled={false} onConfirm={onConfirm} />);
-
-    const file = new File(["conteudo"], "foto.png", { type: "image/png" });
-    await user.upload(screen.getByLabelText("Adicionar imagem"), file);
+    const { user } = await renderWithSelectedImage(onConfirm);
     await user.click(await screen.findByRole("button", { name: "Cancelar" }));
 
     expect(
-      screen.queryByAltText("Pré-visualização de foto.png"),
+      screen.queryByAltText(VALID_IMAGE_PREVIEW_ALT),
     ).not.toBeInTheDocument();
     expect(onConfirm).not.toHaveBeenCalled();
     expect(revokeObjectURLMock).toHaveBeenCalled();
@@ -154,13 +154,7 @@ describe("WorkImageUpload", () => {
 
   it("desabilita input e botões quando disabled=true", async () => {
     const onConfirm = vi.fn().mockResolvedValue(undefined);
-    const { rerender } = render(
-      <WorkImageUpload disabled={false} onConfirm={onConfirm} />,
-    );
-
-    const file = new File(["conteudo"], "foto.png", { type: "image/png" });
-    const user = userEvent.setup();
-    await user.upload(screen.getByLabelText("Adicionar imagem"), file);
+    const { rerender } = await renderWithSelectedImage(onConfirm);
 
     rerender(<WorkImageUpload disabled onConfirm={onConfirm} />);
 
