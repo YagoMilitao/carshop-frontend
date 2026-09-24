@@ -52,7 +52,7 @@ export default async function ServicesPage() {
 
       {categories.length >= 1 && (
         <PageSection spacing="standard" className="pt-0 lg:pt-0" aria-label="Service categories">
-          <ol role="list" className="divide-y divide-border border-t border-border">
+          <ol className="divide-y divide-border border-t border-border">
             {categories.map((category, index) => (
               <li key={category.key}>
                 <ServiceCategoryRow

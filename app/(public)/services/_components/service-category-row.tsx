@@ -86,7 +86,7 @@ export function ServiceCategoryRow({
           textColumn,
         )}
       >
-        <ul role="list" className="flex flex-col">
+        <ul className="flex flex-col">
           {visibleWorks.map((work) => (
             <li key={work.id}>
               <Link

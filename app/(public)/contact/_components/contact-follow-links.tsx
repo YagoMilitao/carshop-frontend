@@ -17,7 +17,7 @@ export function ContactFollowLinks({ links }: Readonly<ContactFollowLinksProps>)
       <h2 id="contact-follow-heading" className="text-heading-4 text-foreground">
         Follow CarShop
       </h2>
-      <ul role="list" className="flex flex-col">
+      <ul className="flex flex-col">
         {links.map((link) => (
           <li key={link.label}>
             <a
