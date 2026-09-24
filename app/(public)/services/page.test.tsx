@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
-import type { Work, WorkImage } from '@/lib/api/works'
+import type { Work } from '@/lib/api/works'
+import { makeServiceWork as makeWork } from '@/test/fixtures/service-work'
 
 const getWorksMock = vi.fn<() => Promise<Work[]>>()
 
@@ -10,35 +11,6 @@ vi.mock('@/lib/api/works', () => ({
   getWorks: () => getWorksMock(),
   getCoverImage: (work: Work) => work.images.find((image) => image.isCover),
 }))
-
-function makeImage(id: string): WorkImage {
-  return {
-    id,
-    url: `https://res.cloudinary.com/demo/${id}.jpg`,
-    publicId: id,
-    alt: `Interior ${id}`,
-    isCover: true,
-    order: 0,
-    createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-02T00:00:00.000Z',
-  }
-}
-
-function makeWork(id: string, category: string, hasImage = true): Work {
-  return {
-    id,
-    slug: `work-${id}`,
-    title: `Work ${id}`,
-    description: 'Descrição',
-    category,
-    tags: [],
-    images: hasImage ? [makeImage(`${id}-cover`)] : [],
-    status: 'published',
-    createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-02T00:00:00.000Z',
-    deletedAt: null,
-  }
-}
 
 async function renderServices() {
   const { default: ServicesPage } = await import('./page')

@@ -3,6 +3,15 @@ import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('server-only', () => ({}))
+vi.mock('@/lib/env/server', () => ({
+  serverEnv: {
+    social: {
+      instagramUrl: 'https://instagram.com/env-default',
+      facebookUrl: undefined,
+      linkedinUrl: undefined,
+    },
+  },
+}))
 
 const { getSocialLinks } = await import('./social-links')
 
@@ -47,6 +56,8 @@ describe('getSocialLinks', () => {
   })
 
   it('usa serverEnv.social por padrão', () => {
-    expect(Array.isArray(getSocialLinks())).toBe(true)
+    expect(getSocialLinks()).toEqual([
+      { href: 'https://instagram.com/env-default', label: 'Instagram' },
+    ])
   })
 })

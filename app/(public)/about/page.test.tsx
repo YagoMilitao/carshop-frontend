@@ -90,7 +90,7 @@ describe('AboutPage (public)', () => {
     expect(images[0]).toHaveAttribute('alt', 'Interior 2-cover')
     // `preload` é observável no jsdom pela ausência de `loading="lazy"`.
     expect(images[0]).not.toHaveAttribute('loading', 'lazy')
-    expect(images[0]).toHaveAttribute('sizes', '(min-width: 1280px) 1120px, 100vw')
+    expect(images[0]).toHaveAttribute('sizes', '(min-width: 1280px) 1120px, (min-width: 1024px) 100vw, (min-width: 768px) 656px, 100vw')
 
     const caption = figure.querySelector('figcaption')
     expect(caption).toHaveTextContent('Bancos de couro')

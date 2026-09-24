@@ -59,13 +59,21 @@ export default async function AboutPage() {
 
       {featured && (
         <PageSection spacing="compact" container="none" className="pt-0 lg:pt-0">
-          <Container variant="page">
-            <figure className="flex flex-col gap-3 md:px-8 lg:px-0">
+          {/*
+            Abaixo de lg a foto segue a coluna de leitura do texto (mesma
+            largura e gutter), evitando desalinhamento no tablet; a partir
+            de lg abre para a largura de página como ponto editorial.
+          */}
+          <Container
+            variant="reading"
+            className="lg:max-w-(--layout-container-page) lg:px-16 xl:px-20"
+          >
+            <figure className="flex flex-col gap-3">
               {/* Única imagem da página e candidata a LCP. */}
               <WorkImageThumb
                 image={featured.image}
                 fallbackAlt={featured.work.title}
-                sizes="(min-width: 1280px) 1120px, 100vw"
+                sizes="(min-width: 1280px) 1120px, (min-width: 1024px) 100vw, (min-width: 768px) 656px, 100vw"
                 preload
                 className="aspect-4/3 md:aspect-video"
               />
