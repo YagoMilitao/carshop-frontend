@@ -36,7 +36,8 @@ type CommentFormProps = {
  * admin) — por isso não é inserido otimisticamente na lista de aprovados
  * nem dispara invalidação de cache aqui: a única invalidação relevante
  * (`revalidateCommentsTag`) já acontece quando o admin aprova o
- * comentário (`app/(admin)/admin/(protected)/comment-moderation-form.tsx`).
+ * comentário (`app/(admin)/admin/(protected)/comentarios/`, via
+ * `syncAfterCommentMutation`).
  */
 export function CommentForm({ workId }: Readonly<CommentFormProps>) {
   const [formError, setFormError] = useState<string | null>(null);
