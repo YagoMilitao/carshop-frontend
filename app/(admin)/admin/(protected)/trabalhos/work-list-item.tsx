@@ -284,9 +284,9 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
               </p>
             )}
 
-            <p role="status" className="sr-only">
+            <output className="sr-only">
               {removeImageStatus}
-            </p>
+            </output>
           </section>
         </CardContent>
       </Card>
