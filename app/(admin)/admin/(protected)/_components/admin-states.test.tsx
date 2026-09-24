@@ -9,12 +9,12 @@ import {
 } from "./admin-states";
 
 describe("AdminLoadingState", () => {
-  it("renderiza um <output> com aria-busy e o label sr-only (mantido no DOM)", () => {
+  it("renderiza um <output> sem aria-busy e mantém o label sr-only no DOM", () => {
     render(<AdminLoadingState label="Carregando trabalhos..." />);
 
     const status = screen.getByRole("status");
     expect(status.tagName).toBe("OUTPUT");
-    expect(status).toHaveAttribute("aria-busy", "true");
+    expect(status).not.toHaveAttribute("aria-busy");
     expect(status).toHaveTextContent("Carregando trabalhos...");
     expect(screen.getByText("Carregando trabalhos...")).toHaveClass("sr-only");
   });

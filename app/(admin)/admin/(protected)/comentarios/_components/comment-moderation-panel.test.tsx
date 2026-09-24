@@ -165,12 +165,12 @@ describe("CommentModerationPanel", () => {
       },
     );
 
-    it("usa o AdminLoadingState compartilhado (output aria-busy)", () => {
+    it("usa o AdminLoadingState compartilhado sem aria-busy persistente", () => {
       getAdminCommentsMock.mockReturnValue(new Promise(() => undefined));
 
       renderPanel();
 
-      expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
+      expect(screen.getByRole("status")).not.toHaveAttribute("aria-busy");
     });
 
     it("erro: 'Tentar novamente' refaz o GET e exibe a lista ao recuperar", async () => {

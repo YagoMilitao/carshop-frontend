@@ -96,9 +96,9 @@ atual da spec nesse ponto.
 ### 5. Estados compartilhados
 Arquivo `app/(admin)/admin/(protected)/_components/admin-states.tsx` (sem
 `"use client"`, apresentacional):
-- `AdminLoadingState({ label, rows? })`: `<output aria-busy>` com label
-  `sr-only` + linhas de `Skeleton` `aria-hidden` (textos de loading
-  permanecem no DOM).
+- `AdminLoadingState({ label, rows? })`: `<output>` com label `sr-only` +
+  linhas de `Skeleton` `aria-hidden` (textos de loading permanecem no DOM;
+  não usar `aria-busy`, pois o live region é desmontado ao concluir).
 - `AdminErrorState({ message, onRetry?, isRetrying? })`:
   `rounded-lg border border-destructive/40 bg-surface p-4`; `LuCircleAlert`
   `aria-hidden`; mensagem `role="alert"` `text-destructive-text`; botão

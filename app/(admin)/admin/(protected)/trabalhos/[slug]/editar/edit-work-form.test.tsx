@@ -191,7 +191,7 @@ describe("EditWorkForm", () => {
     expect(saveButton).not.toHaveAttribute("title");
   });
 
-  it("loading: exibe o AdminLoadingState (output aria-busy) sem formulário", () => {
+  it("loading: exibe o AdminLoadingState sem manter aria-busy até o unmount", () => {
     useQueryMock.mockReturnValue({
       data: undefined,
       error: null,
@@ -202,7 +202,7 @@ describe("EditWorkForm", () => {
     render(<EditWorkForm slug="restauracao-fusca" />);
 
     const status = screen.getByRole("status");
-    expect(status).toHaveAttribute("aria-busy", "true");
+    expect(status).not.toHaveAttribute("aria-busy");
     expect(status).toHaveTextContent("Carregando trabalho...");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Salvar" })).not.toBeInTheDocument();

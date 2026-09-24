@@ -87,9 +87,15 @@ export function CreateWorkForm() {
       )}
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button variant="outline" asChild>
-          <Link href="/admin/trabalhos">Cancelar</Link>
-        </Button>
+        {isSubmitting ? (
+          <Button type="button" variant="outline" disabled>
+            Cancelar
+          </Button>
+        ) : (
+          <Button variant="outline" asChild>
+            <Link href="/admin/trabalhos">Cancelar</Link>
+          </Button>
+        )}
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Salvando..." : "Criar trabalho"}
         </Button>

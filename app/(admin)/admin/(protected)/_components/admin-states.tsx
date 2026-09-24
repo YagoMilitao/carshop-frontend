@@ -19,7 +19,7 @@ type AdminLoadingStateProps = Readonly<{
 
 export function AdminLoadingState({ label, rows = 3 }: AdminLoadingStateProps) {
   return (
-    <output aria-busy="true" className="flex flex-col gap-3">
+    <output className="flex flex-col gap-3">
       <span className="sr-only">{label}</span>
       {Array.from({ length: rows }, (_, index) => (
         <Skeleton

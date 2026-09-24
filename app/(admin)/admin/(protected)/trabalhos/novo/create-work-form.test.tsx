@@ -97,6 +97,36 @@ describe("CreateWorkForm", () => {
     ).toHaveAttribute("type", "submit");
   });
 
+  it("bloqueia 'Cancelar' enquanto a criação está em andamento", async () => {
+    let resolveRequest: ((value: { id: string }) => void) | undefined;
+    createWorkMock.mockImplementation(
+      () =>
+        new Promise<{ id: string }>((resolve) => {
+          resolveRequest = resolve;
+        }),
+    );
+    revalidateWorksTagMock.mockResolvedValue(undefined);
+    const user = userEvent.setup();
+
+    render(<CreateWorkForm />);
+    await fillValidForm(user);
+    await user.click(screen.getByRole("button", { name: "Criar trabalho" }));
+
+    const cancelButton = await screen.findByRole("button", {
+      name: "Cancelar",
+    });
+    expect(cancelButton).toBeDisabled();
+    expect(
+      screen.queryByRole("link", { name: "Cancelar" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(cancelButton);
+    expect(routerPushMock).not.toHaveBeenCalled();
+
+    resolveRequest?.({ id: "1" });
+    await waitFor(() => expect(routerPushMock).toHaveBeenCalledWith("/admin"));
+  });
+
   it("usa NativeSelect com opções Draft/Published (default draft) e Textarea na descrição", () => {
     render(<CreateWorkForm />);
 
