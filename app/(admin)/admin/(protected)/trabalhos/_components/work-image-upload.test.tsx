@@ -128,13 +128,15 @@ describe("WorkImageUpload", () => {
     selectFileIgnoringAccept(file);
 
     const error = screen.getByRole("alert");
-    const input = screen.getByLabelText("Adicionar imagem");
+    const addButton = screen.getByRole("button", { name: "Adicionar imagem" });
 
     expect(error).toHaveTextContent(
       "Formato de imagem inválido (aceita JPEG, PNG ou WebP).",
     );
-    expect(input).toHaveAttribute("aria-invalid", "true");
-    expect(input).toHaveAttribute("aria-describedby", error.id);
+    expect(addButton).toHaveAccessibleDescription(
+      "Formato de imagem inválido (aceita JPEG, PNG ou WebP).",
+    );
+    expect(addButton).toHaveAttribute("aria-describedby", error.id);
     expect(onConfirm).not.toHaveBeenCalled();
     expect(screen.queryByAltText(/Pré-visualização/)).not.toBeInTheDocument();
   });
@@ -174,7 +176,9 @@ describe("WorkImageUpload", () => {
       ).not.toBeInTheDocument(),
     );
     expect(revokeObjectURLMock).toHaveBeenCalled();
-    expect(screen.getByLabelText("Adicionar imagem")).toHaveFocus();
+    expect(
+      screen.getByRole("button", { name: "Adicionar imagem" }),
+    ).toHaveFocus();
   });
 
   it("mantém o preview quando onConfirm falha, permitindo tentar novamente", async () => {
@@ -196,7 +200,9 @@ describe("WorkImageUpload", () => {
     ).not.toBeInTheDocument();
     expect(onConfirm).not.toHaveBeenCalled();
     expect(revokeObjectURLMock).toHaveBeenCalled();
-    expect(screen.getByLabelText("Adicionar imagem")).toHaveFocus();
+    expect(
+      screen.getByRole("button", { name: "Adicionar imagem" }),
+    ).toHaveFocus();
   });
 
   it("mantém o rótulo neutro quando outra mutação desabilita os controles", async () => {
@@ -206,6 +212,9 @@ describe("WorkImageUpload", () => {
     rerender(<WorkImageUpload disabled onConfirm={onConfirm} />);
 
     expect(screen.getByLabelText("Adicionar imagem")).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Adicionar imagem" }),
+    ).toBeDisabled();
     expect(
       screen.getByRole("button", { name: "Enviar imagem" }),
     ).toBeDisabled();
@@ -234,5 +243,46 @@ describe("WorkImageUpload", () => {
         screen.queryByAltText(VALID_IMAGE_PREVIEW_ALT),
       ).not.toBeInTheDocument(),
     );
+  });
+  describe("seletor de arquivo", () => {
+    it("exibe um único botão 'Adicionar imagem' e o texto 'Nenhum arquivo escolhido'", () => {
+      renderUpload(vi.fn());
+
+      expect(
+        screen.getAllByRole("button", { name: "Adicionar imagem" }),
+      ).toHaveLength(1);
+      expect(screen.getByText("Nenhum arquivo escolhido")).toBeInTheDocument();
+      // O input nativo fica fora da ordem de tabulação e da árvore de
+      // acessibilidade para não duplicar o controle.
+      const input = screen.getByLabelText("Adicionar imagem");
+      expect(input).toHaveAttribute("tabindex", "-1");
+      expect(input).toHaveAttribute("aria-hidden", "true");
+    });
+
+    it("abre o seletor nativo ao clicar em 'Adicionar imagem'", async () => {
+      const user = userEvent.setup();
+      renderUpload(vi.fn());
+      const input = screen.getByLabelText("Adicionar imagem");
+      const clickSpy = vi.spyOn(input, "click");
+
+      await user.click(
+        screen.getByRole("button", { name: "Adicionar imagem" }),
+      );
+
+      expect(clickSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("mostra o nome do arquivo selecionado e volta ao texto padrão ao cancelar", async () => {
+      const { user } = await renderWithSelectedImage(vi.fn());
+
+      expect(screen.getByText(VALID_IMAGE_NAME)).toBeInTheDocument();
+      expect(
+        screen.queryByText("Nenhum arquivo escolhido"),
+      ).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+      expect(screen.getByText("Nenhum arquivo escolhido")).toBeInTheDocument();
+    });
   });
 });

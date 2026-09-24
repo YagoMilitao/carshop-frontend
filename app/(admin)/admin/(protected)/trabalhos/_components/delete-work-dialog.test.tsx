@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { DeleteWorkDialog } from "./delete-work-dialog";
@@ -97,5 +97,22 @@ describe("DeleteWorkDialog", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Falha ao excluir work.",
     );
+  });
+
+  it("repassa onCloseAutoFocus ao AlertDialogContent ao fechar", async () => {
+    const onCloseAutoFocus = vi.fn();
+    const props = {
+      onOpenChange: vi.fn(),
+      workTitle: "Restauração Fusca",
+      onConfirm: vi.fn(),
+      isPending: false,
+      error: null,
+      onCloseAutoFocus,
+    };
+    const { rerender } = render(<DeleteWorkDialog open {...props} />);
+
+    rerender(<DeleteWorkDialog open={false} {...props} />);
+
+    await waitFor(() => expect(onCloseAutoFocus).toHaveBeenCalled());
   });
 });

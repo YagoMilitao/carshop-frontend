@@ -18,6 +18,7 @@ type DeleteWorkDialogProps = Readonly<{
   onConfirm: () => void;
   isPending: boolean;
   error: string | null;
+  onCloseAutoFocus?: (event: Event) => void;
 }>;
 
 // Componente de apresentação: não conhece `deleteWork`/Axios diretamente.
@@ -31,10 +32,11 @@ export function DeleteWorkDialog({
   onConfirm,
   isPending,
   error,
+  onCloseAutoFocus,
 }: DeleteWorkDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent onCloseAutoFocus={onCloseAutoFocus}>
         <AlertDialogHeader>
           <AlertDialogTitle>Excluir work</AlertDialogTitle>
           <AlertDialogDescription>

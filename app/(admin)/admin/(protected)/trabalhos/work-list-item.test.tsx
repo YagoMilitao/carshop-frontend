@@ -1,7 +1,13 @@
 import { AxiosError, AxiosHeaders } from "axios";
 import type { InternalAxiosRequestConfig } from "axios";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import type { Work } from "@/lib/api/works";
@@ -51,7 +57,7 @@ const work: Work = {
   images: [
     {
       id: "img-1",
-      url: "https://cdn.example.com/img-1.jpg",
+      url: "https://res.cloudinary.com/demo/img-1.jpg",
       publicId: "img-1",
       alt: "Banco restaurado",
       isCover: true,
@@ -66,19 +72,19 @@ const work: Work = {
   deletedAt: null,
 };
 
-function createAxiosError(message: string) {
+function createAxiosError(message: string, status = 500) {
   const config: InternalAxiosRequestConfig = {
     headers: new AxiosHeaders(),
   };
 
   return new AxiosError(
-    "Internal Server Error",
-    "ERR_BAD_RESPONSE",
+    message,
+    status >= 500 ? "ERR_BAD_RESPONSE" : "ERR_BAD_REQUEST",
     config,
     undefined,
     {
-      status: 500,
-      statusText: "Internal Server Error",
+      status,
+      statusText: String(status),
       headers: new AxiosHeaders(),
       config,
       data: { message },
@@ -91,6 +97,7 @@ function createAxiosError(message: string) {
 // exercitam o fluxo de upload.
 const createObjectURLMock = vi.fn(() => "blob:mock-1");
 const revokeObjectURLMock = vi.fn();
+const OriginalURL = URL;
 
 describe("WorkListItem", () => {
   beforeEach(() => {
@@ -98,11 +105,15 @@ describe("WorkListItem", () => {
     invalidateQueriesMock.mockResolvedValue(undefined);
     createObjectURLMock.mockClear();
     revokeObjectURLMock.mockClear();
-    vi.stubGlobal("URL", {
-      ...URL,
-      createObjectURL: createObjectURLMock,
-      revokeObjectURL: revokeObjectURLMock,
-    });
+    // Subclasse (em vez de um objeto espalhado) para preservar o construtor
+    // `new URL(...)`, usado pelo `next/image` das miniaturas do grid.
+    vi.stubGlobal(
+      "URL",
+      class extends OriginalURL {
+        static createObjectURL = createObjectURLMock;
+        static revokeObjectURL = revokeObjectURLMock;
+      },
+    );
   });
 
   afterEach(() => {
@@ -117,6 +128,22 @@ describe("WorkListItem", () => {
     const statusBadge = screen.getByText("published");
     expect(statusBadge).toBeInTheDocument();
     expect(statusBadge).toHaveAttribute("data-slot", "badge");
+  });
+
+  it("destaca o status 'published' em verde e mantém 'draft' neutro", () => {
+    const { rerender } = render(<WorkListItem work={work} />);
+
+    expect(screen.getByText("published")).toHaveAttribute(
+      "data-variant",
+      "success",
+    );
+
+    rerender(<WorkListItem work={{ ...work, status: "draft" }} />);
+
+    expect(screen.getByText("draft")).toHaveAttribute(
+      "data-variant",
+      "secondary",
+    );
   });
 
   it("exibe um link 'Editar' habilitado apontando para a rota de edição (CARSHOP-32)", () => {
@@ -178,6 +205,40 @@ describe("WorkListItem", () => {
     expect(deleteWorkMock).not.toHaveBeenCalled();
   });
 
+  it("devolve o foco ao botão 'Excluir work' ao cancelar ou fechar com Esc o diálogo de exclusão", async () => {
+    const user = userEvent.setup();
+
+    render(<WorkListItem work={work} />);
+
+    const deleteWorkButton = screen.getByRole("button", {
+      name: "Excluir work",
+    });
+
+    await user.click(deleteWorkButton);
+    await user.click(await screen.findByRole("button", { name: "Cancelar" }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Excluir work" }),
+      ).not.toBeInTheDocument(),
+    );
+    await waitFor(() => expect(deleteWorkButton).toHaveFocus());
+
+    await user.click(deleteWorkButton);
+    expect(
+      await screen.findByRole("heading", { name: "Excluir work" }),
+    ).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Excluir work" }),
+      ).not.toBeInTheDocument(),
+    );
+    await waitFor(() => expect(deleteWorkButton).toHaveFocus());
+    expect(deleteWorkMock).not.toHaveBeenCalled();
+  });
+
   it("exibe erro da API no diálogo quando a exclusão do work falha, sem invalidar o cache", async () => {
     deleteWorkMock.mockRejectedValue(
       createAxiosError("Falha ao excluir work."),
@@ -211,22 +272,74 @@ describe("WorkListItem", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("remove uma imagem, invalida o cache e atualiza a listagem", async () => {
+  it("remove uma imagem somente após confirmação, invalida o cache e atualiza a listagem", async () => {
     deleteWorkImageMock.mockResolvedValue(undefined);
     revalidateWorksTagMock.mockResolvedValue(undefined);
     const user = userEvent.setup();
 
     render(<WorkListItem work={work} />);
 
-    await user.click(screen.getByRole("button", { name: "Remover imagem" }));
+    await user.click(
+      screen.getByRole("button", { name: "Remover imagem: Banco restaurado" }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Remover imagem" }),
+    ).toBeInTheDocument();
+    expect(deleteWorkImageMock).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Excluir imagem" }));
 
     await waitFor(() =>
       expect(deleteWorkImageMock).toHaveBeenCalledWith("work-1", "img-1"),
     );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Remover imagem" }),
+      ).not.toBeInTheDocument(),
+    );
     expect(revalidateWorksTagMock).toHaveBeenCalledTimes(1);
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["admin", "works"],
+    });
+    expect(routerRefreshMock).toHaveBeenCalledTimes(1);
   });
 
-  it("não sinaliza upload enquanto uma imagem existente está sendo removida", async () => {
+  it("devolve o foco ao botão 'Remover' ao cancelar ou fechar com Esc o diálogo de remoção", async () => {
+    const user = userEvent.setup();
+
+    render(<WorkListItem work={work} />);
+
+    const removeButton = screen.getByRole("button", {
+      name: "Remover imagem: Banco restaurado",
+    });
+
+    await user.click(removeButton);
+    await user.click(await screen.findByRole("button", { name: "Cancelar" }));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Remover imagem" }),
+      ).not.toBeInTheDocument(),
+    );
+    await waitFor(() => expect(removeButton).toHaveFocus());
+
+    await user.click(removeButton);
+    expect(
+      await screen.findByRole("heading", { name: "Remover imagem" }),
+    ).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Remover imagem" }),
+      ).not.toBeInTheDocument(),
+    );
+    await waitFor(() => expect(removeButton).toHaveFocus());
+    expect(deleteWorkImageMock).not.toHaveBeenCalled();
+  });
+
+  it("desabilita o upload sem sinalizar 'Enviando...' enquanto uma imagem existente está sendo removida", async () => {
     let resolveDeleteImage = () => {};
     deleteWorkImageMock.mockImplementation(
       () =>
@@ -241,14 +354,24 @@ describe("WorkListItem", () => {
 
     const file = new File(["conteudo"], "foto.png", { type: "image/png" });
     await user.upload(screen.getByLabelText("Adicionar imagem"), file);
-    await user.click(screen.getByRole("button", { name: "Remover imagem" }));
+    await user.click(
+      screen.getByRole("button", { name: "Remover imagem: Banco restaurado" }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "Excluir imagem" }),
+    );
 
     await waitFor(() => expect(deleteWorkImageMock).toHaveBeenCalledTimes(1));
     expect(
-      screen.getByRole("button", { name: "Enviar imagem" }),
+      screen.getByRole("button", { name: "Excluindo..." }),
+    ).toBeDisabled();
+    // Com o diálogo modal aberto, o restante da página fica fora da árvore
+    // de acessibilidade — consultamos com `hidden: true`.
+    expect(
+      screen.getByRole("button", { name: "Enviar imagem", hidden: true }),
     ).toBeDisabled();
     expect(
-      screen.queryByRole("button", { name: "Enviando..." }),
+      screen.queryByRole("button", { name: "Enviando...", hidden: true }),
     ).not.toBeInTheDocument();
 
     resolveDeleteImage();
@@ -303,7 +426,9 @@ describe("WorkListItem", () => {
         screen.queryByAltText("Pré-visualização de foto.png"),
       ).not.toBeInTheDocument(),
     );
-    expect(input).toHaveFocus();
+    expect(
+      screen.getByRole("button", { name: "Adicionar imagem" }),
+    ).toHaveFocus();
   });
 
   it("cancela a seleção de imagem sem chamar a API", async () => {
@@ -388,5 +513,322 @@ describe("WorkListItem", () => {
       await screen.findByText(/excede o limite de/),
     ).toBeInTheDocument();
     expect(uploadWorkImageMock).not.toHaveBeenCalled();
+  });
+  describe("remoção de imagem existente (CARSHOP-34)", () => {
+    const REMOVE_BUTTON_NAME = "Remover imagem: Banco restaurado";
+
+    async function openRemoveDialog(user: ReturnType<typeof userEvent.setup>) {
+      await user.click(screen.getByRole("button", { name: REMOVE_BUTTON_NAME }));
+
+      return screen.findByRole("alertdialog");
+    }
+
+    it("exibe estado vazio e contador zerado quando o work não tem imagens", () => {
+      render(<WorkListItem work={{ ...work, images: [] }} />);
+
+      expect(
+        screen.getByRole("heading", { name: "Imagens (0) do trabalho Restauração Fusca" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Nenhuma imagem cadastrada para este trabalho."),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /^Remover imagem/ }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("exibe a miniatura da imagem no grid com o alt real", () => {
+      render(<WorkListItem work={work} />);
+
+      expect(
+        screen.getByRole("heading", { name: "Imagens (1) do trabalho Restauração Fusca" }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("img", { name: "Banco restaurado" })).toBeInTheDocument();
+      expect(screen.getByText("Capa")).toBeInTheDocument();
+    });
+
+    it("cancelar o diálogo não chama a API nem sincroniza", async () => {
+      const user = userEvent.setup();
+
+      render(<WorkListItem work={work} />);
+
+      const dialog = await openRemoveDialog(user);
+      expect(dialog).toHaveTextContent("Banco restaurado");
+
+      await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
+      expect(deleteWorkImageMock).not.toHaveBeenCalled();
+      expect(invalidateQueriesMock).not.toHaveBeenCalled();
+      expect(revalidateWorksTagMock).not.toHaveBeenCalled();
+      expect(routerRefreshMock).not.toHaveBeenCalled();
+    });
+
+    it("em 404 sincroniza a lista e mantém o diálogo aberto com a mensagem", async () => {
+      deleteWorkImageMock.mockRejectedValue(
+        createAxiosError("Not found", 404),
+      );
+      revalidateWorksTagMock.mockResolvedValue(undefined);
+      const user = userEvent.setup();
+
+      render(<WorkListItem work={work} />);
+
+      const dialog = await openRemoveDialog(user);
+      await user.click(
+        within(dialog).getByRole("button", { name: "Excluir imagem" }),
+      );
+
+      expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+        "Imagem ou trabalho não encontrado. A lista foi atualizada.",
+      );
+      expect(deleteWorkImageMock).toHaveBeenCalledWith("work-1", "img-1");
+      expect(invalidateQueriesMock).toHaveBeenCalledWith({
+        queryKey: ["admin", "works"],
+      });
+      expect(revalidateWorksTagMock).toHaveBeenCalledTimes(1);
+      expect(routerRefreshMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+      // A imagem já não existe: não há como confirmar de novo (evita um
+      // segundo DELETE), sobra só "Fechar".
+      expect(
+        within(dialog).queryByRole("button", { name: "Excluir imagem" }),
+      ).not.toBeInTheDocument();
+      expect(
+        within(dialog).getByRole("button", { name: "Fechar" }),
+      ).toBeEnabled();
+      expect(deleteWorkImageMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("reabilita a confirmação ao abrir uma nova remoção após um 404", async () => {
+      deleteWorkImageMock.mockRejectedValue(
+        createAxiosError("Not found", 404),
+      );
+      revalidateWorksTagMock.mockResolvedValue(undefined);
+      const user = userEvent.setup();
+
+      render(<WorkListItem work={work} />);
+
+      const dialog = await openRemoveDialog(user);
+      await user.click(
+        within(dialog).getByRole("button", { name: "Excluir imagem" }),
+      );
+      await within(dialog).findByRole("alert");
+      await user.click(within(dialog).getByRole("button", { name: "Fechar" }));
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
+
+      const reopened = await openRemoveDialog(user);
+      expect(
+        within(reopened).getByRole("button", { name: "Excluir imagem" }),
+      ).toBeEnabled();
+      expect(within(reopened).queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    it("após 404, fechar o diálogo leva o foco ao heading da seção", async () => {
+      deleteWorkImageMock.mockRejectedValue(
+        createAxiosError("Not found", 404),
+      );
+      revalidateWorksTagMock.mockResolvedValue(undefined);
+      const user = userEvent.setup();
+
+      render(<WorkListItem work={work} />);
+
+      const dialog = await openRemoveDialog(user);
+      await user.click(
+        within(dialog).getByRole("button", { name: "Excluir imagem" }),
+      );
+      await within(dialog).findByRole("alert");
+
+      await user.click(within(dialog).getByRole("button", { name: "Fechar" }));
+
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
+      await waitFor(() =>
+        expect(
+          screen.getByRole("heading", { name: "Imagens (1) do trabalho Restauração Fusca" }),
+        ).toHaveFocus(),
+      );
+    });
+
+    it.each([
+      [401, "Sua sessão expirou. Faça login novamente."],
+      [429, "Muitas tentativas. Aguarde alguns instantes e tente novamente."],
+      [500, "Não foi possível remover a imagem. Tente novamente."],
+    ])(
+      "em %i exibe a mensagem no diálogo sem sincronizar",
+      async (status, expectedMessage) => {
+        deleteWorkImageMock.mockRejectedValue(
+          createAxiosError("Mensagem do backend", status),
+        );
+        const user = userEvent.setup();
+
+        render(<WorkListItem work={work} />);
+
+        const dialog = await openRemoveDialog(user);
+        await user.click(
+          within(dialog).getByRole("button", { name: "Excluir imagem" }),
+        );
+
+        expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+          expectedMessage,
+        );
+        expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+        expect(invalidateQueriesMock).not.toHaveBeenCalled();
+        expect(revalidateWorksTagMock).not.toHaveBeenCalled();
+        expect(routerRefreshMock).not.toHaveBeenCalled();
+        // Permite nova tentativa.
+        expect(
+          within(dialog).getByRole("button", { name: "Excluir imagem" }),
+        ).toBeEnabled();
+      },
+    );
+
+    it("erro de remoção não aparece no alerta do upload e some ao fechar o diálogo", async () => {
+      deleteWorkImageMock.mockRejectedValue(
+        createAxiosError("Mensagem do backend", 500),
+      );
+      const user = userEvent.setup();
+
+      render(<WorkListItem work={work} />);
+
+      const dialog = await openRemoveDialog(user);
+      await user.click(
+        within(dialog).getByRole("button", { name: "Excluir imagem" }),
+      );
+      await within(dialog).findByRole("alert");
+
+      const alerts = screen.getAllByRole("alert", { hidden: true });
+      expect(alerts).toHaveLength(1);
+      expect(dialog).toContainElement(alerts[0] ?? null);
+
+      await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(uploadWorkImageMock).not.toHaveBeenCalled();
+    });
+
+    it("erro de upload não aparece no diálogo de remoção", async () => {
+      uploadWorkImageMock.mockRejectedValue(
+        createAxiosError("Falha ao enviar imagem."),
+      );
+      const user = userEvent.setup();
+
+      render(<WorkListItem work={work} />);
+
+      await user.upload(
+        screen.getByLabelText("Adicionar imagem"),
+        new File(["conteudo"], "foto.png", { type: "image/png" }),
+      );
+      await user.click(
+        await screen.findByRole("button", { name: "Enviar imagem" }),
+      );
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Falha ao enviar imagem.",
+      );
+
+      const dialog = await openRemoveDialog(user);
+
+      expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument();
+      expect(dialog).not.toHaveTextContent("Falha ao enviar imagem.");
+      expect(deleteWorkImageMock).not.toHaveBeenCalled();
+    });
+
+    it("após sucesso anuncia 'Imagem removida.' e leva o foco ao heading da seção", async () => {
+      deleteWorkImageMock.mockResolvedValue(undefined);
+      revalidateWorksTagMock.mockResolvedValue(undefined);
+      const user = userEvent.setup();
+
+      render(<WorkListItem work={work} />);
+
+      expect(screen.getByRole("status")).toBeEmptyDOMElement();
+
+      const dialog = await openRemoveDialog(user);
+      await user.click(
+        within(dialog).getByRole("button", { name: "Excluir imagem" }),
+      );
+
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
+      expect(screen.getByRole("status")).toHaveTextContent("Imagem removida.");
+      await waitFor(() =>
+        expect(
+          screen.getByRole("heading", { name: "Imagens (1) do trabalho Restauração Fusca" }),
+        ).toHaveFocus(),
+      );
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    it("limpa o anúncio de status ao abrir um novo diálogo de remoção", async () => {
+      deleteWorkImageMock.mockResolvedValue(undefined);
+      revalidateWorksTagMock.mockResolvedValue(undefined);
+      const user = userEvent.setup();
+
+      render(<WorkListItem work={work} />);
+
+      const dialog = await openRemoveDialog(user);
+      await user.click(
+        within(dialog).getByRole("button", { name: "Excluir imagem" }),
+      );
+      await waitFor(() =>
+        expect(screen.getByRole("status")).toHaveTextContent(
+          "Imagem removida.",
+        ),
+      );
+
+      await openRemoveDialog(user);
+
+      expect(
+        screen.getByRole("status", { hidden: true }),
+      ).toBeEmptyDOMElement();
+    });
+
+    it("não fecha o diálogo (Esc/Cancelar) enquanto o DELETE está pendente", async () => {
+      let resolveDeleteImage = () => {};
+      deleteWorkImageMock.mockImplementation(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveDeleteImage = resolve;
+          }),
+      );
+      revalidateWorksTagMock.mockResolvedValue(undefined);
+      const user = userEvent.setup();
+
+      render(<WorkListItem work={work} />);
+
+      const dialog = await openRemoveDialog(user);
+      await user.click(
+        within(dialog).getByRole("button", { name: "Excluir imagem" }),
+      );
+
+      const pendingButton = await within(dialog).findByRole("button", {
+        name: "Excluindo...",
+      });
+      expect(pendingButton).toBeDisabled();
+      expect(
+        within(dialog).getByRole("button", { name: "Cancelar" }),
+      ).toBeDisabled();
+
+      await user.keyboard("{Escape}");
+
+      expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Excluir work", hidden: true }),
+      ).toBeDisabled();
+
+      resolveDeleteImage();
+
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
+      expect(deleteWorkImageMock).toHaveBeenCalledTimes(1);
+    });
   });
 });

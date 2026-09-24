@@ -30,6 +30,7 @@ function formatBytes(bytes: number): string {
 // confirmação explícita ("Enviar imagem") ou "Cancelar".
 export function WorkImageUpload({ disabled, onConfirm }: WorkImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const addButtonRef = useRef<HTMLButtonElement | null>(null);
   const shouldRestoreFocusRef = useRef(false);
   const validationErrorId = useId();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -75,7 +76,7 @@ export function WorkImageUpload({ disabled, onConfirm }: WorkImageUploadProps) {
     }
 
     shouldRestoreFocusRef.current = false;
-    fileInputRef.current?.focus();
+    addButtonRef.current?.focus();
   }, [isInteractionDisabled, previewUrl, selectedFile]);
 
   const onSelectFile = (event: ChangeEvent<HTMLInputElement>) => {
@@ -138,18 +139,39 @@ export function WorkImageUpload({ disabled, onConfirm }: WorkImageUploadProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="flex flex-col gap-1.5 text-body-sm">
-        <span>Adicionar imagem</span>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={ACCEPTED_IMAGE_MIME_TYPES.join(",")}
+      {/* O input nativo fica oculto: o navegador renderiza "Escolher
+          arquivo"/"Nenhum arquivo escolhido" junto dele, o que parecia três
+          controles para a mesma ação. O botão visível abre o seletor e o
+          texto ao lado mostra o estado da seleção. O input sai da ordem de
+          tabulação e da árvore de acessibilidade para não duplicar o
+          controle; foco e descrição de erro ficam no botão. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        aria-label="Adicionar imagem"
+        accept={ACCEPTED_IMAGE_MIME_TYPES.join(",")}
+        disabled={isInteractionDisabled}
+        onChange={onSelectFile}
+      />
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          ref={addButtonRef}
+          type="button"
+          variant="outline"
+          size="sm"
           disabled={isInteractionDisabled}
-          aria-invalid={validationError ? true : undefined}
           aria-describedby={validationError ? validationErrorId : undefined}
-          onChange={onSelectFile}
-        />
-      </label>
+          onClick={() => fileInputRef.current?.click()}
+        >
+          Adicionar imagem
+        </Button>
+        <p className="text-body-sm text-muted-foreground">
+          {selectedFile ? selectedFile.name : "Nenhum arquivo escolhido"}
+        </p>
+      </div>
 
       {validationError && (
         <p
