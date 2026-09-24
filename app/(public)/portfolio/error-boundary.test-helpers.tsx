@@ -8,7 +8,10 @@ import type { ComponentType } from 'react'
 type ErrorBoundaryProps = {
   error: Error & { digest?: string }
   reset: () => void
+  retry: () => void
 }
+
+type RecoveryProp = 'reset' | 'retry'
 
 type RunErrorBoundaryTestsOptions = {
   describeLabel: string
@@ -18,6 +21,8 @@ type RunErrorBoundaryTestsOptions = {
   friendlyMessage: string
   headingText: string
   retryButtonText: string
+  /** Prop de recuperação que o botão deve chamar (default `'reset'`). */
+  recoveryProp?: RecoveryProp
 }
 
 export function runErrorBoundaryTests({
@@ -28,6 +33,7 @@ export function runErrorBoundaryTests({
   friendlyMessage,
   headingText,
   retryButtonText,
+  recoveryProp = 'reset',
 }: RunErrorBoundaryTestsOptions) {
   describe(describeLabel, () => {
     afterEach(() => {
@@ -46,7 +52,7 @@ export function runErrorBoundaryTests({
         digest: 'digest-1',
       })
 
-      render(<Component error={error} reset={vi.fn()} />)
+      render(<Component error={error} reset={vi.fn()} retry={vi.fn()} />)
 
       expect(toastErrorMock).toHaveBeenCalledWith(friendlyMessage)
       expect(consoleErrorSpy).toHaveBeenCalledWith(error)
@@ -54,14 +60,15 @@ export function runErrorBoundaryTests({
       consoleErrorSpy.mockRestore()
     })
 
-    it(`renderiza a UI de fallback e chama reset() ao clicar em "${retryButtonText}"`, async () => {
+    it(`renderiza a UI de fallback e chama ${recoveryProp}() ao clicar em "${retryButtonText}"`, async () => {
       vi.spyOn(console, 'error').mockImplementation(() => {})
       const reset = vi.fn()
+      const retry = vi.fn()
       const error = Object.assign(new Error('falha simulada'), {
         digest: 'digest-2',
       })
 
-      render(<Component error={error} reset={reset} />)
+      render(<Component error={error} reset={reset} retry={retry} />)
 
       expect(
         screen.getByRole('heading', {
@@ -73,7 +80,10 @@ export function runErrorBoundaryTests({
       const button = screen.getByRole('button', { name: retryButtonText })
       await userEvent.click(button)
 
-      expect(reset).toHaveBeenCalledTimes(1)
+      const [chosen, other] =
+        recoveryProp === 'retry' ? [retry, reset] : [reset, retry]
+      expect(chosen).toHaveBeenCalledTimes(1)
+      expect(other).not.toHaveBeenCalled()
     })
   })
 }

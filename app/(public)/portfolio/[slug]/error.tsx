@@ -3,33 +3,41 @@
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { PageSection } from '@/components/layout/page-section'
+import { PortfolioStateMessage } from '../_components/portfolio-state-message'
+import { BackToPortfolioLink } from './_components/back-to-portfolio-link'
+
+/** Mesma mensagem no toast e no texto inline. */
+const PROJECT_ERROR_MESSAGE =
+  "We couldn't load this project right now. Please try again in a few moments."
 
 type ProjectDetailsErrorProps = {
   error: Error & { digest?: string }
-  reset: () => void
+  /** Next 16.3+: `router.refresh()` + reset em transição (refaz o fetch no servidor). */
+  retry: () => void
 }
 
 export default function ProjectDetailsError({
   error,
-  reset,
+  retry,
 }: Readonly<ProjectDetailsErrorProps>) {
   useEffect(() => {
-    toast.error(
-      'Não foi possível carregar este projeto agora. Tente novamente em alguns instantes.',
-    )
+    toast.error(PROJECT_ERROR_MESSAGE)
     console.error(error)
   }, [error])
 
   return (
-    <div className="flex flex-col items-center gap-4 py-16 text-center">
-      <h1 className="text-lg font-semibold">
-        Não foi possível carregar este projeto
-      </h1>
-      <p className="text-muted-foreground">
-        Ocorreu um erro ao buscar as informações deste projeto. Tente
-        novamente em alguns instantes.
-      </p>
-      <Button onClick={() => reset()}>Tentar novamente</Button>
-    </div>
+    <PageSection spacing="compact">
+      <PortfolioStateMessage
+        headingLevel={1}
+        title="We couldn't load this project"
+        message={PROJECT_ERROR_MESSAGE}
+      >
+        <Button size="lg" className="h-11 px-6" onClick={() => retry()}>
+          Try again
+        </Button>
+        <BackToPortfolioLink />
+      </PortfolioStateMessage>
+    </PageSection>
   )
 }

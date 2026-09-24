@@ -2,12 +2,13 @@
 
 import type { KeyboardEvent, RefObject } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
-import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { LuChevronLeft, LuChevronRight, LuX } from "react-icons/lu";
 import { VisuallyHidden } from "radix-ui";
 
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -33,6 +34,9 @@ type GalleryLightboxProps = {
  * Dialog é controlado por botões externos ao Dialog root, sem
  * `DialogTrigger`, então não há um trigger implícito para o Radix
  * devolver o foco sozinho).
+ *
+ * Com `prefers-reduced-motion`, o fade do Framer Motion tem duração 0 e as
+ * animações de entrada/saída do conteúdo e do overlay são desligadas.
  */
 export function GalleryLightbox({
   images,
@@ -42,6 +46,7 @@ export function GalleryLightbox({
   fallbackAlt,
   restoreFocusRef,
 }: Readonly<GalleryLightboxProps>) {
+  const shouldReduceMotion = useReducedMotion();
   const isOpen = selectedIndex !== null;
   const currentImage =
     selectedIndex !== null ? images[selectedIndex] : undefined;
@@ -69,7 +74,8 @@ export function GalleryLightbox({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
-        className="flex max-w-3xl flex-col gap-4 bg-background/95 p-4 sm:max-w-3xl"
+        showCloseButton={false}
+        className="flex max-h-[calc(100dvh-2rem)] flex-col gap-4 overflow-y-auto bg-background/95 p-4 sm:max-w-5xl motion-reduce:data-open:animate-none motion-reduce:data-closed:animate-none"
         onKeyDown={handleKeyDown}
         onCloseAutoFocus={(event) => {
           if (restoreFocusRef.current) {
@@ -82,27 +88,37 @@ export function GalleryLightbox({
           <>
             <VisuallyHidden.Root asChild>
               <DialogTitle>
-                {`Imagem ${selectedIndex + 1} de ${images.length}: ${
+                {`Image ${selectedIndex + 1} of ${images.length}: ${
                   currentImage.alt || fallbackAlt
                 }`}
               </DialogTitle>
             </VisuallyHidden.Root>
 
-            <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg bg-muted">
+            <DialogClose asChild>
+              <button
+                type="button"
+                aria-label="Close"
+                className="inline-flex size-11 items-center justify-center self-end rounded-full text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <LuX className="size-5" aria-hidden="true" />
+              </button>
+            </DialogClose>
+
+            <div className="relative flex aspect-3/4 max-h-[calc(100dvh-10rem)] w-full items-center justify-center overflow-hidden rounded-lg bg-muted sm:aspect-video">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={currentImage.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
+                  transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
                   className="relative size-full"
                 >
                   <Image
                     src={currentImage.url}
                     alt={currentImage.alt || fallbackAlt}
                     fill
-                    sizes="100vw"
+                    sizes="(min-width: 1088px) 1024px, calc(100vw - 2rem)"
                     className="object-contain"
                   />
                 </motion.div>
@@ -113,16 +129,16 @@ export function GalleryLightbox({
                   <button
                     type="button"
                     onClick={goToPrevious}
-                    aria-label="Imagem anterior"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 text-foreground shadow-md outline-none hover:bg-background focus-visible:ring-3 focus-visible:ring-ring/50"
+                    aria-label="Previous image"
+                    className="absolute left-2 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 text-foreground shadow-md outline-none hover:bg-background focus-visible:ring-3 focus-visible:ring-ring/50"
                   >
                     <LuChevronLeft className="size-5" aria-hidden="true" />
                   </button>
                   <button
                     type="button"
                     onClick={goToNext}
-                    aria-label="Próxima imagem"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 text-foreground shadow-md outline-none hover:bg-background focus-visible:ring-3 focus-visible:ring-ring/50"
+                    aria-label="Next image"
+                    className="absolute right-2 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 text-foreground shadow-md outline-none hover:bg-background focus-visible:ring-3 focus-visible:ring-ring/50"
                   >
                     <LuChevronRight className="size-5" aria-hidden="true" />
                   </button>

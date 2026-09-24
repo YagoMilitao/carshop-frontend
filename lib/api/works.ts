@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { serverEnv } from "@/lib/env/server";
 import { HttpError } from "./errors";
 import { withRetryBackoff } from "./retry";
@@ -45,7 +46,7 @@ export type Work = {
  */
 export const WORKS_REVALIDATE_SECONDS = 3600;
 
-/** Limite de duração de cada tentativa individual de `GET /works`. */
+/** Limite de duração de cada tentativa individual de `GET /works` e `GET /works/{slug}`. */
 export const WORKS_REQUEST_TIMEOUT_MS = 10_000;
 
 /**
@@ -84,20 +85,53 @@ export async function getWorks(): Promise<Work[]> {
 }
 
 /**
- * Busca a listagem completa via `getWorks()` e filtra pelo `slug` no
- * servidor. Não é uma chamada HTTP adicional — reaproveita o Next Data
- * Cache da mesma revalidação.
+ * Busca um `Work` publicado pelo `slug` via `GET /works/{slug}` (público;
+ * o backend responde `404` para slugs inexistentes, rascunhos e works
+ * removidos).
  *
- * O backend expõe `GET /works/{slug}` (público; 404 para rascunhos e works
- * removidos), conforme o `docs/api-contract.md` do `carshop-backend`. Esta
- * função ainda não o usa: migrar a página pública para esse endpoint é uma
- * decisão separada (follow-up), fora do escopo da CARSHOP-34.
+ * - `404` → `undefined` (sem retry); a página chama `notFound()`.
+ * - Demais respostas não-ok → `HttpError` (5xx/429 e erros de rede são
+ *   repetidos por `withRetryBackoff`; outros 4xx não).
+ *
+ * Envolvida em `React.cache()` para deduplicar `generateMetadata` e a
+ * página no mesmo request: a memoização nativa do `fetch` é desativada
+ * quando há `signal`, e o Next Data Cache só armazena respostas `200`.
  */
-export async function getWorkBySlug(slug: string): Promise<Work | undefined> {
-  const works = await getWorks();
+export const getWorkBySlug = cache(
+  async (slug: string): Promise<Work | undefined> =>
+    withRetryBackoff(async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        WORKS_REQUEST_TIMEOUT_MS,
+      );
 
-  return works.find((work) => work.slug === slug);
-}
+      try {
+        const response = await fetch(
+          `${serverEnv.apiUrl}/works/${encodeURIComponent(slug)}`,
+          {
+            signal: controller.signal,
+            next: { revalidate: WORKS_REVALIDATE_SECONDS, tags: ["works"] },
+          },
+        );
+
+        if (response.status === 404) {
+          return undefined;
+        }
+
+        if (!response.ok) {
+          throw new HttpError(
+            `Failed to fetch work "${slug}": ${response.status}`,
+            response.status,
+          );
+        }
+
+        return (await response.json()) as Work;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }),
+);
 
 /**
  * Resolve a imagem de capa de um `Work` (`images.find(i => i.isCover)`).
