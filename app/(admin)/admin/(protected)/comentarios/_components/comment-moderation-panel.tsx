@@ -6,7 +6,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { getApiErrorMessage } from "@/lib/api/auth.client";
 import type { Comment } from "@/lib/api/comments";
 import {
   adminCommentsBaseQueryKey,
@@ -193,11 +192,11 @@ export function CommentModerationPanel({
 
       {error && (
         <p role="alert" className="text-body-sm text-destructive-text">
-          {getApiErrorMessage(error)}
+          {getCommentModerationErrorMessage(error)}
         </p>
       )}
 
-      {data && data.items.length === 0 && page === 1 && (
+      {data?.items.length === 0 && page === 1 && (
         <div className="flex flex-col gap-1">
           <p className="text-body-sm text-muted-foreground">
             {emptyMessageByStatus[status]}
@@ -210,7 +209,7 @@ export function CommentModerationPanel({
         </div>
       )}
 
-      {data && data.items.length === 0 && page > 1 && (
+      {data?.items.length === 0 && page > 1 && (
         <p className="text-body-sm text-muted-foreground">
           Nenhum comentário nesta página.
         </p>

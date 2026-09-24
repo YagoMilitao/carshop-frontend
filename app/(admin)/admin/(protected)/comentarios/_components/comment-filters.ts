@@ -23,6 +23,7 @@ export const COMMENT_FILTER_STATUSES: readonly CommentFilterStatus[] = [
   "HIDDEN",
   "ALL",
 ];
+const commentFilterStatusValues: readonly string[] = COMMENT_FILTER_STATUSES;
 
 const COMMENTS_BASE_PATH = "/admin/comentarios";
 
@@ -31,7 +32,7 @@ function firstValue(value: string | string[] | undefined): string | undefined {
 }
 
 function isCommentFilterStatus(value: string): value is CommentFilterStatus {
-  return COMMENT_FILTER_STATUSES.some((status) => status === value);
+  return commentFilterStatusValues.includes(value);
 }
 
 function parsePage(value: string | undefined): number {

@@ -145,18 +145,25 @@ describe("CommentModerationPanel", () => {
       ).toBeInTheDocument();
     });
 
-    it("exibe o erro com role='alert'", async () => {
-      getAdminCommentsMock.mockRejectedValue(
-        createAxiosError(500, "Falha ao listar"),
-      );
+    it.each([
+      [401, "Sua sessão expirou. Faça login novamente."],
+      [429, "Muitas tentativas. Aguarde alguns instantes e tente novamente."],
+      [500, "Falha ao listar"],
+    ] as const)(
+      "exibe o erro %i da listagem com role='alert'",
+      async (status, expectedMessage) => {
+        getAdminCommentsMock.mockRejectedValue(
+          createAxiosError(status, "Falha ao listar"),
+        );
 
-      renderPanel();
+        renderPanel();
 
-      expect(await screen.findByRole("alert")).toHaveTextContent(
-        "Falha ao listar",
-      );
-      expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    });
+        expect(await screen.findByRole("alert")).toHaveTextContent(
+          expectedMessage,
+        );
+        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+      },
+    );
 
     it("consulta a API com status, página e limite", async () => {
       getAdminCommentsMock.mockResolvedValue(listResponse([comment]));
