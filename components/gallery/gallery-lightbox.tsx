@@ -36,7 +36,7 @@ type GalleryLightboxProps = {
  * devolver o foco sozinho).
  *
  * Com `prefers-reduced-motion`, o fade do Framer Motion tem duração 0 e as
- * animações de entrada/saída do `DialogContent` são desligadas.
+ * animações de entrada/saída do conteúdo e do overlay são desligadas.
  */
 export function GalleryLightbox({
   images,
@@ -75,7 +75,7 @@ export function GalleryLightbox({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="flex flex-col gap-4 bg-background/95 p-4 sm:max-w-5xl motion-reduce:data-open:animate-none motion-reduce:data-closed:animate-none"
+        className="flex max-h-[calc(100dvh-2rem)] flex-col gap-4 overflow-y-auto bg-background/95 p-4 sm:max-w-5xl motion-reduce:data-open:animate-none motion-reduce:data-closed:animate-none"
         onKeyDown={handleKeyDown}
         onCloseAutoFocus={(event) => {
           if (restoreFocusRef.current) {
@@ -104,7 +104,7 @@ export function GalleryLightbox({
               </button>
             </DialogClose>
 
-            <div className="relative flex aspect-3/4 w-full items-center justify-center overflow-hidden rounded-lg bg-muted sm:aspect-video">
+            <div className="relative flex aspect-3/4 max-h-[calc(100dvh-10rem)] w-full items-center justify-center overflow-hidden rounded-lg bg-muted sm:aspect-video">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={currentImage.id}

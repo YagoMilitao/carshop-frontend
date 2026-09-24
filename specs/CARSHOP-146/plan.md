@@ -179,13 +179,16 @@ e `error.tsx` da listagem, Home, Header/Footer, admin, `app/sitemap.ts`,
 - Copy em inglês: título `sr-only` `Image ${i + 1} of ${n}: ${alt}`;
   "Previous image" / "Next image"; manter o contador `aria-live`.
 - `DialogContent showCloseButton={false}` + botão próprio `DialogClose asChild`
-  `size-11` com `aria-label="Close"`. **Não** editar `components/ui/dialog.tsx`.
+  `size-11` com `aria-label="Close"`.
 - Setas `size-11`; `sm:max-w-5xl`; frame `aspect-3/4 sm:aspect-video`,
-  `object-contain`, `sizes="(min-width: 1088px) 1024px, calc(100vw - 2rem)"`.
-  Imagem do lightbox só monta quando aberto.
+  limitado à altura disponível do viewport; conteúdo com `max-height` em
+  `dvh` e rolagem de segurança; `object-contain`,
+  `sizes="(min-width: 1088px) 1024px, calc(100vw - 2rem)"`. Imagem do
+  lightbox só monta quando aberto.
 - Reduced motion: `useReducedMotion()` do `framer-motion` →
   `transition={{ duration: 0 }}`; `DialogContent` com
-  `motion-reduce:data-open:animate-none motion-reduce:data-closed:animate-none`.
+  `motion-reduce:data-open:animate-none motion-reduce:data-closed:animate-none`;
+  `DialogOverlay` compartilhado recebe as mesmas variantes de forma aditiva.
 - Foco: manter `restoreFocusRef`; ao fechar, foco volta ao botão de origem
   mesmo após navegar. Focus trap, Esc e ←/→ inalterados. Sem setas com 1
   imagem.
@@ -415,7 +418,7 @@ Subir um dev server em porta própria (sem matar o do usuário) e validar
 2. **Crop central cego** (sem focal point/dimensões) — lightbox `contain`
    é a visão íntegra.
 3. **Especificidade de `motion-reduce`** sobre as animações do
-   `DialogContent` — verificar no DevTools.
+   `DialogContent` e `DialogOverlay` — verificar no DevTools.
 4. **Remoção de `WorkGallery`** — grep obrigatório por referências.
 5. **Mudanças aditivas** em `WorkImageThumb`, `PortfolioStateMessage` e no
    helper de teste — defaults preservam Home, `/portfolio` e admin.

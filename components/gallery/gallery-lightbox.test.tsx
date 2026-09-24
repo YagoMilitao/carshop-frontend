@@ -84,7 +84,14 @@ describe("GalleryLightbox", () => {
 
     const dialog = screen.getByRole("dialog");
     expect(dialog).toBeInTheDocument();
+    expect(dialog).toHaveClass(
+      "max-h-[calc(100dvh-2rem)]",
+      "overflow-y-auto",
+    );
     expect(screen.getByAltText("Banco dianteiro")).toBeInTheDocument();
+    expect(
+      screen.getByAltText("Banco dianteiro").parentElement?.parentElement,
+    ).toHaveClass("max-h-[calc(100dvh-10rem)]");
     expect(
       screen.getByText("Image 1 of 3: Banco dianteiro"),
     ).toBeInTheDocument();
@@ -249,7 +256,7 @@ describe("GalleryLightbox", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it("usa alvos de 44px nas setas e desliga as animações do dialog com reduced motion", () => {
+  it("usa alvos de 44px e desliga conteúdo e overlay com reduced motion", () => {
     useReducedMotionMock.mockReturnValue(true);
 
     render(
@@ -266,6 +273,10 @@ describe("GalleryLightbox", () => {
     expect(screen.getByRole("button", { name: "Previous image" })).toHaveClass("size-11");
     expect(screen.getByRole("button", { name: "Next image" })).toHaveClass("size-11");
     expect(screen.getByRole("dialog")).toHaveClass(
+      "motion-reduce:data-open:animate-none",
+      "motion-reduce:data-closed:animate-none",
+    );
+    expect(document.querySelector('[data-slot="dialog-overlay"]')).toHaveClass(
       "motion-reduce:data-open:animate-none",
       "motion-reduce:data-closed:animate-none",
     );
