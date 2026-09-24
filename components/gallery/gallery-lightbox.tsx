@@ -3,7 +3,7 @@
 import type { KeyboardEvent, RefObject } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { VisuallyHidden } from "radix-ui";
 
 import {
@@ -116,7 +116,7 @@ export function GalleryLightbox({
                     aria-label="Imagem anterior"
                     className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 text-foreground shadow-md outline-none hover:bg-background focus-visible:ring-3 focus-visible:ring-ring/50"
                   >
-                    <ChevronLeft className="size-5" aria-hidden="true" />
+                    <LuChevronLeft className="size-5" aria-hidden="true" />
                   </button>
                   <button
                     type="button"
@@ -124,7 +124,7 @@ export function GalleryLightbox({
                     aria-label="Próxima imagem"
                     className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 text-foreground shadow-md outline-none hover:bg-background focus-visible:ring-3 focus-visible:ring-ring/50"
                   >
-                    <ChevronRight className="size-5" aria-hidden="true" />
+                    <LuChevronRight className="size-5" aria-hidden="true" />
                   </button>
                 </>
               )}
