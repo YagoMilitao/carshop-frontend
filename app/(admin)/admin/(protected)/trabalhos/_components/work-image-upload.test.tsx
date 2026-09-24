@@ -245,13 +245,18 @@ describe("WorkImageUpload", () => {
     );
   });
   describe("seletor de arquivo", () => {
-    it("exibe um único botão 'Adicionar imagem' e o texto 'Nenhum arquivo escolhido'", () => {
+    it("associa o estado inicial do arquivo ao botão customizado", () => {
       renderUpload(vi.fn());
 
-      expect(
-        screen.getAllByRole("button", { name: "Adicionar imagem" }),
-      ).toHaveLength(1);
-      expect(screen.getByText("Nenhum arquivo escolhido")).toBeInTheDocument();
+      const addButton = screen.getByRole("button", {
+        name: "Adicionar imagem",
+      });
+      const fileStatus = screen.getByRole("status");
+
+      expect(fileStatus).toHaveTextContent("Nenhum arquivo escolhido");
+      expect(addButton).toHaveAccessibleDescription(
+        "Nenhum arquivo escolhido",
+      );
       // O input nativo fica fora da ordem de tabulação e da árvore de
       // acessibilidade para não duplicar o controle.
       const input = screen.getByLabelText("Adicionar imagem");
@@ -272,17 +277,26 @@ describe("WorkImageUpload", () => {
       expect(clickSpy).toHaveBeenCalledTimes(1);
     });
 
-    it("mostra o nome do arquivo selecionado e volta ao texto padrão ao cancelar", async () => {
+    it("anuncia e associa o nome selecionado, voltando ao estado padrão ao cancelar", async () => {
       const { user } = await renderWithSelectedImage(vi.fn());
 
-      expect(screen.getByText(VALID_IMAGE_NAME)).toBeInTheDocument();
+      const addButton = screen.getByRole("button", {
+        name: "Adicionar imagem",
+      });
+      const fileStatus = screen.getByRole("status");
+
+      expect(fileStatus).toHaveTextContent(VALID_IMAGE_NAME);
+      expect(addButton).toHaveAccessibleDescription(VALID_IMAGE_NAME);
       expect(
         screen.queryByText("Nenhum arquivo escolhido"),
       ).not.toBeInTheDocument();
 
       await user.click(screen.getByRole("button", { name: "Cancelar" }));
 
-      expect(screen.getByText("Nenhum arquivo escolhido")).toBeInTheDocument();
+      expect(fileStatus).toHaveTextContent("Nenhum arquivo escolhido");
+      expect(addButton).toHaveAccessibleDescription(
+        "Nenhum arquivo escolhido",
+      );
     });
   });
 });

@@ -6,6 +6,7 @@ import type { WorkImage } from "@/lib/api/works";
 
 import {
   WorkImageGrid,
+  getWorkImageActionLabel,
   getWorkImageLabel,
   sortWorkImages,
 } from "./work-image-grid";
@@ -33,6 +34,11 @@ const coverImage = createImage({
 });
 const firstImage = createImage({ id: "img-first", alt: "Painel", order: 0 });
 const noAltImage = createImage({ id: "img-no-alt", alt: "", order: 1 });
+const duplicateAltImage = createImage({
+  id: "img-duplicate-alt",
+  alt: "Painel",
+  order: 1,
+});
 
 describe("getWorkImageLabel", () => {
   it("usa o alt da imagem quando presente", () => {
@@ -44,6 +50,20 @@ describe("getWorkImageLabel", () => {
   it("usa um fallback descritivo com posição e título quando o alt é vazio", () => {
     expect(getWorkImageLabel(noAltImage, 1, WORK_TITLE)).toBe(
       "Imagem 2 do trabalho Restauração Fusca",
+    );
+  });
+});
+
+describe("getWorkImageActionLabel", () => {
+  it("inclui a posição mesmo quando a imagem tem alt", () => {
+    expect(getWorkImageActionLabel(coverImage, 2, WORK_TITLE)).toBe(
+      "imagem 3: Banco restaurado",
+    );
+  });
+
+  it("usa posição e título do work quando o alt é vazio", () => {
+    expect(getWorkImageActionLabel(noAltImage, 1, WORK_TITLE)).toBe(
+      "imagem 2 do trabalho Restauração Fusca",
     );
   });
 });
@@ -135,10 +155,10 @@ describe("WorkImageGrid", () => {
     }
   });
 
-  it("gera um aria-label único por botão de remoção", () => {
+  it("gera um aria-label único quando duas imagens compartilham o mesmo alt", () => {
     render(
       <WorkImageGrid
-        images={[coverImage, firstImage, noAltImage]}
+        images={[duplicateAltImage, firstImage]}
         workTitle={WORK_TITLE}
         disabled={false}
         onRequestRemove={vi.fn()}
@@ -146,15 +166,15 @@ describe("WorkImageGrid", () => {
     );
 
     const labels = screen
-      .getAllByRole("button", { name: /^Remover imagem: / })
+      .getAllByRole("button", { name: /^Remover imagem / })
       .map((button) => button.getAttribute("aria-label"));
 
     expect(labels).toEqual([
-      "Remover imagem: Painel",
-      "Remover imagem: Imagem 2 do trabalho Restauração Fusca",
-      "Remover imagem: Banco restaurado",
+      "Remover imagem 1: Painel",
+      "Remover imagem 2: Painel",
     ]);
     expect(new Set(labels).size).toBe(labels.length);
+    expect(screen.getAllByRole("img", { name: "Painel" })).toHaveLength(2);
   });
 
   it("chama onRequestRemove com a imagem clicada e o botão acionado", async () => {
@@ -171,7 +191,7 @@ describe("WorkImageGrid", () => {
     );
 
     const removeButton = screen.getByRole("button", {
-      name: "Remover imagem: Banco restaurado",
+      name: "Remover imagem 2: Banco restaurado",
     });
     await user.click(removeButton);
 

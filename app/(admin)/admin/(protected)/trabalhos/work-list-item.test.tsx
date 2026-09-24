@@ -280,7 +280,7 @@ describe("WorkListItem", () => {
     render(<WorkListItem work={work} />);
 
     await user.click(
-      screen.getByRole("button", { name: "Remover imagem: Banco restaurado" }),
+      screen.getByRole("button", { name: "Remover imagem 1: Banco restaurado" }),
     );
 
     expect(
@@ -311,7 +311,7 @@ describe("WorkListItem", () => {
     render(<WorkListItem work={work} />);
 
     const removeButton = screen.getByRole("button", {
-      name: "Remover imagem: Banco restaurado",
+      name: "Remover imagem 1: Banco restaurado",
     });
 
     await user.click(removeButton);
@@ -355,7 +355,7 @@ describe("WorkListItem", () => {
     const file = new File(["conteudo"], "foto.png", { type: "image/png" });
     await user.upload(screen.getByLabelText("Adicionar imagem"), file);
     await user.click(
-      screen.getByRole("button", { name: "Remover imagem: Banco restaurado" }),
+      screen.getByRole("button", { name: "Remover imagem 1: Banco restaurado" }),
     );
     await user.click(
       await screen.findByRole("button", { name: "Excluir imagem" }),
@@ -515,7 +515,7 @@ describe("WorkListItem", () => {
     expect(uploadWorkImageMock).not.toHaveBeenCalled();
   });
   describe("remoção de imagem existente (CARSHOP-34)", () => {
-    const REMOVE_BUTTON_NAME = "Remover imagem: Banco restaurado";
+    const REMOVE_BUTTON_NAME = "Remover imagem 1: Banco restaurado";
 
     async function openRemoveDialog(user: ReturnType<typeof userEvent.setup>) {
       await user.click(screen.getByRole("button", { name: REMOVE_BUTTON_NAME }));
@@ -595,19 +595,17 @@ describe("WorkListItem", () => {
       expect(routerRefreshMock).not.toHaveBeenCalled();
     });
 
-    it("em 404 sincroniza a lista e mantém o diálogo aberto com a mensagem", async () => {
+    it("em 404 mantém o feedback até o usuário fechar e só então sincroniza", async () => {
       const user = userEvent.setup();
       const dialog = await submitRemoveWithNotFound(user);
 
       expect(within(dialog).getByRole("alert")).toHaveTextContent(
-        "Imagem ou trabalho não encontrado. A lista foi atualizada.",
+        "Imagem ou trabalho não encontrado. Feche este aviso para atualizar a lista.",
       );
       expect(deleteWorkImageMock).toHaveBeenCalledWith("work-1", "img-1");
-      expect(invalidateQueriesMock).toHaveBeenCalledWith({
-        queryKey: ["admin", "works"],
-      });
-      expect(revalidateWorksTagMock).toHaveBeenCalledTimes(1);
-      expect(routerRefreshMock).toHaveBeenCalledTimes(1);
+      expect(invalidateQueriesMock).not.toHaveBeenCalled();
+      expect(revalidateWorksTagMock).not.toHaveBeenCalled();
+      expect(routerRefreshMock).not.toHaveBeenCalled();
       expect(screen.getByRole("alertdialog")).toBeInTheDocument();
       // A imagem já não existe: não há como confirmar de novo (evita um
       // segundo DELETE), sobra só "Fechar".
@@ -618,6 +616,14 @@ describe("WorkListItem", () => {
         within(dialog).getByRole("button", { name: "Fechar" }),
       ).toBeEnabled();
       expect(deleteWorkImageMock).toHaveBeenCalledTimes(1);
+
+      await closeRemoveDialog(user, dialog);
+
+      expect(invalidateQueriesMock).toHaveBeenCalledWith({
+        queryKey: ["admin", "works"],
+      });
+      expect(revalidateWorksTagMock).toHaveBeenCalledTimes(1);
+      expect(routerRefreshMock).toHaveBeenCalledTimes(1);
     });
 
     it("reabilita a confirmação ao abrir uma nova remoção após um 404", async () => {
@@ -736,7 +742,9 @@ describe("WorkListItem", () => {
 
       render(<WorkListItem work={work} />);
 
-      expect(screen.getByRole("status")).toBeEmptyDOMElement();
+      expect(
+        screen.getByRole("status", { name: "Status da remoção de imagem" }),
+      ).toBeEmptyDOMElement();
 
       const dialog = await openRemoveDialog(user);
       await user.click(
@@ -746,7 +754,9 @@ describe("WorkListItem", () => {
       await waitFor(() =>
         expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
       );
-      expect(screen.getByRole("status")).toHaveTextContent("Imagem removida.");
+      expect(
+        screen.getByRole("status", { name: "Status da remoção de imagem" }),
+      ).toHaveTextContent("Imagem removida.");
       await waitFor(() =>
         expect(
           screen.getByRole("heading", { name: "Imagens (1) do trabalho Restauração Fusca" }),
@@ -767,15 +777,20 @@ describe("WorkListItem", () => {
         within(dialog).getByRole("button", { name: "Excluir imagem" }),
       );
       await waitFor(() =>
-        expect(screen.getByRole("status")).toHaveTextContent(
-          "Imagem removida.",
-        ),
+        expect(
+          screen.getByRole("status", {
+            name: "Status da remoção de imagem",
+          }),
+        ).toHaveTextContent("Imagem removida."),
       );
 
       await openRemoveDialog(user);
 
       expect(
-        screen.getByRole("status", { hidden: true }),
+        screen.getByRole("status", {
+          name: "Status da remoção de imagem",
+          hidden: true,
+        }),
       ).toBeEmptyDOMElement();
     });
 

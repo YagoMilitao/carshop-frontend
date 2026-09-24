@@ -12,7 +12,7 @@ export function getDeleteWorkImageErrorMessage(error: unknown): string {
       case 401:
         return "Sua sessão expirou. Faça login novamente.";
       case 404:
-        return "Imagem ou trabalho não encontrado. A lista foi atualizada.";
+        return "Imagem ou trabalho não encontrado. Feche este aviso para atualizar a lista.";
       case 429:
         return "Muitas tentativas. Aguarde alguns instantes e tente novamente.";
       case 500:

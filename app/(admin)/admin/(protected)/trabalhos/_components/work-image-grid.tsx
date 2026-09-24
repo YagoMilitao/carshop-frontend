@@ -15,18 +15,30 @@ type WorkImageGridProps = Readonly<{
   onRequestRemove: (image: WorkImage, trigger: HTMLButtonElement) => void;
 }>;
 
-/**
- * Label acessível de uma imagem do work: `alt` do backend ou um fallback
- * descritivo. Usado no `alt` da miniatura, no `aria-label` do botão e no
- * texto do diálogo de confirmação, para que os três descrevam a mesma
- * imagem.
- */
+/** Descrição da imagem: `alt` do backend ou um fallback descritivo. */
 export function getWorkImageLabel(
   image: WorkImage,
   index: number,
   workTitle: string,
 ): string {
   return image.alt || `Imagem ${index + 1} do trabalho ${workTitle}`;
+}
+
+/**
+ * Identifica sem ambiguidade a ocorrência usada em ações. A posição é
+ * mantida mesmo quando existe `alt`, pois imagens diferentes podem ter a
+ * mesma descrição.
+ */
+export function getWorkImageActionLabel(
+  image: WorkImage,
+  index: number,
+  workTitle: string,
+): string {
+  const position = index + 1;
+
+  return image.alt
+    ? `imagem ${position}: ${image.alt}`
+    : `imagem ${position} do trabalho ${workTitle}`;
 }
 
 export function sortWorkImages(images: readonly WorkImage[]): WorkImage[] {
@@ -54,13 +66,14 @@ export function WorkImageGrid({
   return (
     <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {sortedImages.map((image, index) => {
-        const label = getWorkImageLabel(image, index, workTitle);
+        const imageLabel = getWorkImageLabel(image, index, workTitle);
+        const actionLabel = getWorkImageActionLabel(image, index, workTitle);
 
         return (
           <li key={image.id} className="flex flex-col gap-2">
             <WorkImageThumb
               image={image}
-              fallbackAlt={label}
+              fallbackAlt={imageLabel}
               sizes="(min-width: 1024px) 200px, (min-width: 640px) 33vw, 50vw"
             />
             <div className="flex items-center gap-2">
@@ -71,7 +84,7 @@ export function WorkImageGrid({
                 size="sm"
                 className="ml-auto"
                 disabled={disabled}
-                aria-label={`Remover imagem: ${label}`}
+                aria-label={`Remover ${actionLabel}`}
                 onClick={(event) => onRequestRemove(image, event.currentTarget)}
               >
                 Remover

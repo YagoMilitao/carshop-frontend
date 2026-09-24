@@ -33,6 +33,7 @@ export function WorkImageUpload({ disabled, onConfirm }: WorkImageUploadProps) {
   const addButtonRef = useRef<HTMLButtonElement | null>(null);
   const shouldRestoreFocusRef = useRef(false);
   const validationErrorId = useId();
+  const selectedFileStatusId = useId();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -144,7 +145,8 @@ export function WorkImageUpload({ disabled, onConfirm }: WorkImageUploadProps) {
           controles para a mesma ação. O botão visível abre o seletor e o
           texto ao lado mostra o estado da seleção. O input sai da ordem de
           tabulação e da árvore de acessibilidade para não duplicar o
-          controle; foco e descrição de erro ficam no botão. */}
+          controle; o estado selecionado e os erros ficam associados ao
+          botão visível. */}
       <input
         ref={fileInputRef}
         type="file"
@@ -163,14 +165,19 @@ export function WorkImageUpload({ disabled, onConfirm }: WorkImageUploadProps) {
           variant="outline"
           size="sm"
           disabled={isInteractionDisabled}
-          aria-describedby={validationError ? validationErrorId : undefined}
+          aria-describedby={
+            validationError ? validationErrorId : selectedFileStatusId
+          }
           onClick={() => fileInputRef.current?.click()}
         >
           Adicionar imagem
         </Button>
-        <p className="text-body-sm text-muted-foreground">
+        <output
+          id={selectedFileStatusId}
+          className="text-body-sm text-muted-foreground"
+        >
           {selectedFile ? selectedFile.name : "Nenhum arquivo escolhido"}
-        </p>
+        </output>
       </div>
 
       {validationError && (

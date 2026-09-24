@@ -23,7 +23,7 @@ import { DeleteWorkImageDialog } from "./_components/delete-work-image-dialog";
 import { getDeleteWorkImageErrorMessage } from "./_components/delete-work-image-error";
 import {
   WorkImageGrid,
-  getWorkImageLabel,
+  getWorkImageActionLabel,
   sortWorkImages,
 } from "./_components/work-image-grid";
 import { WorkImageUpload } from "./_components/work-image-upload";
@@ -39,6 +39,7 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
   const imagesHeadingId = useId();
   const imagesHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const focusSectionOnCloseRef = useRef(false);
+  const syncWorksOnRemoveDialogCloseRef = useRef(false);
   const removeImageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const deleteWorkButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -121,9 +122,10 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
     setRemoveImageStatus("");
     setCanConfirmRemoveImage(true);
     focusSectionOnCloseRef.current = false;
+    syncWorksOnRemoveDialogCloseRef.current = false;
     setImageToRemove({
       image,
-      label: getWorkImageLabel(image, index, work.title),
+      label: getWorkImageActionLabel(image, index, work.title),
     });
   };
 
@@ -159,11 +161,12 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
           mutationError.response?.status === 404;
 
         if (isNotFound) {
-          // A imagem (ou o work) já não existe: atualiza a lista para
-          // tirá-la da tela, mantendo o diálogo aberto com a mensagem.
+          // O mesmo 404 representa imagem ou work ausente. Adia o refetch
+          // até o usuário fechar o aviso para que a remoção do work da lista
+          // não desmonte este diálogo antes de o feedback ser apresentado.
           focusSectionOnCloseRef.current = true;
+          syncWorksOnRemoveDialogCloseRef.current = true;
           setCanConfirmRemoveImage(false);
-          await syncWorks();
         }
 
         setRemoveImageError(getDeleteWorkImageErrorMessage(mutationError));
@@ -207,11 +210,15 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
 
     if (!focusSectionOnCloseRef.current && trigger?.isConnected) {
       trigger.focus();
-      return;
+    } else {
+      focusSectionOnCloseRef.current = false;
+      imagesHeadingRef.current?.focus();
     }
 
-    focusSectionOnCloseRef.current = false;
-    imagesHeadingRef.current?.focus();
+    if (syncWorksOnRemoveDialogCloseRef.current) {
+      syncWorksOnRemoveDialogCloseRef.current = false;
+      void syncWorks();
+    }
   };
 
   return (
@@ -284,7 +291,10 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
               </p>
             )}
 
-            <output className="sr-only">
+            <output
+              aria-label="Status da remoção de imagem"
+              className="sr-only"
+            >
               {removeImageStatus}
             </output>
           </section>

@@ -19,7 +19,10 @@ function createAxiosError(status: number, message = "Mensagem do backend") {
 describe("getDeleteWorkImageErrorMessage", () => {
   it.each([
     [401, "Sua sessão expirou. Faça login novamente."],
-    [404, "Imagem ou trabalho não encontrado. A lista foi atualizada."],
+    [
+      404,
+      "Imagem ou trabalho não encontrado. Feche este aviso para atualizar a lista.",
+    ],
     [429, "Muitas tentativas. Aguarde alguns instantes e tente novamente."],
     [500, "Não foi possível remover a imagem. Tente novamente."],
   ])("mapeia o status %i para a mensagem da feature", (status, expected) => {

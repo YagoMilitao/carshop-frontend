@@ -90,7 +90,8 @@ describe("DeleteWorkImageDialog", () => {
   it("omite a ação de confirmar e oferece só 'Fechar' quando canConfirm é false", () => {
     renderDialog({
       canConfirm: false,
-      error: "Imagem ou trabalho não encontrado. A lista foi atualizada.",
+      error:
+        "Imagem ou trabalho não encontrado. Feche este aviso para atualizar a lista.",
     });
 
     expect(
