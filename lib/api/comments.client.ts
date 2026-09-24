@@ -37,9 +37,29 @@ export async function approveComment(commentId: string): Promise<Comment> {
   return response.data;
 }
 
-export type UpdateCommentPayload = {
+/**
+ * Status aceitos na escrita por `PATCH /admin/comments/:commentId`. O
+ * contrato real não permite `HIDDEN` em nenhum caminho de escrita (é aceito
+ * apenas como filtro de leitura em `GET /admin/comments`).
+ */
+export type EditableCommentStatus = Exclude<CommentStatus, "HIDDEN">;
+
+type UpdateCommentFields = {
+  authorName: string;
   content: string;
+  status: EditableCommentStatus;
 };
+
+/**
+ * Body de `PATCH /admin/comments/:commentId`: todas as propriedades são
+ * opcionais, mas o contrato exige **ao menos uma** (`minProperties: 1`).
+ * O tipo mapeado gera a união "exatamente esta obrigatória + demais
+ * opcionais" para cada campo, rejeitando `{}` em tempo de compilação.
+ */
+export type UpdateCommentPayload = {
+  [K in keyof UpdateCommentFields]: Pick<UpdateCommentFields, K> &
+    Partial<Omit<UpdateCommentFields, K>>;
+}[keyof UpdateCommentFields];
 
 /** `PATCH /admin/comments/:commentId` (admin, autenticado). */
 export async function updateComment(
@@ -80,12 +100,20 @@ export type GetAdminCommentsParams = {
   limit?: number;
 };
 
+/**
+ * Prefixo comum a todas as queries de comentários admin (todos os status e
+ * páginas). Usar **sempre** esta chave para invalidação: o retorno de
+ * `adminCommentsQueryKey()` tem `undefined` na 3ª posição e não casa com as
+ * chaves de status específico.
+ */
+export const adminCommentsBaseQueryKey = ["admin", "comments"] as const;
+
 export const adminCommentsQueryKey = (
   status?: CommentStatus,
   page?: number,
   limit?: number,
 ) => {
-  const prefix = ["admin", "comments", status] as const;
+  const prefix = [...adminCommentsBaseQueryKey, status] as const;
 
   return page === undefined && limit === undefined
     ? prefix

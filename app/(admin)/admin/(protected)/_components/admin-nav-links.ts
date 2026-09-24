@@ -1,7 +1,7 @@
 /**
- * Itens reais de navegação do admin (decisão do `architect`, CARSHOP-152).
- * Apenas 2 itens — não inventar seções ("Usuários"/"Configurações") sem
- * decisão de arquitetura adicional.
+ * Itens reais de navegação do admin (decisões do `architect`, CARSHOP-152 e
+ * CARSHOP-35 — "Comentários"). Não inventar seções
+ * ("Usuários"/"Configurações") sem decisão de arquitetura adicional.
  */
 export type AdminNavLinkItem = {
   href: string;
@@ -12,4 +12,5 @@ export const adminNavLinks: readonly AdminNavLinkItem[] = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/trabalhos", label: "Trabalhos" },
   { href: "/admin/trabalhos/novo", label: "Novo trabalho" },
+  { href: "/admin/comentarios", label: "Comentários" },
 ];

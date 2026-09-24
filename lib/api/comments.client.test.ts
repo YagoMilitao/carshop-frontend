@@ -15,6 +15,7 @@ vi.mock("@/lib/api/http", () => ({
 }));
 
 import {
+  adminCommentsBaseQueryKey,
   adminCommentsQueryKey,
   approveComment,
   createComment,
@@ -101,6 +102,46 @@ describe("lib/api/comments.client", () => {
       expect(result.content).toBe("Editado");
     });
 
+    it("envia payload parcial apenas com authorName", async () => {
+      patchMock.mockResolvedValue({
+        data: { ...comment, authorName: "Novo autor" },
+      });
+
+      await updateComment("c-1", { authorName: "Novo autor" });
+
+      expect(patchMock).toHaveBeenCalledWith("/admin/comments/c-1", {
+        authorName: "Novo autor",
+      });
+    });
+
+    it("envia status PENDING (voltar para pendente) sem outros campos", async () => {
+      patchMock.mockResolvedValue({ data: comment });
+
+      await updateComment("c-1", { status: "PENDING" });
+
+      expect(patchMock).toHaveBeenCalledWith("/admin/comments/c-1", {
+        status: "PENDING",
+      });
+    });
+
+    it("envia múltiplos campos juntos", async () => {
+      patchMock.mockResolvedValue({
+        data: { ...comment, status: "APPROVED" },
+      });
+
+      await updateComment("c-1", {
+        authorName: "Autor",
+        content: "Conteúdo revisado",
+        status: "APPROVED",
+      });
+
+      expect(patchMock).toHaveBeenCalledWith("/admin/comments/c-1", {
+        authorName: "Autor",
+        content: "Conteúdo revisado",
+        status: "APPROVED",
+      });
+    });
+
     it("propaga o erro da API quando a edição falha", async () => {
       const apiError = { response: { data: { message: "Conteúdo inválido." } } };
       patchMock.mockRejectedValue(apiError);
@@ -125,6 +166,25 @@ describe("lib/api/comments.client", () => {
       deleteMock.mockRejectedValue(apiError);
 
       await expect(deleteComment("c-x")).rejects.toBe(apiError);
+    });
+  });
+
+  describe("adminCommentsBaseQueryKey", () => {
+    it("é o prefixo ['admin', 'comments'] usado para invalidar todas as queries de comentários admin", () => {
+      expect(adminCommentsBaseQueryKey).toEqual(["admin", "comments"]);
+    });
+
+    it("é prefixo de todas as chaves geradas por adminCommentsQueryKey", () => {
+      const keys = [
+        adminCommentsQueryKey("PENDING", 1, 20),
+        adminCommentsQueryKey("APPROVED", 3, 20),
+        adminCommentsQueryKey(undefined, 1, 20),
+        adminCommentsQueryKey("HIDDEN"),
+      ];
+
+      for (const key of keys) {
+        expect(key.slice(0, 2)).toEqual([...adminCommentsBaseQueryKey]);
+      }
     });
   });
 

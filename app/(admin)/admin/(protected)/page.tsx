@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { PageSection } from "@/components/layout/page-section";
 
-import { CommentModerationForm } from "./comment-moderation-form";
 import { DashboardSummary } from "./_components/dashboard-summary";
 import { PendingCommentsList } from "./_components/pending-comments-list";
 
@@ -44,11 +45,10 @@ export default function AdminPage() {
             <PendingCommentsList />
           </div>
 
-          <div className="flex flex-col gap-3">
-            <h3 className="text-body-sm font-semibold text-muted-foreground">
-              Moderar comentário
-            </h3>
-            <CommentModerationForm />
+          <div>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/admin/comentarios">Moderar comentários</Link>
+            </Button>
           </div>
         </section>
       </Container>
