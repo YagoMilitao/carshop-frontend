@@ -23,7 +23,7 @@ state after integration with the `Work`s API:
 
 | Page | Rendering today | Server/Client | Cache/revalidation |
 |---|---|---|---|
-| Home (`app/(public)/page.tsx`) | Static (implicit SSG, no `fetch`) | Server Component | No revalidation — purely static content until dynamic data exists |
+| Home (`app/(public)/page.tsx`) | ISR — real fetch via `getWorks()` (`lib/api/works.ts`, `GET /works`), updated in `CARSHOP-144` | Server Component (all sections; no `'use client'`) | Same source/cache as `getWorks()` (`revalidate` 3600s, `tags: ['works']`). Selection (`selectHomeWorks`): only works with a cover image, in API order; hero = first, "Our Work" = next 3. Silent degradation: on API error or no works with cover, `console.error` (error only), typographic Hero and "Our Work" omitted — no toast, no empty-state message |
 | About (`app/(public)/about/page.tsx`) | Static | Server Component | Same |
 | Services (`app/(public)/services/page.tsx`) | Static | Server Component | Same |
 | Portfolio — listing (`app/(public)/portfolio/page.tsx`) | ISR — real fetch via `getWorks()` (`lib/api/works.ts`, `GET /works`) | Server Component | `revalidate: WORKS_REVALIDATE_SECONDS` (3600s/1h) + `tags: ['works']` on Next's native `fetch` |

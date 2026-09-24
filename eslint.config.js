@@ -20,4 +20,29 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // `cn` must come from the configured merger in lib/utils.ts, which
+    // registers the custom typography utilities from app/globals.css.
+    files: ['**/*.{ts,tsx}'],
+    ignores: ['lib/utils.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'cn',
+              message: 'Import { cn } from "@/lib/utils" instead.',
+            },
+          ],
+          patterns: [
+            {
+              group: ['cn/*'],
+              message: 'Import { cn } from "@/lib/utils" instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ])

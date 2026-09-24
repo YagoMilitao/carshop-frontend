@@ -12,6 +12,13 @@
   `text-label`, `text-nav`, `text-button` utilities) live in
   `app/globals.css`. Use them instead of ad-hoc `text-*`/`font-*`/color
   values for a role the scale or tokens already cover.
+- Class merging always uses `cn` from `@/lib/utils`, never directly from the
+  `cn` package (enforced by ESLint `no-restricted-imports`; rewrite the
+  import when the Shadcn CLI emits `from "cn"`). `lib/utils.ts` registers the
+  custom typography utilities in the `font-size` class group so they are not
+  mistaken for text colors and dropped. When adding or renaming a
+  `@utility text-*` in `app/globals.css`, update `TYPOGRAPHY_UTILITIES` in
+  `lib/utils.ts` (a test in `lib/utils.test.ts` fails if they diverge).
 - `components/ui/*` is generated or updated only through `npx shadcn add`;
   never hand-write a primitive there. When running the CLI, do not accept
   overwriting existing customized primitives and review the diff.
