@@ -84,10 +84,14 @@ export async function getWorks(): Promise<Work[]> {
 }
 
 /**
- * Mitigação da lacuna de backend (não há `GET /works/:slug` público):
- * busca a listagem completa via `getWorks()` e filtra pelo `slug` no
+ * Busca a listagem completa via `getWorks()` e filtra pelo `slug` no
  * servidor. Não é uma chamada HTTP adicional — reaproveita o Next Data
  * Cache da mesma revalidação.
+ *
+ * O backend expõe `GET /works/{slug}` (público; 404 para rascunhos e works
+ * removidos), conforme o `docs/api-contract.md` do `carshop-backend`. Esta
+ * função ainda não o usa: migrar a página pública para esse endpoint é uma
+ * decisão separada (follow-up), fora do escopo da CARSHOP-34.
  */
 export async function getWorkBySlug(slug: string): Promise<Work | undefined> {
   const works = await getWorks();

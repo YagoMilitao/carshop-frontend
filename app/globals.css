@@ -52,6 +52,11 @@
   /* Estados funcionais restritos (docs/design/colors.md #Success/#Warning);
      não fazem parte da identidade visual pública, apenas de feedback. */
   --success: #4e8b5c;
+  /* Mesmo matiz de --success, mais claro, dedicado a texto (ex.: badge
+     "published" sobre bg-success/15). --success puro dá 3.79:1 sobre esse
+     fundo; #6fae7e dá 5.88:1 sobre bg-success/15 e 6.98:1 sobre --card,
+     acima do AA de 4.5:1 para texto normal. */
+  --success-text: #6fae7e;
   --warning: #b8863b;
   /* Radius único compartilhado por Public e Admin, reduzido de 10px para a
      faixa 4–8px recomendada por docs/design/components.md
@@ -74,6 +79,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-text: var(--destructive-text);
   --color-success: var(--success);
+  --color-success-text: var(--success-text);
   --color-warning: var(--warning);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);

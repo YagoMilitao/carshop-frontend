@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 
 import {
   adminWorksQueryKey,
@@ -14,43 +15,65 @@ import { getApiErrorMessage } from "@/lib/api/auth.client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Work } from "@/lib/api/works";
+import type { Work, WorkImage } from "@/lib/api/works";
 
 import { revalidateWorksTag } from "../../actions";
 import { DeleteWorkDialog } from "./_components/delete-work-dialog";
+import { DeleteWorkImageDialog } from "./_components/delete-work-image-dialog";
+import { getDeleteWorkImageErrorMessage } from "./_components/delete-work-image-error";
+import {
+  WorkImageGrid,
+  getWorkImageActionLabel,
+  sortWorkImages,
+} from "./_components/work-image-grid";
 import { WorkImageUpload } from "./_components/work-image-upload";
+
+type ImageToRemove = Readonly<{
+  image: WorkImage;
+  label: string;
+}>;
 
 export function WorkListItem({ work }: Readonly<{ work: Work }>) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
+  const imagesHeadingId = useId();
+  const imagesHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const focusSectionOnCloseRef = useRef(false);
+  const syncWorksOnRemoveDialogCloseRef = useRef(false);
+  const removeImageTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const deleteWorkButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploadPending, setIsUploadPending] = useState(false);
+
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeletePending, setIsDeletePending] = useState(false);
 
-  // Rejeita em caso de erro (após registrar a mensagem em `error`) para que
-  // chamadores que precisem diferenciar sucesso de falha (ex.:
-  // `WorkImageUpload`, que só limpa o preview em caso de sucesso) possam
-  // reagir à rejeição. Chamadores que não precisam dessa distinção (ex.
-  // `onDeleteImage`) descartam a rejeição explicitamente.
-  const runMutation = async (mutation: () => Promise<void>) => {
-    setError(null);
-    setIsPending(true);
+  // Snapshot da imagem (e do label exibido) no momento em que o diálogo é
+  // aberto: um refetch com o diálogo aberto (ex.: após 404) não altera o
+  // texto de confirmação.
+  const [imageToRemove, setImageToRemove] = useState<ImageToRemove | null>(
+    null,
+  );
+  const [removeImageError, setRemoveImageError] = useState<string | null>(
+    null,
+  );
+  const [isRemoveImagePending, setIsRemoveImagePending] = useState(false);
+  // Após um 404 a imagem já não existe: não faz sentido tentar de novo.
+  const [canConfirmRemoveImage, setCanConfirmRemoveImage] = useState(true);
+  const [removeImageStatus, setRemoveImageStatus] = useState("");
 
-    try {
-      await mutation();
-      await Promise.allSettled([
-        queryClient.invalidateQueries({ queryKey: adminWorksQueryKey }),
-        revalidateWorksTag(),
-      ]);
-      router.refresh();
-    } catch (mutationError) {
-      setError(getApiErrorMessage(mutationError));
-      throw mutationError;
-    } finally {
-      setIsPending(false);
-    }
+  const isImageActionPending = isUploadPending || isRemoveImagePending;
+
+  // Sincroniza cache do TanStack Query, tag do Next e RSC após uma mutação
+  // bem-sucedida. Falhas aqui nunca são apresentadas como falha da ação.
+  const syncWorks = async () => {
+    await Promise.allSettled([
+      queryClient.invalidateQueries({ queryKey: adminWorksQueryKey }),
+      revalidateWorksTag(),
+    ]);
+    router.refresh();
   };
 
   const onConfirmDeleteWork = () => {
@@ -60,12 +83,8 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
     void (async () => {
       try {
         await deleteWork(work.id);
-        await Promise.allSettled([
-          queryClient.invalidateQueries({ queryKey: adminWorksQueryKey }),
-          revalidateWorksTag(),
-        ]);
+        await syncWorks();
         setIsDeleteDialogOpen(false);
-        router.refresh();
       } catch (mutationError) {
         setDeleteError(getApiErrorMessage(mutationError));
       } finally {
@@ -74,20 +93,133 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
     })();
   };
 
-  const onDeleteImage = (imageId: string) => {
-    // O erro já é exibido via estado `error`; a rejeição de `runMutation`
-    // não precisa ser tratada aqui (não há um fluxo de "sucesso" adicional
-    // a executar como em `onConfirmUploadImage`).
-    runMutation(() => deleteWorkImage(work.id, imageId)).catch(() => {});
+  // Rejeita em caso de erro (após registrar a mensagem) para que
+  // `WorkImageUpload` só limpe o preview em caso de sucesso.
+  const onConfirmUploadImage = async (file: File) => {
+    setUploadError(null);
+    setIsUploadPending(true);
+
+    try {
+      await uploadWorkImage(work.id, file);
+      await syncWorks();
+    } catch (mutationError) {
+      setUploadError(getApiErrorMessage(mutationError));
+      throw mutationError;
+    } finally {
+      setIsUploadPending(false);
+    }
   };
 
-  // Propaga a rejeição de `runMutation` para `WorkImageUpload`: em caso de
-  // erro, o preview/input não são limpos (permitindo tentar de novo), e a
-  // mensagem já foi definida em `error` por `runMutation`.
-  const onConfirmUploadImage = (file: File) =>
-    runMutation(async () => {
-      await uploadWorkImage(work.id, file);
+  const onRequestRemoveImage = (
+    image: WorkImage,
+    trigger: HTMLButtonElement,
+  ) => {
+    removeImageTriggerRef.current = trigger;
+    const index = sortWorkImages(work.images).findIndex(
+      (candidate) => candidate.id === image.id,
+    );
+    setRemoveImageError(null);
+    setRemoveImageStatus("");
+    setCanConfirmRemoveImage(true);
+    focusSectionOnCloseRef.current = false;
+    syncWorksOnRemoveDialogCloseRef.current = false;
+    setImageToRemove({
+      image,
+      label: getWorkImageActionLabel(image, index, work.title),
     });
+  };
+
+  const onRemoveImageDialogOpenChange = (open: boolean) => {
+    if (open) {
+      return;
+    }
+    // Não permite fechar (Esc/Cancelar) com o DELETE em andamento.
+    if (isRemoveImagePending) {
+      return;
+    }
+    setImageToRemove(null);
+    setRemoveImageError(null);
+  };
+
+  const onConfirmRemoveImage = () => {
+    if (!imageToRemove) {
+      return;
+    }
+
+    const { image } = imageToRemove;
+    setRemoveImageError(null);
+    setIsRemoveImagePending(true);
+
+    void (async () => {
+      try {
+        await deleteWorkImage(work.id, image.id);
+      } catch (mutationError) {
+        // 401 já passou pelo interceptor de `lib/api/http.ts` (refresh e,
+        // se falhar, `onAuthFailure`); aqui só exibimos o feedback.
+        const isNotFound =
+          mutationError instanceof AxiosError &&
+          mutationError.response?.status === 404;
+
+        if (isNotFound) {
+          // O mesmo 404 representa imagem ou work ausente. Adia o refetch
+          // até o usuário fechar o aviso para que a remoção do work da lista
+          // não desmonte este diálogo antes de o feedback ser apresentado.
+          focusSectionOnCloseRef.current = true;
+          syncWorksOnRemoveDialogCloseRef.current = true;
+          setCanConfirmRemoveImage(false);
+        }
+
+        setRemoveImageError(getDeleteWorkImageErrorMessage(mutationError));
+        setIsRemoveImagePending(false);
+        return;
+      }
+
+      await syncWorks();
+      focusSectionOnCloseRef.current = true;
+      setRemoveImageStatus("Imagem removida.");
+      setIsRemoveImagePending(false);
+      setImageToRemove(null);
+    })();
+  };
+
+  const onDeleteWorkDialogCloseAutoFocus = (event: Event) => {
+    // Diálogo controlado, sem `AlertDialogTrigger`: o Radix mandaria o foco
+    // para o `body`. No cancelar/Esc o foco volta a "Excluir work". Após
+    // uma exclusão bem-sucedida este item é desmontado pelo refetch (junto
+    // com o diálogo), então este handler normalmente nem roda; se o item
+    // continuar montado (ex.: refetch falhou), o botão ainda existe e
+    // recebe o foco.
+    event.preventDefault();
+    if (deleteWorkButtonRef.current?.isConnected) {
+      deleteWorkButtonRef.current.focus();
+    }
+  };
+
+  const onRemoveImageDialogCloseAutoFocus = (event: Event) => {
+    // O diálogo é controlado e não usa `AlertDialogTrigger`, então o Radix
+    // não sabe para onde devolver o foco (iria para o `body`). O foco é
+    // gerenciado aqui:
+    // - sucesso ou 404: o botão "Remover" pode não existir mais após o
+    //   refetch, então o foco vai para o heading da seção;
+    // - cancelar/Esc: volta ao botão "Remover" que abriu o diálogo (ou ao
+    //   heading, se esse botão tiver saído do DOM).
+    event.preventDefault();
+
+    const trigger = removeImageTriggerRef.current;
+    removeImageTriggerRef.current = null;
+
+    if (!focusSectionOnCloseRef.current && trigger?.isConnected) {
+      trigger.focus();
+    } else {
+      focusSectionOnCloseRef.current = false;
+      imagesHeadingRef.current?.focus();
+    }
+
+    if (syncWorksOnRemoveDialogCloseRef.current) {
+      syncWorksOnRemoveDialogCloseRef.current = false;
+      void syncWorks();
+    }
+  };
 
   return (
     <li>
@@ -96,7 +228,10 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
           <div className="flex items-center justify-between gap-4">
             <div>
               <CardTitle>{work.title}</CardTitle>
-              <Badge variant="secondary" className="mt-1">
+              <Badge
+                variant={work.status === "published" ? "success" : "secondary"}
+                className="mt-1"
+              >
                 {work.status}
               </Badge>
             </div>
@@ -107,9 +242,10 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
                 </Link>
               </Button>
               <Button
+                ref={deleteWorkButtonRef}
                 type="button"
                 variant="destructive"
-                disabled={isPending}
+                disabled={isImageActionPending}
                 onClick={() => setIsDeleteDialogOpen(true)}
               >
                 Excluir work
@@ -118,36 +254,50 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
           </div>
         </CardHeader>
 
-        <CardContent className="flex flex-col gap-4">
-          <ul className="flex flex-wrap gap-2">
-            {work.images.map((image) => (
-              <li key={image.id} className="flex flex-col items-start gap-1">
-                <span className="text-body-sm text-muted-foreground">
-                  {image.alt || image.id}
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={isPending}
-                  onClick={() => onDeleteImage(image.id)}
-                >
-                  Remover imagem
-                </Button>
-              </li>
-            ))}
-          </ul>
+        <CardContent>
+          <section
+            aria-labelledby={imagesHeadingId}
+            className="flex flex-col gap-4"
+          >
+            {/* h2: o título do work (`CardTitle`) é uma `div`, então o
+                próximo nível abaixo do h1 da página é h2. */}
+            <h2
+              id={imagesHeadingId}
+              ref={imagesHeadingRef}
+              tabIndex={-1}
+              className="text-body font-semibold text-foreground"
+            >
+              {/* O complemento sr-only diferencia o nome acessível entre os
+                  vários cards da listagem. */}
+              Imagens ({work.images.length}){" "}
+              <span className="sr-only">do trabalho {work.title}</span>
+            </h2>
 
-          <WorkImageUpload
-            disabled={isPending}
-            onConfirm={onConfirmUploadImage}
-          />
+            <WorkImageGrid
+              images={work.images}
+              workTitle={work.title}
+              disabled={isImageActionPending}
+              onRequestRemove={onRequestRemoveImage}
+            />
 
-          {error && (
-            <p role="alert" className="text-body-sm text-destructive-text">
-              {error}
-            </p>
-          )}
+            <WorkImageUpload
+              disabled={isImageActionPending}
+              onConfirm={onConfirmUploadImage}
+            />
+
+            {uploadError && (
+              <p role="alert" className="text-body-sm text-destructive-text">
+                {uploadError}
+              </p>
+            )}
+
+            <output
+              aria-label="Status da remoção de imagem"
+              className="sr-only"
+            >
+              {removeImageStatus}
+            </output>
+          </section>
         </CardContent>
       </Card>
 
@@ -163,6 +313,18 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
         onConfirm={onConfirmDeleteWork}
         isPending={isDeletePending}
         error={deleteError}
+        onCloseAutoFocus={onDeleteWorkDialogCloseAutoFocus}
+      />
+
+      <DeleteWorkImageDialog
+        open={imageToRemove !== null}
+        onOpenChange={onRemoveImageDialogOpenChange}
+        imageLabel={imageToRemove?.label ?? ""}
+        onConfirm={onConfirmRemoveImage}
+        isPending={isRemoveImagePending}
+        canConfirm={canConfirmRemoveImage}
+        error={removeImageError}
+        onCloseAutoFocus={onRemoveImageDialogCloseAutoFocus}
       />
     </li>
   );
