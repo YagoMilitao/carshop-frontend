@@ -3,6 +3,13 @@
 import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { PageSection } from '@/components/layout/page-section'
+import { PortfolioHeader } from './_components/portfolio-header'
+import {
+  BackToHomeLink,
+  PORTFOLIO_ERROR_MESSAGE,
+  PortfolioStateMessage,
+} from './_components/portfolio-state-message'
 
 type PortfolioErrorProps = {
   error: Error & { digest?: string }
@@ -14,22 +21,24 @@ export default function PortfolioError({
   reset,
 }: Readonly<PortfolioErrorProps>) {
   useEffect(() => {
-    toast.error(
-      'Não foi possível carregar o portfólio agora. Tente novamente em alguns instantes.',
-    )
+    toast.error(PORTFOLIO_ERROR_MESSAGE)
     console.error(error)
   }, [error])
 
   return (
-    <div className="flex flex-col items-center gap-4 py-16 text-center">
-      <h1 className="text-lg font-semibold">
-        Não foi possível carregar o portfólio
-      </h1>
-      <p className="text-muted-foreground">
-        Ocorreu um erro ao buscar os projetos do portfólio. Tente
-        novamente em alguns instantes.
-      </p>
-      <Button onClick={() => reset()}>Tentar novamente</Button>
-    </div>
+    <PageSection spacing="compact">
+      <PortfolioHeader />
+      <div className="mt-10 lg:mt-16">
+        <PortfolioStateMessage
+          title="We couldn't load the portfolio"
+          message={PORTFOLIO_ERROR_MESSAGE}
+        >
+          <Button size="lg" className="h-11 px-6" onClick={() => reset()}>
+            Try again
+          </Button>
+          <BackToHomeLink />
+        </PortfolioStateMessage>
+      </div>
+    </PageSection>
   )
 }

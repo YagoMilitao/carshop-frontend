@@ -1,25 +1,62 @@
 import Link from "next/link"
 import { WorkImageThumb } from "@/components/gallery/work-image-thumb"
-import type { HomeWork } from "../_lib/select-home-works"
+import type { Work, WorkImage } from "@/lib/api/works"
+import { cn } from "@/lib/utils"
 
-type ProjectPreviewEmphasis = "dominant" | "supporting"
-
-type ProjectPreviewProps = {
-  item: HomeWork
-  emphasis: ProjectPreviewEmphasis
+/** Work já com a imagem resolvida pela camada de apresentação que o usa. */
+export type ProjectPreviewItem = {
+  work: Work
+  image: WorkImage
 }
 
-const sizesByEmphasis: Record<ProjectPreviewEmphasis, string> = {
-  dominant: "(min-width: 1280px) 750px, (min-width: 1024px) 66vw, 100vw",
-  supporting:
-    "(min-width: 1280px) 370px, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw",
+/**
+ * Proporções controladas por papel no layout (o contrato não expõe
+ * dimensões nem focal point das imagens): `editorial` 4:3, `banner`
+ * 4:3 → 16:9 a partir de `md`, `detail` 4:3 → 3:4 a partir de `lg`.
+ */
+export type ProjectPreviewFrame = "editorial" | "banner" | "detail"
+
+type ProjectPreviewProps = {
+  item: ProjectPreviewItem
+  sizes: string
+  frame?: ProjectPreviewFrame
+  headingLevel?: 2 | 3
+  lead?: boolean
+  priority?: boolean
+}
+
+const frameClassNames: Record<ProjectPreviewFrame, string> = {
+  editorial: "aspect-4/3",
+  banner: "aspect-4/3 md:aspect-video",
+  detail: "aspect-4/3 lg:aspect-3/4",
 }
 
 export function ProjectPreview({
   item,
-  emphasis,
+  sizes,
+  frame = "editorial",
+  headingLevel = 3,
+  lead = false,
+  priority = false,
 }: Readonly<ProjectPreviewProps>) {
   const { work, image } = item
+  const Heading = headingLevel === 2 ? "h2" : "h3"
+
+  const titleBlock = (
+    <div className={cn("flex flex-col gap-1", lead && "lg:col-span-6")}>
+      <span className="text-label text-muted-foreground">
+        {work.category}
+      </span>
+      <Heading
+        className={cn(
+          lead ? "text-heading-2" : "text-heading-3",
+          "text-foreground transition-colors group-hover:text-primary",
+        )}
+      >
+        {work.title}
+      </Heading>
+    </div>
+  )
 
   return (
     <Link
@@ -31,18 +68,26 @@ export function ProjectPreview({
         <WorkImageThumb
           image={image}
           fallbackAlt={work.title}
-          sizes={sizesByEmphasis[emphasis]}
-          className="aspect-4/3 transition-transform duration-300 motion-safe:group-hover:scale-[1.02] motion-reduce:transition-none"
+          sizes={sizes}
+          priority={priority}
+          className={cn(
+            frameClassNames[frame],
+            "transition-transform duration-300 motion-safe:group-hover:scale-[1.02] motion-reduce:transition-none",
+          )}
         />
       </div>
-      <div className="flex flex-col gap-1">
-        <span className="text-label text-muted-foreground">
-          {work.category}
-        </span>
-        <h3 className="text-heading-3 text-foreground transition-colors group-hover:text-primary">
-          {work.title}
-        </h3>
-      </div>
+      {lead ? (
+        <div className="flex flex-col gap-3 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-8">
+          {titleBlock}
+          {work.description && (
+            <p className="line-clamp-3 text-body text-secondary-foreground lg:col-span-5 lg:col-start-8">
+              {work.description}
+            </p>
+          )}
+        </div>
+      ) : (
+        titleBlock
+      )}
     </Link>
   )
 }

@@ -4,6 +4,12 @@ import { PageSection } from "@/components/layout/page-section"
 import type { HomeWork } from "../_lib/select-home-works"
 import { ProjectPreview } from "./project-preview"
 
+const sizesByEmphasis = {
+  dominant: "(min-width: 1280px) 750px, (min-width: 1024px) 66vw, 100vw",
+  supporting:
+    "(min-width: 1280px) 370px, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw",
+} as const
+
 type FeaturedWorksProps = {
   featured: HomeWork[]
 }
@@ -37,13 +43,13 @@ export function FeaturedWorks({ featured }: Readonly<FeaturedWorksProps>) {
 
       <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:mt-14 lg:grid-cols-12 lg:gap-8">
         <div className="md:col-span-2 lg:col-span-8">
-          <ProjectPreview item={dominant} emphasis="dominant" />
+          <ProjectPreview item={dominant} sizes={sizesByEmphasis.dominant} />
         </div>
         {supporting.length > 0 && (
           <ul className="grid grid-cols-1 gap-4 md:col-span-2 md:grid-cols-2 lg:col-span-4 lg:grid-cols-1 lg:gap-8">
             {supporting.map((item) => (
               <li key={item.work.id}>
-                <ProjectPreview item={item} emphasis="supporting" />
+                <ProjectPreview item={item} sizes={sizesByEmphasis.supporting} />
               </li>
             ))}
           </ul>

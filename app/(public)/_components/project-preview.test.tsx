@@ -30,9 +30,21 @@ function makeItem(alt = 'Banco de couro restaurado') {
   return { work, image }
 }
 
+const SIZES = '(min-width: 1280px) 750px, (min-width: 1024px) 66vw, 100vw'
+
+function imageFrame() {
+  const frame = screen.getByRole('img').parentElement
+
+  if (!frame) {
+    throw new Error('imagem sem contêiner')
+  }
+
+  return frame
+}
+
 describe('ProjectPreview', () => {
   it('é um link para o detalhe do projeto, rotulado pelo título', () => {
-    render(<ProjectPreview item={makeItem()} emphasis="dominant" />)
+    render(<ProjectPreview item={makeItem()} sizes={SIZES} />)
 
     expect(screen.getByRole('link', { name: 'Mustang 1967' })).toHaveAttribute(
       'href',
@@ -40,40 +52,78 @@ describe('ProjectPreview', () => {
     )
   })
 
-  it('exibe categoria (como vem da API) e título em h3', () => {
-    render(<ProjectPreview item={makeItem()} emphasis="supporting" />)
+  it('por padrão exibe categoria (como vem da API) e título em h3, sem descrição', () => {
+    render(<ProjectPreview item={makeItem()} sizes={SIZES} />)
 
     expect(screen.getByText('bancos')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 3, name: 'Mustang 1967' })).toBeInTheDocument()
+    const heading = screen.getByRole('heading', { level: 3, name: 'Mustang 1967' })
+    expect(heading).toHaveClass('text-heading-3')
+    expect(screen.queryByText('Descrição')).not.toBeInTheDocument()
   })
 
-  it('usa sizes de destaque para emphasis="dominant"', () => {
-    render(<ProjectPreview item={makeItem()} emphasis="dominant" />)
+  it('renderiza o título em h2 quando headingLevel=2', () => {
+    render(<ProjectPreview item={makeItem()} sizes={SIZES} headingLevel={2} />)
 
-    expect(screen.getByRole('img')).toHaveAttribute(
-      'sizes',
-      '(min-width: 1280px) 750px, (min-width: 1024px) 66vw, 100vw',
+    expect(screen.getByRole('heading', { level: 2, name: 'Mustang 1967' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument()
+  })
+
+  it('repassa sizes para a imagem', () => {
+    render(<ProjectPreview item={makeItem()} sizes={SIZES} />)
+
+    expect(screen.getByRole('img')).toHaveAttribute('sizes', SIZES)
+  })
+
+  it('frame padrão (editorial) usa 4:3', () => {
+    render(<ProjectPreview item={makeItem()} sizes={SIZES} />)
+
+    expect(imageFrame()).toHaveClass('aspect-4/3')
+    expect(imageFrame()).not.toHaveClass('aspect-square')
+  })
+
+  it('frame="banner" usa 4:3 no mobile e 16:9 a partir de md', () => {
+    render(<ProjectPreview item={makeItem()} sizes={SIZES} frame="banner" />)
+
+    expect(imageFrame()).toHaveClass('aspect-4/3', 'md:aspect-video')
+  })
+
+  it('frame="detail" usa 4:3 e 3:4 a partir de lg', () => {
+    render(<ProjectPreview item={makeItem()} sizes={SIZES} frame="detail" />)
+
+    expect(imageFrame()).toHaveClass('aspect-4/3', 'lg:aspect-3/4')
+  })
+
+  it('lead: título em text-heading-2 e descrição real', () => {
+    render(<ProjectPreview item={makeItem()} sizes={SIZES} headingLevel={2} lead />)
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Mustang 1967' })).toHaveClass(
+      'text-heading-2',
     )
+    expect(screen.getByText('Descrição')).toHaveClass('line-clamp-3')
   })
 
-  it('usa sizes de apoio para emphasis="supporting"', () => {
-    render(<ProjectPreview item={makeItem()} emphasis="supporting" />)
+  it('lead sem descrição não renderiza parágrafo vazio', () => {
+    const item = makeItem()
+    item.work.description = ''
+    const { container } = render(<ProjectPreview item={item} sizes={SIZES} lead />)
 
-    expect(screen.getByRole('img')).toHaveAttribute(
-      'sizes',
-      '(min-width: 1280px) 370px, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw',
-    )
+    expect(container.querySelector('p')).toBeNull()
   })
 
-  it('usa o alt da imagem e carrega de forma lazy', () => {
-    render(<ProjectPreview item={makeItem()} emphasis="dominant" />)
+  it('carrega de forma lazy por padrão', () => {
+    render(<ProjectPreview item={makeItem()} sizes={SIZES} />)
 
-    const image = screen.getByAltText('Banco de couro restaurado')
-    expect(image).toHaveAttribute('loading', 'lazy')
+    expect(screen.getByAltText('Banco de couro restaurado')).toHaveAttribute('loading', 'lazy')
+  })
+
+  it('não é lazy quando priority=true', () => {
+    render(<ProjectPreview item={makeItem()} sizes={SIZES} priority />)
+
+    expect(screen.getByRole('img')).not.toHaveAttribute('loading', 'lazy')
   })
 
   it('usa o título do work como alt quando a imagem não tem alt', () => {
-    render(<ProjectPreview item={makeItem('')} emphasis="supporting" />)
+    render(<ProjectPreview item={makeItem('')} sizes={SIZES} />)
 
     expect(screen.getByAltText('Mustang 1967')).toBeInTheDocument()
   })

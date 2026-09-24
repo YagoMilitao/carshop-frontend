@@ -106,4 +106,21 @@ describe('FeaturedWorks', () => {
       'our-work-heading',
     )
   })
+
+  it('regressão CARSHOP-145: previews da Home seguem 4:3, h3 text-heading-3 e sem descrição', () => {
+    const { container } = render(
+      <FeaturedWorks featured={[makeItem('1'), makeItem('2'), makeItem('3')]} />,
+    )
+
+    for (const image of screen.getAllByRole('img')) {
+      const frame = image.parentElement
+      expect(frame).toHaveClass('aspect-4/3')
+      expect(frame).not.toHaveClass('aspect-square', 'md:aspect-video', 'lg:aspect-3/4')
+    }
+    for (const heading of screen.getAllByRole('heading', { level: 3 })) {
+      expect(heading).toHaveClass('text-heading-3')
+    }
+    expect(screen.queryByText('Descrição')).not.toBeInTheDocument()
+    expect(container.querySelector('.line-clamp-3')).toBeNull()
+  })
 })
