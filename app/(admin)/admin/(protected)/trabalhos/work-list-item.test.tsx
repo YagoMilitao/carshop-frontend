@@ -523,6 +523,35 @@ describe("WorkListItem", () => {
       return screen.findByRole("alertdialog");
     }
 
+    async function submitRemoveWithNotFound(
+      user: ReturnType<typeof userEvent.setup>,
+    ) {
+      deleteWorkImageMock.mockRejectedValue(
+        createAxiosError("Not found", 404),
+      );
+      revalidateWorksTagMock.mockResolvedValue(undefined);
+
+      render(<WorkListItem work={work} />);
+
+      const dialog = await openRemoveDialog(user);
+      await user.click(
+        within(dialog).getByRole("button", { name: "Excluir imagem" }),
+      );
+      await within(dialog).findByRole("alert");
+
+      return dialog;
+    }
+
+    async function closeRemoveDialog(
+      user: ReturnType<typeof userEvent.setup>,
+      dialog: HTMLElement,
+    ) {
+      await user.click(within(dialog).getByRole("button", { name: "Fechar" }));
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
+    }
+
     it("exibe estado vazio e contador zerado quando o work não tem imagens", () => {
       render(<WorkListItem work={{ ...work, images: [] }} />);
 
@@ -567,20 +596,10 @@ describe("WorkListItem", () => {
     });
 
     it("em 404 sincroniza a lista e mantém o diálogo aberto com a mensagem", async () => {
-      deleteWorkImageMock.mockRejectedValue(
-        createAxiosError("Not found", 404),
-      );
-      revalidateWorksTagMock.mockResolvedValue(undefined);
       const user = userEvent.setup();
+      const dialog = await submitRemoveWithNotFound(user);
 
-      render(<WorkListItem work={work} />);
-
-      const dialog = await openRemoveDialog(user);
-      await user.click(
-        within(dialog).getByRole("button", { name: "Excluir imagem" }),
-      );
-
-      expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      expect(within(dialog).getByRole("alert")).toHaveTextContent(
         "Imagem ou trabalho não encontrado. A lista foi atualizada.",
       );
       expect(deleteWorkImageMock).toHaveBeenCalledWith("work-1", "img-1");
@@ -602,23 +621,9 @@ describe("WorkListItem", () => {
     });
 
     it("reabilita a confirmação ao abrir uma nova remoção após um 404", async () => {
-      deleteWorkImageMock.mockRejectedValue(
-        createAxiosError("Not found", 404),
-      );
-      revalidateWorksTagMock.mockResolvedValue(undefined);
       const user = userEvent.setup();
-
-      render(<WorkListItem work={work} />);
-
-      const dialog = await openRemoveDialog(user);
-      await user.click(
-        within(dialog).getByRole("button", { name: "Excluir imagem" }),
-      );
-      await within(dialog).findByRole("alert");
-      await user.click(within(dialog).getByRole("button", { name: "Fechar" }));
-      await waitFor(() =>
-        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
-      );
+      const dialog = await submitRemoveWithNotFound(user);
+      await closeRemoveDialog(user, dialog);
 
       const reopened = await openRemoveDialog(user);
       expect(
@@ -628,25 +633,9 @@ describe("WorkListItem", () => {
     });
 
     it("após 404, fechar o diálogo leva o foco ao heading da seção", async () => {
-      deleteWorkImageMock.mockRejectedValue(
-        createAxiosError("Not found", 404),
-      );
-      revalidateWorksTagMock.mockResolvedValue(undefined);
       const user = userEvent.setup();
-
-      render(<WorkListItem work={work} />);
-
-      const dialog = await openRemoveDialog(user);
-      await user.click(
-        within(dialog).getByRole("button", { name: "Excluir imagem" }),
-      );
-      await within(dialog).findByRole("alert");
-
-      await user.click(within(dialog).getByRole("button", { name: "Fechar" }));
-
-      await waitFor(() =>
-        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
-      );
+      const dialog = await submitRemoveWithNotFound(user);
+      await closeRemoveDialog(user, dialog);
       await waitFor(() =>
         expect(
           screen.getByRole("heading", { name: "Imagens (1) do trabalho Restauração Fusca" }),
