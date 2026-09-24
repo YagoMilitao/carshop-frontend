@@ -17,15 +17,11 @@ import {
   isNotFoundError,
 } from "./comment-moderation-error";
 import { syncAfterCommentMutation } from "./comment-moderation-sync";
+import { commentDateFormatter } from "./comment-date";
 import {
   commentStatusBadgeVariants,
   commentStatusLabels,
 } from "./comment-status";
-
-const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
-  dateStyle: "short",
-  timeStyle: "short",
-});
 
 type QuickAction = "approve" | "revertToPending";
 
@@ -99,7 +95,7 @@ export function CommentListItem({
           dateTime={comment.createdAt}
           className="text-body-sm text-muted-foreground"
         >
-          {dateFormatter.format(new Date(comment.createdAt))}
+          {commentDateFormatter.format(new Date(comment.createdAt))}
         </time>
       </div>
 

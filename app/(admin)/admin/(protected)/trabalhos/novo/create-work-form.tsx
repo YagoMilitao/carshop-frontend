@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -85,9 +86,14 @@ export function CreateWorkForm() {
         </p>
       )}
 
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Salvando..." : "Criar trabalho"}
-      </Button>
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button variant="outline" asChild>
+          <Link href="/admin/trabalhos">Cancelar</Link>
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Salvando..." : "Criar trabalho"}
+        </Button>
+      </div>
     </form>
   );
 }

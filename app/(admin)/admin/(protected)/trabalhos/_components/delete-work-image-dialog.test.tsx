@@ -29,7 +29,7 @@ describe("DeleteWorkImageDialog", () => {
     renderDialog({ open: false });
 
     expect(
-      screen.queryByRole("heading", { name: "Remover imagem" }),
+      screen.queryByRole("heading", { name: "Excluir imagem" }),
     ).not.toBeInTheDocument();
   });
 
@@ -37,11 +37,11 @@ describe("DeleteWorkImageDialog", () => {
     renderDialog();
 
     expect(
-      screen.getByRole("heading", { name: "Remover imagem" }),
+      screen.getByRole("heading", { name: "Excluir imagem" }),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Tem certeza que deseja remover “Banco restaurado”? Essa ação não pode ser desfeita.",
+        "Tem certeza que deseja excluir “Banco restaurado”? Essa ação não pode ser desfeita.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancelar" })).toBeEnabled();

@@ -106,7 +106,7 @@ describe("CommentListItem", () => {
     expect(within(item).getByText("Cliente")).toBeInTheDocument();
     expect(within(item).getByText("Pendente")).toHaveAttribute(
       "data-variant",
-      "outline",
+      "warning",
     );
     const time = item.querySelector("time");
     expect(time).toHaveAttribute("dateTime", baseComment.createdAt);

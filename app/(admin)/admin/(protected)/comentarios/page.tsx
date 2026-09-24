@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Container } from "@/components/layout/container";
 import { PageSection } from "@/components/layout/page-section";
 
+import { AdminPageHeader } from "../_components/admin-page-header";
+
 import {
   parseCommentFilters,
   type CommentSearchParams,
@@ -33,7 +35,7 @@ export default async function AdminCommentsPage({
   return (
     <PageSection spacing="compact" container="none">
       <Container variant="page" className="flex flex-col gap-8">
-        <h1 className="text-heading-2 text-foreground">Comentários</h1>
+        <AdminPageHeader title="Comentários" />
 
         <CommentStatusFilter current={filter.status} />
 

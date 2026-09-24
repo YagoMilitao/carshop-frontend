@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import type { Work } from "@/lib/api/works";
@@ -111,6 +111,41 @@ describe("EditWorkForm", () => {
     );
   });
 
+  it("mantém o erro visível e mostra 'Tentando novamente...' desabilitado enquanto refaz o fetch", async () => {
+    const refetchMock = vi.fn();
+    getApiErrorMessageMock.mockReturnValue("Ocorreu um erro inesperado. Tente novamente.");
+    useQueryMock.mockReturnValue({
+      data: undefined,
+      error: { response: { status: 500 } },
+      isFetching: false,
+      isPending: false,
+      refetch: refetchMock,
+    });
+    const user = userEvent.setup();
+
+    const { rerender } = render(<EditWorkForm slug="restauracao-fusca" />);
+
+    await user.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    expect(refetchMock).toHaveBeenCalledTimes(1);
+
+    useQueryMock.mockReturnValue({
+      data: undefined,
+      error: { response: { status: 500 } },
+      isFetching: true,
+      isPending: false,
+      refetch: refetchMock,
+    });
+    rerender(<EditWorkForm slug="restauracao-fusca" />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Ocorreu um erro inesperado. Tente novamente.",
+    );
+    expect(
+      screen.getByRole("button", { name: "Tentando novamente..." }),
+    ).toBeDisabled();
+    expect(screen.queryByText("Carregando trabalho...")).not.toBeInTheDocument();
+  });
+
   it("exibe 404 inline com link de retorno quando o work não é encontrado", () => {
     useQueryMock.mockReturnValue({
       data: undefined,
@@ -154,6 +189,98 @@ describe("EditWorkForm", () => {
     expect(saveButton).toBeEnabled();
     expect(saveButton).not.toHaveAttribute("aria-disabled");
     expect(saveButton).not.toHaveAttribute("title");
+  });
+
+  it("loading: exibe o AdminLoadingState (output aria-busy) sem formulário", () => {
+    useQueryMock.mockReturnValue({
+      data: undefined,
+      error: null,
+      isFetching: true,
+      isPending: true,
+    });
+
+    render(<EditWorkForm slug="restauracao-fusca" />);
+
+    const status = screen.getByRole("status");
+    expect(status).toHaveAttribute("aria-busy", "true");
+    expect(status).toHaveTextContent("Carregando trabalho...");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Salvar" })).not.toBeInTheDocument();
+  });
+
+  it("erro: 'Tentar novamente' chama o refetch da query, sem exibir o formulário nem o not-found", async () => {
+    const refetchMock = vi.fn().mockResolvedValue(undefined);
+    getApiErrorMessageMock.mockReturnValue("Falha ao carregar.");
+    useQueryMock.mockReturnValue({
+      data: undefined,
+      error: new Error("boom"),
+      isFetching: false,
+      isPending: false,
+      refetch: refetchMock,
+    });
+    const user = userEvent.setup();
+
+    render(<EditWorkForm slug="restauracao-fusca" />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Falha ao carregar.");
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Nenhum trabalho encontrado para este identificador."),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Salvar" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Tentar novamente" }));
+
+    expect(refetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("not-found: estado vazio distinto do erro (sem role=alert nem retry)", () => {
+    useQueryMock.mockReturnValue({
+      data: undefined,
+      error: null,
+      isFetching: false,
+      isPending: false,
+    });
+
+    render(<EditWorkForm slug="inexistente" />);
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Tentar novamente" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("formulário: 'Cancelar' aponta para /admin/trabalhos e o status usa NativeSelect com Draft/Published", () => {
+    useQueryMock.mockReturnValue({
+      data: { ...work, status: "published" },
+      error: null,
+      isPending: false,
+    });
+
+    render(<EditWorkForm slug="restauracao-fusca" />);
+
+    expect(screen.getByRole("link", { name: "Cancelar" })).toHaveAttribute(
+      "href",
+      "/admin/trabalhos",
+    );
+
+    const statusSelect = screen.getByRole("combobox", { name: "Status" });
+    expect(statusSelect).toHaveAttribute("data-slot", "native-select");
+    expect(statusSelect).toHaveValue("published");
+    const options = within(statusSelect).getAllByRole("option");
+    expect(options.map((option) => [option.getAttribute("value"), option.textContent])).toEqual([
+      ["draft", "Draft"],
+      ["published", "Published"],
+    ]);
+    expect(screen.queryByText("published")).not.toBeInTheDocument();
+    expect(screen.queryByText("draft")).not.toBeInTheDocument();
+
+    const description = screen.getByLabelText("Descrição");
+    expect(description.tagName).toBe("TEXTAREA");
+    expect(description).toHaveAttribute("data-slot", "textarea");
+    expect(description).toHaveAttribute("aria-invalid", "false");
+    expect(description).toHaveClass("min-h-24");
   });
 
   describe("submit", () => {

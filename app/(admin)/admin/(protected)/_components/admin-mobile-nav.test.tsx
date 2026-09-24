@@ -51,7 +51,7 @@ describe("AdminMobileNav", () => {
       await screen.findByRole("link", { name: "Dashboard" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Novo trabalho" }),
+      screen.getByRole("link", { name: "Comentários" }),
     ).toBeInTheDocument();
   });
 

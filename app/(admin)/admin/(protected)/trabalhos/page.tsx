@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { PageSection } from "@/components/layout/page-section";
 
+import { AdminPageHeader } from "../_components/admin-page-header";
+
 import { AdminWorkList } from "./admin-work-list";
 
 // Defesa em profundidade, complementar a `app/(admin)/admin/layout.tsx`:
@@ -22,13 +24,15 @@ export const metadata: Metadata = {
 export default function AdminWorksPage() {
   return (
     <PageSection spacing="compact" container="none">
-      <Container variant="page" className="flex flex-col gap-10">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-heading-2 text-foreground">Trabalhos</h1>
-          <Button asChild>
-            <Link href="/admin/trabalhos/novo">Novo trabalho</Link>
-          </Button>
-        </div>
+      <Container variant="page" className="flex flex-col gap-8">
+        <AdminPageHeader
+          title="Trabalhos"
+          actions={
+            <Button asChild>
+              <Link href="/admin/trabalhos/novo">Novo trabalho</Link>
+            </Button>
+          }
+        />
 
         <AdminWorkList />
       </Container>

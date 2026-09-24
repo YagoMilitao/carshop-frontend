@@ -14,7 +14,7 @@ describe("AdminNavLink", () => {
   it("marca aria-current='page' quando o pathname corresponde ao href", () => {
     usePathnameMock.mockReturnValue("/admin");
 
-    render(<AdminNavLink item={{ href: "/admin", label: "Dashboard" }} />);
+    render(<AdminNavLink item={{ href: "/admin", label: "Dashboard", match: "exact" }} />);
 
     expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
       "aria-current",
@@ -25,11 +25,42 @@ describe("AdminNavLink", () => {
   it("não marca aria-current quando o pathname não corresponde", () => {
     usePathnameMock.mockReturnValue("/admin/trabalhos/novo");
 
-    render(<AdminNavLink item={{ href: "/admin", label: "Dashboard" }} />);
+    render(<AdminNavLink item={{ href: "/admin", label: "Dashboard", match: "exact" }} />);
 
     expect(
       screen.getByRole("link", { name: "Dashboard" }),
     ).not.toHaveAttribute("aria-current");
+  });
+
+  it.each(["/admin/trabalhos/novo", "/admin/trabalhos/restauracao-fusca/editar"])(
+    "marca 'Trabalhos' como ativo na sub-rota %s",
+    (pathname) => {
+      usePathnameMock.mockReturnValue(pathname);
+
+      render(
+        <AdminNavLink
+          item={{ href: "/admin/trabalhos", label: "Trabalhos", match: "prefix" }}
+        />,
+      );
+
+      const link = screen.getByRole("link", { name: "Trabalhos" });
+      expect(link).toHaveAttribute("aria-current", "page");
+      expect(link).toHaveClass("bg-accent", "text-foreground", "before:bg-primary");
+    },
+  );
+
+  it("não marca 'Trabalhos' como ativo em /admin/trabalhosX (sem falso positivo)", () => {
+    usePathnameMock.mockReturnValue("/admin/trabalhosX");
+
+    render(
+      <AdminNavLink
+        item={{ href: "/admin/trabalhos", label: "Trabalhos", match: "prefix" }}
+      />,
+    );
+
+    const link = screen.getByRole("link", { name: "Trabalhos" });
+    expect(link).not.toHaveAttribute("aria-current");
+    expect(link).toHaveClass("text-muted-foreground");
   });
 
   it("chama onNavigate ao clicar no link", async () => {
@@ -39,7 +70,7 @@ describe("AdminNavLink", () => {
 
     render(
       <AdminNavLink
-        item={{ href: "/admin", label: "Dashboard" }}
+        item={{ href: "/admin", label: "Dashboard", match: "exact" }}
         onNavigate={onNavigate}
       />,
     );

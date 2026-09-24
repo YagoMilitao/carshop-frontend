@@ -17,7 +17,7 @@ describe("comment-status", () => {
 
   it("mapeia as variantes do Badge por status", () => {
     expect(commentStatusBadgeVariants).toEqual({
-      PENDING: "outline",
+      PENDING: "warning",
       APPROVED: "success",
       HIDDEN: "secondary",
     });

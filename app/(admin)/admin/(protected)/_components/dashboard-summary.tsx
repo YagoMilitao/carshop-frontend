@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getApiErrorMessage } from "@/lib/api/auth.client";
 import { adminCommentsQueryKey, getAdminComments } from "@/lib/api/comments.client";
 import { adminWorksQueryKey, getAdminWorks } from "@/lib/api/works.client";
@@ -29,8 +30,21 @@ function SummaryCard({ title, value, isLoading, error }: SummaryCardProps) {
             {error}
           </p>
         ) : (
-          <output className="text-body-lg font-semibold text-foreground">
-            {isLoading ? "…" : value}
+          <output
+            aria-busy={isLoading}
+            className="block text-body-lg font-semibold text-foreground"
+          >
+            {isLoading ? (
+              <>
+                <span className="sr-only">Carregando...</span>
+                <Skeleton
+                  aria-hidden="true"
+                  className="h-7 w-16 motion-reduce:animate-none"
+                />
+              </>
+            ) : (
+              value
+            )}
           </output>
         )}
       </CardContent>
@@ -78,13 +92,13 @@ export function DashboardSummary() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <SummaryCard
-        title="Total de works"
+        title="Total de trabalhos"
         value={String(total)}
         isLoading={worksQuery.isPending}
         error={worksError}
       />
       <SummaryCard
-        title="Publicados vs. rascunho"
+        title="Publicados / rascunhos"
         value={`${published} / ${draft}`}
         isLoading={worksQuery.isPending}
         error={worksError}

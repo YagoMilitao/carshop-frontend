@@ -43,9 +43,9 @@ export function DeleteWorkImageDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent onCloseAutoFocus={onCloseAutoFocus}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Remover imagem</AlertDialogTitle>
+          <AlertDialogTitle>Excluir imagem</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja remover &ldquo;{imageLabel}&rdquo;? Essa
+            Tem certeza que deseja excluir &ldquo;{imageLabel}&rdquo;? Essa
             ação não pode ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>

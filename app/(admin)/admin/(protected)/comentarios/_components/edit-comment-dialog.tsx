@@ -18,6 +18,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 import type { Comment } from "@/lib/api/comments";
 import {
   updateComment,
@@ -29,6 +34,7 @@ import {
   isNotFoundError,
 } from "./comment-moderation-error";
 import { syncAfterCommentMutation } from "./comment-moderation-sync";
+import { commentStatusLabels } from "./comment-status";
 import {
   buildUpdateCommentPayload,
   editCommentSchema,
@@ -36,9 +42,6 @@ import {
   type EditCommentFormInput,
   type EditCommentFormValues,
 } from "./edit-comment-form-values";
-
-const fieldClassName =
-  "rounded-lg border border-input bg-transparent px-2.5 py-2 text-body-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive";
 
 type EditCommentDialogProps = Readonly<{
   open: boolean;
@@ -178,13 +181,13 @@ export function EditCommentDialog({
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor={contentId}>Comentário</Label>
-              <textarea
+              <Textarea
                 id={contentId}
                 aria-invalid={errors.content ? "true" : "false"}
                 aria-describedby={
                   errors.content ? `${contentId}-error` : undefined
                 }
-                className={`min-h-32 ${fieldClassName}`}
+                className="min-h-32"
                 {...register("content")}
               />
               {errors.content && (
@@ -200,18 +203,23 @@ export function EditCommentDialog({
             {canEditStatus && (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor={statusId}>Status</Label>
-                <select
+                {/* `className` do NativeSelect vai para o wrapper (w-fit). */}
+                <NativeSelect
                   id={statusId}
                   aria-invalid={errors.status ? "true" : "false"}
                   aria-describedby={
                     errors.status ? `${statusId}-error` : undefined
                   }
-                  className={fieldClassName}
+                  className="w-full sm:w-64"
                   {...register("status")}
                 >
-                  <option value="PENDING">Pendente</option>
-                  <option value="APPROVED">Aprovado</option>
-                </select>
+                  <NativeSelectOption value="PENDING">
+                    {commentStatusLabels.PENDING}
+                  </NativeSelectOption>
+                  <NativeSelectOption value="APPROVED">
+                    {commentStatusLabels.APPROVED}
+                  </NativeSelectOption>
+                </NativeSelect>
                 {errors.status && (
                   <p
                     id={`${statusId}-error`}

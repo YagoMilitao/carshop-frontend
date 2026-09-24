@@ -165,6 +165,47 @@ describe("CommentModerationPanel", () => {
       },
     );
 
+    it("usa o AdminLoadingState compartilhado (output aria-busy)", () => {
+      getAdminCommentsMock.mockReturnValue(new Promise(() => undefined));
+
+      renderPanel();
+
+      expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
+    });
+
+    it("erro: 'Tentar novamente' refaz o GET e exibe a lista ao recuperar", async () => {
+      getAdminCommentsMock
+        .mockRejectedValueOnce(createAxiosError(500, "Falha ao listar"))
+        .mockResolvedValueOnce(listResponse([comment]));
+      const user = userEvent.setup();
+
+      renderPanel();
+
+      expect(await screen.findByRole("alert")).toHaveTextContent("Falha ao listar");
+      await user.click(screen.getByRole("button", { name: "Tentar novamente" }));
+
+      expect(await screen.findByText("Ficou incrível!")).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(getAdminCommentsMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("resolve títulos via useAdminWorkTitles compartilhando o cache de adminWorksQueryKey", async () => {
+      queryClient.setDefaultOptions({
+        queries: { retry: false, staleTime: Infinity },
+      });
+      queryClient.setQueryData<Work[]>(["admin", "works"], [
+        { ...work, title: "Título vindo do cache" },
+      ]);
+      getAdminCommentsMock.mockResolvedValue(listResponse([comment]));
+
+      renderPanel();
+
+      expect(
+        await screen.findByText("Trabalho: Título vindo do cache"),
+      ).toBeInTheDocument();
+      expect(getAdminWorksMock).not.toHaveBeenCalled();
+    });
+
     it("consulta a API com status, página e limite", async () => {
       getAdminCommentsMock.mockResolvedValue(listResponse([comment]));
 

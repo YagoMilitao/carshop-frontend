@@ -58,6 +58,14 @@
      acima do AA de 4.5:1 para texto normal. */
   --success-text: #6fae7e;
   --warning: #b8863b;
+  /* Mesmo matiz de --warning, mais claro, dedicado a texto (ex.: badge
+     "Pendente" sobre bg-warning/15). Contraste calculado (luminância
+     relativa WCAG) sobre bg-warning/15 composto: 5.99:1 sobre --surface
+     (#151515), 5.58:1 sobre --surface-warm (#1c1b19) e 6.57:1 sobre
+     --background; --warning puro daria 4.32:1 sobre surface-warm (abaixo do
+     AA de 4.5:1). Distinguível do cognac --primary (#b56a3b): matiz ~35°
+     vs. ~23° e 1.65:1 de diferença de luminância, mais claro/amarelado. */
+  --warning-text: #d09a4e;
   /* Radius único compartilhado por Public e Admin, reduzido de 10px para a
      faixa 4–8px recomendada por docs/design/components.md
      (#Component-Radius / #Button-Radius). */
@@ -81,6 +89,7 @@
   --color-success: var(--success);
   --color-success-text: var(--success-text);
   --color-warning: var(--warning);
+  --color-warning-text: var(--warning-text);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);

@@ -16,7 +16,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Container } from "@/components/layout/container";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Informe o e-mail.").email("E-mail inválido."),
@@ -26,6 +31,9 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const INVALID_CREDENTIALS_MESSAGE = "E-mail ou senha inválidos.";
+
+const loginMainClassName =
+  "flex min-h-dvh items-center justify-center px-5 py-16 sm:px-8";
 
 /**
  * Formulário de login admin propriamente dito. Extraído de
@@ -65,69 +73,110 @@ function LoginForm() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <Container variant="reading" className="flex flex-col gap-6 py-16">
-        <h1 className="text-heading-3 text-foreground">
-          Entrar no painel admin
-        </h1>
+    <main className={loginMainClassName}>
+      <Card className="w-full max-w-sm">
+        <CardHeader className="gap-2">
+          <p className="text-body-sm font-semibold text-muted-foreground">
+            CarShop Admin
+          </p>
+          <h1 className="text-heading-3 text-foreground">
+            Entrar no painel admin
+          </h1>
+        </CardHeader>
 
-        <form
-          className="flex flex-col gap-4"
-          noValidate
-          onSubmit={(event) => void handleSubmit(onSubmit)(event)}
-        >
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email">E-mail</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              aria-invalid={errors.email ? "true" : "false"}
-              aria-describedby={errors.email ? "email-error" : undefined}
-              {...register("email")}
-            />
-            {errors.email && (
-              <p id="email-error" className="text-body-sm text-destructive-text">
-                {errors.email.message}
+        <CardContent>
+          <form
+            className="flex flex-col gap-4"
+            noValidate
+            onSubmit={(event) => void handleSubmit(onSubmit)(event)}
+          >
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                aria-invalid={errors.email ? "true" : "false"}
+                aria-describedby={errors.email ? "email-error" : undefined}
+                {...register("email")}
+              />
+              {errors.email && (
+                <p id="email-error" className="text-body-sm text-destructive-text">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="password">Senha</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                aria-invalid={errors.password ? "true" : "false"}
+                aria-describedby={errors.password ? "password-error" : undefined}
+                {...register("password")}
+              />
+              {errors.password && (
+                <p id="password-error" className="text-body-sm text-destructive-text">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            {formError && (
+              <p role="alert" className="text-body-sm text-destructive-text">
+                {formError}
               </p>
             )}
-          </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="password">Senha</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              aria-invalid={errors.password ? "true" : "false"}
-              aria-describedby={errors.password ? "password-error" : undefined}
-              {...register("password")}
-            />
-            {errors.password && (
-              <p id="password-error" className="text-body-sm text-destructive-text">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Entrando..." : "Entrar"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </main>
+  );
+}
 
-          {formError && (
-            <p role="alert" className="text-body-sm text-destructive-text">
-              {formError}
-            </p>
-          )}
-
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Entrando..." : "Entrar"}
-          </Button>
-        </form>
-      </Container>
+/**
+ * Fallback do `<Suspense>` com as mesmas dimensões do card de login, para
+ * evitar tela vazia e layout shift enquanto `useSearchParams()` resolve.
+ */
+function LoginFormSkeleton() {
+  return (
+    <main className={loginMainClassName}>
+      <Card className="w-full max-w-sm">
+        <CardHeader className="gap-2">
+          <p className="text-body-sm font-semibold text-muted-foreground">
+            CarShop Admin
+          </p>
+          <output aria-busy="true" className="sr-only">
+            Carregando formulário de login...
+          </output>
+          <Skeleton
+            aria-hidden="true"
+            className="h-9 w-3/4 motion-reduce:animate-none"
+          />
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4" aria-hidden="true">
+          {[0, 1].map((field) => (
+            <div key={field} className="flex flex-col gap-1.5">
+              <Skeleton className="h-4 w-16 motion-reduce:animate-none" />
+              <Skeleton className="h-9 w-full motion-reduce:animate-none" />
+            </div>
+          ))}
+          <Skeleton className="h-9 w-full motion-reduce:animate-none" />
+        </CardContent>
+      </Card>
     </main>
   );
 }
 
 export default function AdminLoginPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<LoginFormSkeleton />}>
       <LoginForm />
     </Suspense>
   );

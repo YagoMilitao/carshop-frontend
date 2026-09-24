@@ -18,7 +18,7 @@ describe("DeleteWorkDialog", () => {
     );
 
     expect(
-      screen.queryByRole("heading", { name: "Excluir work" }),
+      screen.queryByRole("heading", { name: "Excluir trabalho" }),
     ).not.toBeInTheDocument();
   });
 
@@ -39,7 +39,7 @@ describe("DeleteWorkDialog", () => {
 
     expect(screen.getByText(/Restauração Fusca/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Excluir" }));
+    await user.click(screen.getByRole("button", { name: "Excluir trabalho" }));
 
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
