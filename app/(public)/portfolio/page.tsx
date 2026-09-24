@@ -1,91 +1,88 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { clientEnv } from '@/lib/env/client'
-import { getCoverImage, getWorks, type Work } from '@/lib/api/works'
-import { WorkImageThumb } from '@/components/gallery/work-image-thumb'
+import { getWorks, type Work } from '@/lib/api/works'
 import { ErrorToast } from '@/components/feedback/error-toast'
 import { PageSection } from '@/components/layout/page-section'
+import { buildPortfolioLayout } from './_lib/build-portfolio-layout'
+import { PORTFOLIO_INTRO, PortfolioHeader } from './_components/portfolio-header'
+import { PortfolioGrid } from './_components/portfolio-grid'
+import { PortfolioTextEntry } from './_components/portfolio-text-entry'
+import {
+  BackToHomeLink,
+  PORTFOLIO_ERROR_MESSAGE,
+  PortfolioStateMessage,
+} from './_components/portfolio-state-message'
 
 export const metadata: Metadata = {
   title: 'Portfolio',
-  description: 'Confira os projetos e trabalhos realizados pela CarShop.',
+  description: PORTFOLIO_INTRO,
   alternates: {
     canonical: new URL('/portfolio', clientEnv.NEXT_PUBLIC_SITE_URL).toString(),
   },
   openGraph: {
     title: 'Portfolio',
-    description: 'Confira os projetos e trabalhos realizados pela CarShop.',
+    description: PORTFOLIO_INTRO,
   },
 }
 
 export default async function PortfolioPage() {
   let works: Work[] = []
-  let errorMessage: string | null = null
+  let failed = false
 
   try {
     works = await getWorks()
   } catch (error) {
-    console.error('Falha ao buscar works em /portfolio:', error)
-    errorMessage =
-      'Não foi possível carregar o portfólio agora. Tente novamente em alguns instantes.'
+    console.error('Failed to fetch works for /portfolio:', error)
+    failed = true
   }
 
   let content: ReactNode
 
-  if (errorMessage) {
+  if (failed) {
     content = (
       <>
-        <ErrorToast message={errorMessage} />
-        <p className="text-body text-secondary-foreground">{errorMessage}</p>
+        <ErrorToast message={PORTFOLIO_ERROR_MESSAGE} />
+        <PortfolioStateMessage
+          title="We couldn't load the portfolio"
+          message={PORTFOLIO_ERROR_MESSAGE}
+        >
+          <BackToHomeLink />
+        </PortfolioStateMessage>
       </>
     )
   } else if (works.length === 0) {
     content = (
-      <p className="text-body text-secondary-foreground">
-        Nenhum projeto publicado ainda.
-      </p>
+      <PortfolioStateMessage
+        title="No projects published yet"
+        message="Published projects will appear here."
+      >
+        <BackToHomeLink />
+      </PortfolioStateMessage>
     )
   } else {
-    content = (
-      <div className="flex flex-col divide-y divide-border">
-        {works.map((work) => {
-          const cover = getCoverImage(work)
+    const { entries, textOnly } = buildPortfolioLayout(works)
 
-          return (
-            <Link
-              key={work.id}
-              href={`/portfolio/${work.slug}`}
-              aria-label={work.title}
-              className="group flex items-center gap-6 py-8 outline-none first:pt-0 focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              {cover && (
-                <WorkImageThumb
-                  image={cover}
-                  fallbackAlt={work.title}
-                  sizes="96px"
-                  className="size-24 shrink-0 transition-transform duration-200 group-hover:scale-105"
-                />
-              )}
-              <div className="flex flex-col gap-1">
-                <span className="text-label text-muted-foreground">
-                  {work.category}
-                </span>
-                <span className="text-heading-3 text-foreground transition-colors group-hover:text-primary">
-                  {work.title}
-                </span>
-              </div>
-            </Link>
-          )
-        })}
+    content = (
+      <div className="flex flex-col gap-12 md:gap-16 lg:gap-24">
+        {entries.length > 0 && <PortfolioGrid entries={entries} />}
+        {textOnly.length > 0 && (
+          <ul className="divide-y divide-border border-t border-border">
+            {textOnly.map((work) => (
+              <li key={work.id}>
+                <PortfolioTextEntry work={work} />
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     )
   }
 
   return (
-    <PageSection spacing="editorial">
-      <h1 className="text-display-lg text-foreground">Portfolio</h1>
-      <div className="mt-10">{content}</div>
+    <PageSection spacing="compact">
+      <PortfolioHeader />
+      <div className="mt-10 lg:mt-16">{content}</div>
     </PageSection>
   )
 }

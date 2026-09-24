@@ -34,6 +34,47 @@ describe("Button", () => {
     expect(button.className).toContain("w-full");
   });
 
+  it("preserva text-button junto da cor de texto em variants com cor", () => {
+    render(
+      <>
+        <Button>Padrão</Button>
+        <Button variant="secondary">Secundário</Button>
+        <Button variant="destructive">Destrutivo</Button>
+      </>,
+    );
+
+    for (const name of ["Padrão", "Secundário", "Destrutivo"]) {
+      expect(screen.getByRole("button", { name }).className.split(" ")).toContain(
+        "text-button",
+      );
+    }
+    const primary = screen.getByRole("button", { name: "Padrão" });
+    expect(primary.className.split(" ")).toContain("text-primary-foreground");
+  });
+
+  it("size xs substitui text-button por text-xs", () => {
+    render(<Button size="xs">Mini</Button>);
+
+    const classes = screen.getByRole("button", { name: "Mini" }).className.split(" ");
+    expect(classes).toContain("text-xs");
+    expect(classes).not.toContain("text-button");
+    expect(classes).toContain("text-primary-foreground");
+    expect(classes).toContain("font-bold");
+  });
+
+  it("size sm substitui text-button por text-[0.8rem] mantendo peso bold", () => {
+    render(
+      <Button size="sm" variant="outline">
+        Pequeno
+      </Button>,
+    );
+
+    const classes = screen.getByRole("button", { name: "Pequeno" }).className.split(" ");
+    expect(classes).toContain("text-[0.8rem]");
+    expect(classes).not.toContain("text-button");
+    expect(classes).toContain("font-bold");
+  });
+
   it("não dispara onClick quando disabled", async () => {
     const onClick = vi.fn();
     const user = userEvent.setup();

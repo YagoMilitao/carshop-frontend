@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 import { LuChevronDown } from "react-icons/lu"
 
 type NativeSelectProps = Omit<React.ComponentProps<"select">, "size"> & {

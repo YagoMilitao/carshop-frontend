@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { LuMenu, LuX } from "react-icons/lu"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 import { navLinks } from "./nav-links"
 import { Button } from "@/components/ui/button"
 

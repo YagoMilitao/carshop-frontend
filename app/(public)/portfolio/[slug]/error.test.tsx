@@ -18,4 +18,5 @@ runErrorBoundaryTests({
   toastErrorMock,
   friendlyMessage: 'Não foi possível carregar este projeto agora. Tente novamente em alguns instantes.',
   headingText: 'Não foi possível carregar este projeto',
+  retryButtonText: 'Tentar novamente',
 })

@@ -17,6 +17,7 @@ type RunErrorBoundaryTestsOptions = {
   toastErrorMock: Mock
   friendlyMessage: string
   headingText: string
+  retryButtonText: string
 }
 
 export function runErrorBoundaryTests({
@@ -26,6 +27,7 @@ export function runErrorBoundaryTests({
   toastErrorMock,
   friendlyMessage,
   headingText,
+  retryButtonText,
 }: RunErrorBoundaryTestsOptions) {
   describe(describeLabel, () => {
     afterEach(() => {
@@ -52,7 +54,7 @@ export function runErrorBoundaryTests({
       consoleErrorSpy.mockRestore()
     })
 
-    it('renderiza a UI de fallback e chama reset() ao clicar em "Tentar novamente"', async () => {
+    it(`renderiza a UI de fallback e chama reset() ao clicar em "${retryButtonText}"`, async () => {
       vi.spyOn(console, 'error').mockImplementation(() => {})
       const reset = vi.fn()
       const error = Object.assign(new Error('falha simulada'), {
@@ -68,7 +70,7 @@ export function runErrorBoundaryTests({
         }),
       ).toBeInTheDocument()
 
-      const button = screen.getByRole('button', { name: 'Tentar novamente' })
+      const button = screen.getByRole('button', { name: retryButtonText })
       await userEvent.click(button)
 
       expect(reset).toHaveBeenCalledTimes(1)
