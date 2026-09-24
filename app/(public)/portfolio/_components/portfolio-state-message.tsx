@@ -9,6 +9,8 @@ export const PORTFOLIO_ERROR_MESSAGE =
 type PortfolioStateMessageProps = {
   title: string
   message: string
+  /** `1` quando o estado é o conteúdo principal da página (ex.: 404/erro do detalhe). */
+  headingLevel?: 1 | 2
   children?: ReactNode
 }
 
@@ -16,11 +18,16 @@ type PortfolioStateMessageProps = {
 export function PortfolioStateMessage({
   title,
   message,
+  headingLevel = 2,
   children,
 }: Readonly<PortfolioStateMessageProps>) {
   return (
     <div className="flex max-w-xl flex-col gap-4">
-      <h2 className="text-heading-3 text-foreground">{title}</h2>
+      {headingLevel === 1 ? (
+        <h1 className="text-heading-1 text-foreground">{title}</h1>
+      ) : (
+        <h2 className="text-heading-3 text-foreground">{title}</h2>
+      )}
       <p className="text-body text-secondary-foreground">{message}</p>
       {children && (
         <div className="mt-2 flex flex-wrap items-center gap-x-8 gap-y-4">

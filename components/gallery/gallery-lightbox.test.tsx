@@ -1,8 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { RefObject } from "react";
 import type { WorkImage } from "@/lib/api/works";
+
+const useReducedMotionMock = vi.fn<() => boolean | null>(() => false);
+
+vi.mock("framer-motion", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("framer-motion")>();
+
+  return { ...actual, useReducedMotion: () => useReducedMotionMock() };
+});
+
 import { GalleryLightbox } from "./gallery-lightbox";
 
 const restoreFocusRef: RefObject<HTMLElement | null> = { current: null };
@@ -41,6 +50,10 @@ const images: WorkImage[] = [
 ];
 
 describe("GalleryLightbox", () => {
+  beforeEach(() => {
+    useReducedMotionMock.mockReturnValue(false);
+  });
+
   it("não monta a imagem quando selectedIndex é null (fechado)", () => {
     render(
       <GalleryLightbox
@@ -73,7 +86,7 @@ describe("GalleryLightbox", () => {
     expect(dialog).toBeInTheDocument();
     expect(screen.getByAltText("Banco dianteiro")).toBeInTheDocument();
     expect(
-      screen.getByText("Imagem 1 de 3: Banco dianteiro"),
+      screen.getByText("Image 1 of 3: Banco dianteiro"),
     ).toBeInTheDocument();
     expect(screen.getByText("1 / 3")).toBeInTheDocument();
   });
@@ -92,7 +105,7 @@ describe("GalleryLightbox", () => {
 
     expect(screen.getAllByAltText("Fusca 1978")[0]).toBeInTheDocument();
     expect(
-      screen.getByText("Imagem 3 de 3: Fusca 1978"),
+      screen.getByText("Image 3 of 3: Fusca 1978"),
     ).toBeInTheDocument();
   });
 
@@ -111,7 +124,7 @@ describe("GalleryLightbox", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Próxima imagem" }));
+    await user.click(screen.getByRole("button", { name: "Next image" }));
     expect(onNavigate).toHaveBeenCalledWith(0);
   });
 
@@ -130,7 +143,7 @@ describe("GalleryLightbox", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Imagem anterior" }));
+    await user.click(screen.getByRole("button", { name: "Previous image" }));
     expect(onNavigate).toHaveBeenCalledWith(2);
   });
 
@@ -206,11 +219,56 @@ describe("GalleryLightbox", () => {
     );
 
     expect(
-      screen.queryByRole("button", { name: "Próxima imagem" }),
+      screen.queryByRole("button", { name: "Next image" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Imagem anterior" }),
+      screen.queryByRole("button", { name: "Previous image" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("1 / 1")).not.toBeInTheDocument();
+  });
+  it("oferece um botão Close próprio com alvo de 44px, que fecha o dialog", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+
+    render(
+      <GalleryLightbox
+        images={images}
+        selectedIndex={0}
+        onOpenChange={onOpenChange}
+        onNavigate={vi.fn()}
+        fallbackAlt="Fusca 1978"
+        restoreFocusRef={restoreFocusRef}
+      />,
+    );
+
+    const closeButtons = screen.getAllByRole("button", { name: "Close" });
+    expect(closeButtons).toHaveLength(1);
+    expect(closeButtons[0]).toHaveClass("size-11");
+
+    await user.click(closeButtons[0]);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("usa alvos de 44px nas setas e desliga as animações do dialog com reduced motion", () => {
+    useReducedMotionMock.mockReturnValue(true);
+
+    render(
+      <GalleryLightbox
+        images={images}
+        selectedIndex={0}
+        onOpenChange={vi.fn()}
+        onNavigate={vi.fn()}
+        fallbackAlt="Fusca 1978"
+        restoreFocusRef={restoreFocusRef}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Previous image" })).toHaveClass("size-11");
+    expect(screen.getByRole("button", { name: "Next image" })).toHaveClass("size-11");
+    expect(screen.getByRole("dialog")).toHaveClass(
+      "motion-reduce:data-open:animate-none",
+      "motion-reduce:data-closed:animate-none",
+    );
+    expect(useReducedMotionMock).toHaveBeenCalled();
   });
 });

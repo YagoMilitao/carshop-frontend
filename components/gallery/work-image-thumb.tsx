@@ -8,6 +8,11 @@ type WorkImageThumbProps = {
   fallbackAlt: string;
   sizes: string;
   priority?: boolean;
+  /**
+   * Substituto de `priority` (deprecado no Next 16) para a imagem LCP.
+   * Nunca combinar com `priority`: o `next/image` lança erro.
+   */
+  preload?: boolean;
   className?: string;
 };
 
@@ -21,6 +26,7 @@ export function WorkImageThumb({
   fallbackAlt,
   sizes,
   priority = false,
+  preload = false,
   className,
 }: Readonly<WorkImageThumbProps>) {
   return (
@@ -36,6 +42,7 @@ export function WorkImageThumb({
         fill
         sizes={sizes}
         priority={priority}
+        preload={preload}
         className="object-cover"
       />
     </div>

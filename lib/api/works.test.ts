@@ -194,20 +194,145 @@ describe("lib/api/works", () => {
   });
 
   describe("getWorkBySlug", () => {
-    it("retorna o work cujo slug bate com o parâmetro", async () => {
-      mockFetchOnce([baseWork]);
+    function jsonResponse(body: unknown, status = 200): Response {
+      return new Response(JSON.stringify(body), {
+        status,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
-      const work = await getWorkBySlug(baseWork.slug);
+    it("busca `GET /works/{slug}` com o slug codificado, ISR e AbortSignal", async () => {
+      vi.useFakeTimers();
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(jsonResponse(baseWork));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const work = await getWorkBySlug("a b/c");
 
       expect(work).toEqual(baseWork);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchMock.mock.calls[0] ?? [];
+      expect(String(url)).toMatch(/\/works\/a%20b%2Fc$/);
+      expect(init).toEqual(
+        expect.objectContaining({
+          signal: expect.any(AbortSignal),
+          next: { revalidate: WORKS_REVALIDATE_SECONDS, tags: ["works"] },
+        }),
+      );
+      expect(vi.getTimerCount()).toBe(0);
     });
 
-    it("retorna undefined quando nenhum work bate com o slug", async () => {
-      mockFetchOnce([baseWork]);
+    it("retorna undefined em 404, sem retry e sem timers pendentes", async () => {
+      vi.useFakeTimers();
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(new Response(null, { status: 404 }));
+      vi.stubGlobal("fetch", fetchMock);
 
-      const work = await getWorkBySlug("slug-inexistente");
+      const work = await getWorkBySlug("slug-inexistente-404");
 
       expect(work).toBeUndefined();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it("repete após 503 e retorna o work na tentativa seguinte", async () => {
+      vi.useFakeTimers();
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(new Response(null, { status: 503 }))
+        .mockResolvedValueOnce(jsonResponse(baseWork));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const resultPromise = getWorkBySlug("slug-retry-503");
+      await vi.runAllTimersAsync();
+
+      await expect(resultPromise).resolves.toEqual(baseWork);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it("lança HttpError após esgotar os retries com 500 persistente", async () => {
+      vi.useFakeTimers();
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockImplementation(async () => new Response(null, { status: 500 }));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const assertion = expect(
+        getWorkBySlug("slug-500-persistente"),
+      ).rejects.toMatchObject({ name: "HttpError", status: 500 });
+      await vi.runAllTimersAsync();
+      await assertion;
+
+      expect(fetchMock).toHaveBeenCalledTimes(5);
+    });
+
+    it("lança HttpError em 400 sem repetir", async () => {
+      vi.useFakeTimers();
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(new Response(null, { status: 400 }));
+      vi.stubGlobal("fetch", fetchMock);
+
+      await expect(getWorkBySlug("slug-400")).rejects.toMatchObject({
+        name: "HttpError",
+        status: 400,
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it("aborta uma tentativa lenta por timeout e repete com um novo AbortSignal", async () => {
+      vi.useFakeTimers();
+      const signals: AbortSignal[] = [];
+      const fetchMock = vi.fn<typeof fetch>((_input, init) => {
+        const signal = init?.signal;
+
+        if (!signal) {
+          return Promise.reject(new Error("AbortSignal ausente"));
+        }
+
+        signals.push(signal);
+
+        if (signals.length > 1) {
+          return Promise.resolve(jsonResponse(baseWork));
+        }
+
+        return new Promise((_resolve, reject) => {
+          signal.addEventListener("abort", () => reject(signal.reason), {
+            once: true,
+          });
+        });
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      const resultPromise = getWorkBySlug("slug-timeout-lento");
+      const assertion = expect(resultPromise).resolves.toEqual(baseWork);
+      await vi.advanceTimersByTimeAsync(WORKS_REQUEST_TIMEOUT_MS);
+      await vi.runAllTimersAsync();
+
+      await assertion;
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(signals[0]?.aborted).toBe(true);
+      expect(signals[1]?.aborted).toBe(false);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it("repete em erro de rede", async () => {
+      vi.useFakeTimers();
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockRejectedValueOnce(new TypeError("fetch failed"))
+        .mockResolvedValueOnce(jsonResponse(baseWork));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const resultPromise = getWorkBySlug("slug-erro-de-rede");
+      await vi.runAllTimersAsync();
+
+      await expect(resultPromise).resolves.toEqual(baseWork);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
   });
 

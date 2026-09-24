@@ -3,12 +3,8 @@ import { render, screen } from '@testing-library/react'
 import type { Work } from '@/lib/api/works'
 import type { Comment } from '@/lib/api/comments'
 
-// `formatCommentDate` (page.tsx) usa `Intl.DateTimeFormat` sem `timeZone`
-// explícito, ou seja, depende do fuso horário local do processo Node em
-// execução (ver achado reportado ao reviewer/developer). Fixamos `TZ=UTC`
-// aqui para que as asserções de data sejam determinísticas
-// independentemente da máquina/CI que roda a suíte — isso NÃO corrige o
-// bug de fuso horário, apenas isola o teste dele.
+// `formatCommentDate` (project-comments.tsx) já fixa `timeZone: 'UTC'`;
+// `TZ=UTC` mantém o restante da suíte determinístico entre máquinas/CI.
 process.env.TZ = 'UTC'
 
 const getWorkBySlugMock = vi.fn<(slug: string) => Promise<Work | undefined>>()
@@ -19,6 +15,8 @@ const notFoundMock = vi.fn(() => {
 const getWorksMock = vi.fn<() => Promise<Work[]>>()
 const getWorkCommentsMock = vi.fn<(workId: string) => Promise<Comment[]>>()
 const toastErrorMock = vi.fn()
+
+vi.mock('server-only', () => ({}))
 
 vi.mock('@/lib/api/works', () => ({
   getWorkBySlug: (slug: string) => getWorkBySlugMock(slug),
@@ -85,7 +83,7 @@ describe('ProjectDetailsPage', () => {
     ])
   })
 
-  it('renderiza os dados reais do projeto encontrado pelo slug', async () => {
+  it('renderiza os dados reais do projeto com um único h1, sem tags nem datas do work', async () => {
     getWorkBySlugMock.mockResolvedValue(baseWork)
     getWorkCommentsMock.mockResolvedValue([])
     const { default: ProjectDetailsPage } = await import('./page')
@@ -96,17 +94,51 @@ describe('ProjectDetailsPage', () => {
       }),
     )
 
-    expect(
-      screen.getByRole('heading', { level: 1, name: baseWork.title }),
-    ).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+    const h1 = screen.getByRole('heading', { level: 1, name: baseWork.title })
+    expect(h1).toHaveAttribute('id', 'project-title')
+    expect(screen.getByRole('article')).toHaveAttribute(
+      'aria-labelledby',
+      'project-title',
+    )
+    expect(screen.getByText(baseWork.category)).toBeInTheDocument()
     expect(screen.getByText(baseWork.description)).toBeInTheDocument()
+    expect(screen.queryByText('fusca')).not.toBeInTheDocument()
+    expect(screen.queryByText(/2024/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back to portfolio' })).toHaveAttribute(
+      'href',
+      '/portfolio',
+    )
     expect(getWorkCommentsMock).toHaveBeenCalledWith(baseWork.id)
-    expect(
-      screen.getByText('Ainda não há comentários aprovados para este projeto.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('No comments yet.')).toBeInTheDocument()
   })
 
-  it('renderiza a galeria de imagens (WorkGallery) do work no corpo da página', async () => {
+  it('segue a hierarquia h1 → h2 "Project photos" → h2 "Comments" → h3 "Leave a comment"', async () => {
+    getWorkBySlugMock.mockResolvedValue(baseWork)
+    getWorkCommentsMock.mockResolvedValue([])
+    const { default: ProjectDetailsPage } = await import('./page')
+
+    render(
+      await ProjectDetailsPage({
+        params: Promise.resolve({ slug: baseWork.slug }),
+      }),
+    )
+
+    const headings = screen
+      .getAllByRole('heading')
+      .map((heading) => `${heading.tagName}:${heading.textContent}`)
+    expect(headings).toEqual([
+      `H1:${baseWork.title}`,
+      'H2:Project photos',
+      'H2:Comments',
+      'H3:Leave a comment',
+    ])
+    expect(screen.getByRole('heading', { name: 'Project photos' })).toHaveClass(
+      'sr-only',
+    )
+  })
+
+  it('renderiza o hero da galeria com preload (não lazy) e botão acessível', async () => {
     getWorkBySlugMock.mockResolvedValue(baseWork)
     getWorkCommentsMock.mockResolvedValue([])
     const { default: ProjectDetailsPage } = await import('./page')
@@ -118,12 +150,63 @@ describe('ProjectDetailsPage', () => {
     )
 
     expect(
-      screen.getByRole('button', { name: 'Ampliar imagem 1 de 1' }),
+      screen.getByRole('button', { name: 'View image 1 of 1: Banco restaurado' }),
     ).toBeInTheDocument()
-    expect(screen.getByAltText('Banco restaurado')).toBeInTheDocument()
+    expect(screen.getByAltText('Banco restaurado')).not.toHaveAttribute(
+      'loading',
+      'lazy',
+    )
   })
 
-  it('não renderiza a galeria quando o work não possui imagens', async () => {
+  it('com várias imagens: capa como hero único (preload), demais por order e lazy, sem before/after', async () => {
+    const makeImage = (id: string, order: number, isCover: boolean) => ({
+      ...baseWork.images[0],
+      id,
+      url: `https://cdn.example.com/${id}.jpg`,
+      publicId: id,
+      alt: `Foto ${id}`,
+      isCover,
+      order,
+    })
+    const workWithImages: Work = {
+      ...baseWork,
+      slug: 'projeto-varias-imagens',
+      images: [
+        makeImage('c', 3, false),
+        makeImage('capa', 2, true),
+        makeImage('a', 1, false),
+        makeImage('b', 4, false),
+      ],
+    }
+    getWorkBySlugMock.mockResolvedValue(workWithImages)
+    getWorkCommentsMock.mockResolvedValue([])
+    const { default: ProjectDetailsPage } = await import('./page')
+
+    render(
+      await ProjectDetailsPage({
+        params: Promise.resolve({ slug: workWithImages.slug }),
+      }),
+    )
+
+    const labels = screen
+      .getAllByRole('button', { name: /^View image/ })
+      .map((button) => button.getAttribute('aria-label'))
+    expect(labels).toEqual([
+      'View image 1 of 4: Foto capa',
+      'View image 2 of 4: Foto a',
+      'View image 3 of 4: Foto c',
+      'View image 4 of 4: Foto b',
+    ])
+    expect(screen.getAllByAltText('Foto capa')).toHaveLength(1)
+    expect(screen.getByAltText('Foto capa')).not.toHaveAttribute('loading', 'lazy')
+    for (const alt of ['Foto a', 'Foto c', 'Foto b']) {
+      expect(screen.getByAltText(alt)).toHaveAttribute('loading', 'lazy')
+    }
+    expect(document.querySelector('.aspect-square')).toBeNull()
+    expect(document.body.textContent).not.toMatch(/before\s*(&|and|\/)\s*after|antes\s*(e|\/)\s*depois/i)
+  })
+
+  it('não renderiza a seção de fotos quando o work não possui imagens', async () => {
     const workWithoutImages: Work = { ...baseWork, images: [] }
     getWorkBySlugMock.mockResolvedValue(workWithoutImages)
     getWorkCommentsMock.mockResolvedValue([])
@@ -136,8 +219,23 @@ describe('ProjectDetailsPage', () => {
     )
 
     expect(
-      screen.queryByRole('button', { name: /Ampliar imagem/ }),
+      screen.queryByRole('button', { name: /View image/ }),
     ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Project photos' }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+  })
+
+  it('propaga erros de getWorkBySlug (para o error.tsx) sem chamar notFound', async () => {
+    getWorkBySlugMock.mockRejectedValue(new Error('backend indisponível'))
+    const { default: ProjectDetailsPage } = await import('./page')
+
+    await expect(
+      ProjectDetailsPage({ params: Promise.resolve({ slug: baseWork.slug }) }),
+    ).rejects.toThrow('backend indisponível')
+    expect(notFoundMock).not.toHaveBeenCalled()
+    expect(getWorkCommentsMock).not.toHaveBeenCalled()
   })
 
   it('renderiza os comentários aprovados retornados para o work, incluindo nome, mensagem e data formatada', async () => {
@@ -272,6 +370,23 @@ describe('ProjectDetailsPage', () => {
     expect(metadata.openGraph).not.toHaveProperty('images')
   })
 
+  it('generateMetadata usa o título do work como alt da capa quando alt vem vazio', async () => {
+    const workWithEmptyAlt: Work = {
+      ...baseWork,
+      images: [{ ...baseWork.images[0], alt: '' }],
+    }
+    getWorkBySlugMock.mockResolvedValue(workWithEmptyAlt)
+    const { generateMetadata } = await import('./page')
+
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ slug: baseWork.slug }),
+    })
+
+    expect(metadata.openGraph).toMatchObject({
+      images: [{ url: baseWork.images[0].url, alt: baseWork.title }],
+    })
+  })
+
   it('generateMetadata chama notFound() quando o slug não existe', async () => {
     getWorkBySlugMock.mockResolvedValue(undefined)
     const { generateMetadata } = await import('./page')
@@ -295,7 +410,7 @@ describe('ProjectDetailsPage', () => {
     consoleErrorSpy.mockRestore()
   })
 
-  it('renderiza <ErrorToast /> e comentários vazios quando getWorkComments() falha', async () => {
+  it('quando getWorkComments() falha, exibe toast + mensagem inline (sem mensagem de vazio) e mantém o formulário', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     getWorkBySlugMock.mockResolvedValue(baseWork)
     getWorkCommentsMock.mockRejectedValue(new Error('backend indisponível'))
@@ -307,11 +422,14 @@ describe('ProjectDetailsPage', () => {
       }),
     )
 
-    expect(toastErrorMock).toHaveBeenCalledWith(
-      'Não foi possível carregar os comentários agora. Tente novamente mais tarde.',
-    )
+    const message =
+      "We couldn't load comments right now. Please try again later."
+    expect(toastErrorMock).toHaveBeenCalledWith(message)
+    expect(screen.getByText(message)).toBeInTheDocument()
+    expect(screen.queryByText('No comments yet.')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Send comment' })).toBeInTheDocument()
     expect(
-      screen.getByText('Ainda não há comentários aprovados para este projeto.'),
+      screen.getByRole('heading', { level: 1, name: baseWork.title }),
     ).toBeInTheDocument()
     expect(consoleErrorSpy).toHaveBeenCalled()
 

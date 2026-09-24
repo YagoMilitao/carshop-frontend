@@ -69,6 +69,22 @@ describe("WorkImageThumb", () => {
     expect(img).not.toHaveAttribute("loading", "lazy");
   });
 
+  it("aplica preload (substituto de priority) quando solicitado", () => {
+    render(
+      <WorkImageThumb
+        image={baseImage}
+        fallbackAlt="Fusca 1978"
+        sizes="50vw"
+        preload
+      />,
+    );
+
+    const img = screen.getByAltText("Banco restaurado");
+    // `preload` (Next 16) desliga o lazy loading e injeta o preload do
+    // recurso via `ReactDOM.preload`; não define `fetchpriority` por si só.
+    expect(img).not.toHaveAttribute("loading", "lazy");
+  });
+
   it("mescla className extra no container", () => {
     const { container } = render(
       <WorkImageThumb

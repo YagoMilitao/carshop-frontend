@@ -2,25 +2,14 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getCoverImage, getWorkBySlug, getWorks } from '@/lib/api/works'
 import { getWorkComments, type Comment } from '@/lib/api/comments'
-import { WorkGallery } from '@/components/gallery/work-gallery'
-import { ErrorToast } from '@/components/feedback/error-toast'
-import { Container } from '@/components/layout/container'
 import { PageSection } from '@/components/layout/page-section'
-import { CommentForm } from './comment-form'
+import { BackToPortfolioLink } from './_components/back-to-portfolio-link'
+import { ProjectComments } from './_components/project-comments'
+import { ProjectGallery } from './_components/project-gallery'
+import { buildProjectGallery } from './_lib/build-project-gallery'
 
 type ProjectDetailsPageProps = {
   params: Promise<{ slug: string }>
-}
-
-const commentDateFormatter = new Intl.DateTimeFormat('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  timeZone: 'UTC',
-})
-
-function formatCommentDate(isoDate: string): string {
-  return commentDateFormatter.format(new Date(isoDate))
 }
 
 export async function generateStaticParams() {
@@ -57,7 +46,9 @@ export async function generateMetadata({
       title: `${work.title} — CarShop`,
       description: work.description,
       type: 'article',
-      ...(cover ? { images: [{ url: cover.url, alt: cover.alt }] } : {}),
+      ...(cover
+        ? { images: [{ url: cover.url, alt: cover.alt || work.title }] }
+        : {}),
     },
     alternates: {
       canonical: `/portfolio/${slug}`,
@@ -65,6 +56,12 @@ export async function generateMetadata({
   }
 }
 
+/**
+ * Sem `try/catch` em `getWorkBySlug`: falhas propagam para `error.tsx`, e
+ * `undefined` (404 do backend) vira `notFound()` → `not-found.tsx` com
+ * HTTP 404 real. Não adicionar `loading.tsx`/`Suspense` neste segmento ou
+ * acima: o streaming começaria antes do `notFound()` (soft-404).
+ */
 export default async function ProjectDetailsPage({
   params,
 }: Readonly<ProjectDetailsPageProps>) {
@@ -76,7 +73,7 @@ export default async function ProjectDetailsPage({
   }
 
   let comments: Comment[] = []
-  let commentsErrorMessage: string | null = null
+  let commentsFailed = false
 
   try {
     comments = await getWorkComments(work.id)
@@ -85,70 +82,60 @@ export default async function ProjectDetailsPage({
       `Falha ao buscar comentários do work ${work.id}:`,
       error,
     )
-    commentsErrorMessage =
-      'Não foi possível carregar os comentários agora. Tente novamente mais tarde.'
+    commentsFailed = true
   }
+
+  const layout = buildProjectGallery(work)
 
   return (
     <>
-      <PageSection spacing="editorial" container="reading">
-        <span className="text-label text-muted-foreground">
-          {work.category}
-        </span>
-        <h1 className="mt-2 text-display-lg text-foreground">
-          {work.title}
-        </h1>
-        <p className="mt-6 text-body-lg text-secondary-foreground">
-          {work.description}
-        </p>
-      </PageSection>
+      <PageSection spacing="compact" container="page">
+        <article aria-labelledby="project-title">
+          <BackToPortfolioLink />
 
-      <PageSection spacing="compact" container="none">
-        <Container variant="page">
-          <WorkGallery images={work.images} fallbackAlt={work.title} />
-        </Container>
+          <header className="mt-8 flex max-w-4xl flex-col lg:mt-12">
+            <span className="text-label text-muted-foreground">
+              {work.category}
+            </span>
+            <h1
+              id="project-title"
+              className="mt-3 text-display-lg text-foreground"
+            >
+              {work.title}
+            </h1>
+            <p className="mt-6 max-w-2xl whitespace-pre-line text-body-lg text-secondary-foreground">
+              {work.description}
+            </p>
+          </header>
+
+          {layout.hero && (
+            <section
+              aria-labelledby="project-photos-heading"
+              className="mt-10 lg:mt-16"
+            >
+              <h2 id="project-photos-heading" className="sr-only">
+                Project photos
+              </h2>
+              <ProjectGallery layout={layout} fallbackAlt={work.title} />
+            </section>
+          )}
+        </article>
       </PageSection>
 
       <PageSection
         as="section"
         spacing="standard"
-        container="reading"
+        container="page"
         aria-labelledby="comments-heading"
       >
-        <h2 id="comments-heading" className="text-heading-2 text-foreground">
-          Comentários
-        </h2>
-
-        {commentsErrorMessage && (
-          <ErrorToast message={commentsErrorMessage} />
-        )}
-
-        {comments.length === 0 ? (
-          <p className="mt-6 text-body text-secondary-foreground">
-            Ainda não há comentários aprovados para este projeto.
-          </p>
-        ) : (
-          <ul className="mt-6 flex flex-col divide-y divide-border">
-            {comments.map((comment) => (
-              <li key={comment.id} className="flex flex-col gap-1 py-6 first:pt-0">
-                <p className="text-body font-semibold text-foreground">
-                  {comment.authorName}
-                </p>
-                <p className="text-body text-secondary-foreground">
-                  {comment.content}
-                </p>
-                <p className="text-body-sm text-muted-foreground">
-                  <time dateTime={comment.createdAt}>
-                    {formatCommentDate(comment.createdAt)}
-                  </time>
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div className="mt-10">
-          <CommentForm workId={work.id} />
+        <div className="border-t border-border pt-10 lg:pt-12">
+          <div className="max-w-2xl">
+            <ProjectComments
+              workId={work.id}
+              comments={comments}
+              failed={commentsFailed}
+            />
+          </div>
         </div>
       </PageSection>
     </>
