@@ -103,7 +103,7 @@ describe("WorkImageGrid", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Remover imagem/ }),
+      screen.queryByRole("button", { name: /Excluir imagem/ }),
     ).not.toBeInTheDocument();
   });
 
@@ -166,12 +166,12 @@ describe("WorkImageGrid", () => {
     );
 
     const labels = screen
-      .getAllByRole("button", { name: /^Remover imagem / })
+      .getAllByRole("button", { name: /^Excluir imagem / })
       .map((button) => button.getAttribute("aria-label"));
 
     expect(labels).toEqual([
-      "Remover imagem 1: Painel",
-      "Remover imagem 2: Painel",
+      "Excluir imagem 1: Painel",
+      "Excluir imagem 2: Painel",
     ]);
     expect(new Set(labels).size).toBe(labels.length);
     expect(screen.getAllByRole("img", { name: "Painel" })).toHaveLength(2);
@@ -191,7 +191,7 @@ describe("WorkImageGrid", () => {
     );
 
     const removeButton = screen.getByRole("button", {
-      name: "Remover imagem 2: Banco restaurado",
+      name: "Excluir imagem 2: Banco restaurado",
     });
     await user.click(removeButton);
 
@@ -212,7 +212,7 @@ describe("WorkImageGrid", () => {
       />,
     );
 
-    const buttons = screen.getAllByRole("button", { name: /^Remover imagem/ });
+    const buttons = screen.getAllByRole("button", { name: /^Excluir imagem/ });
     for (const button of buttons) {
       expect(button).toBeDisabled();
     }

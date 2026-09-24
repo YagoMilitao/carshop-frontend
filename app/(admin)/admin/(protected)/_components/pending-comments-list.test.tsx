@@ -22,6 +22,14 @@ vi.mock("@/lib/api/comments.client", () => ({
     getAdminCommentsMock(params),
 }));
 
+const useAdminWorkTitlesMock = vi.fn<
+  () => ReadonlyMap<string, string> | undefined
+>();
+
+vi.mock("./use-admin-work-titles", () => ({
+  useAdminWorkTitles: () => useAdminWorkTitlesMock(),
+}));
+
 import { PendingCommentsList } from "./pending-comments-list";
 
 const pendingComment = {
@@ -49,6 +57,9 @@ function renderPendingCommentsList() {
 describe("PendingCommentsList", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useAdminWorkTitlesMock.mockReturnValue(
+      new Map([["work-1", "Restauração Fusca"]]),
+    );
   });
 
   it("exibe o estado de carregamento", () => {
@@ -74,7 +85,10 @@ describe("PendingCommentsList", () => {
 
     expect(await screen.findByText("Cliente")).toBeInTheDocument();
     expect(screen.getByText("Ficou incrível!")).toBeInTheDocument();
-    expect(screen.getByText("c-1")).toBeInTheDocument();
+    expect(
+      screen.getByText("Trabalho: Restauração Fusca"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("c-1")).not.toBeInTheDocument();
   });
 
   it("carrega a próxima página e mantém cada página em uma query distinta", async () => {
@@ -135,5 +149,109 @@ describe("PendingCommentsList", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Ocorreu um erro inesperado. Tente novamente.",
     );
+  });
+
+  it("exibe o título do trabalho, a data pt-BR e não exibe IDs crus do comentário", async () => {
+    getAdminCommentsMock.mockResolvedValue({
+      items: [pendingComment],
+      page: 1,
+      limit: 20,
+      total: 1,
+      totalPages: 1,
+    });
+
+    const { container } = renderPendingCommentsList();
+
+    expect(
+      await screen.findByText("Trabalho: Restauração Fusca"),
+    ).toBeInTheDocument();
+    expect(container.querySelector("code")).toBeNull();
+    expect(screen.queryByText(/work-1/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ID do comentário/)).not.toBeInTheDocument();
+    expect(container).not.toHaveTextContent("c-1");
+
+    const time = container.querySelector("time");
+    expect(time).toHaveAttribute("dateTime", pendingComment.createdAt);
+    expect(time).toHaveTextContent(
+      new Intl.DateTimeFormat("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "short",
+      }).format(new Date(pendingComment.createdAt)),
+    );
+  });
+
+  it.each([
+    ["títulos ainda não carregados", undefined],
+    ["work ausente do mapa", new Map([["outro-work", "Outro"]])],
+  ] as const)(
+    "usa o workId em <code> como fallback (%s)",
+    async (_caso, titles) => {
+      useAdminWorkTitlesMock.mockReturnValue(titles);
+      getAdminCommentsMock.mockResolvedValue({
+        items: [pendingComment],
+        page: 1,
+        limit: 20,
+        total: 1,
+        totalPages: 1,
+      });
+
+      renderPendingCommentsList();
+
+      const code = await screen.findByText("work-1");
+      expect(code.tagName).toBe("CODE");
+      expect(code.parentElement).toHaveTextContent("Trabalho: work-1");
+      expect(screen.queryByText(/ID do comentário/)).not.toBeInTheDocument();
+    },
+  );
+
+  it("permite tentar novamente após erro e exibe os comentários ao recuperar", async () => {
+    getAdminCommentsMock
+      .mockRejectedValueOnce(new Error("network down"))
+      .mockResolvedValueOnce({
+        items: [pendingComment],
+        page: 1,
+        limit: 20,
+        total: 1,
+        totalPages: 1,
+      });
+    const user = userEvent.setup();
+
+    renderPendingCommentsList();
+
+    await screen.findByRole("alert");
+    await user.click(screen.getByRole("button", { name: "Tentar novamente" }));
+
+    expect(await screen.findByText("Ficou incrível!")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(getAdminCommentsMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("exibe o estado vazio da página quando uma página > 1 vem sem itens", async () => {
+    getAdminCommentsMock
+      .mockResolvedValueOnce({
+        items: [pendingComment],
+        page: 1,
+        limit: 20,
+        total: 21,
+        totalPages: 2,
+      })
+      .mockResolvedValueOnce({
+        items: [],
+        page: 2,
+        limit: 20,
+        total: 20,
+        totalPages: 1,
+      });
+    const user = userEvent.setup();
+
+    renderPendingCommentsList();
+
+    await screen.findByText("Página 1 de 2");
+    await user.click(screen.getByRole("button", { name: "Próxima" }));
+
+    expect(
+      await screen.findByText("Nenhum comentário nesta página."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Anterior" })).toBeEnabled();
   });
 });

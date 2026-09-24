@@ -38,7 +38,7 @@ export function DeleteWorkDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent onCloseAutoFocus={onCloseAutoFocus}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Excluir work</AlertDialogTitle>
+          <AlertDialogTitle>Excluir trabalho</AlertDialogTitle>
           <AlertDialogDescription>
             Tem certeza que deseja excluir &ldquo;{workTitle}&rdquo;? Essa
             ação não pode ser desfeita.
@@ -61,7 +61,7 @@ export function DeleteWorkDialog({
               onConfirm();
             }}
           >
-            {isPending ? "Excluindo..." : "Excluir"}
+            {isPending ? "Excluindo..." : "Excluir trabalho"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

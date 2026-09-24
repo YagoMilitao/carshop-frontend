@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
 import { PageSection } from "@/components/layout/page-section";
 
+import { AdminPageHeader } from "./_components/admin-page-header";
 import { DashboardSummary } from "./_components/dashboard-summary";
 import { PendingCommentsList } from "./_components/pending-comments-list";
 
@@ -23,8 +24,8 @@ export const metadata: Metadata = {
 export default function AdminPage() {
   return (
     <PageSection spacing="compact" container="none">
-      <Container variant="page" className="flex flex-col gap-10">
-        <h1 className="text-heading-2 text-foreground">Dashboard</h1>
+      <Container variant="page" className="flex flex-col gap-8">
+        <AdminPageHeader title="Dashboard" />
 
         <section className="flex flex-col gap-4">
           <h2 className="text-body-lg font-semibold text-foreground">

@@ -1,3 +1,4 @@
+import { use } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -54,6 +55,42 @@ describe("AdminLoginPage", () => {
     await submitLogin();
 
     expect(screen.getByRole("heading", { name: "Entrar no painel admin" })).toBeInTheDocument();
+  });
+
+  it("renderiza o formulário dentro de um card com a marca 'CarShop Admin' e h1 'Entrar no painel admin'", () => {
+    const { container } = render(<AdminLoginPage />);
+
+    const heading = screen.getByRole("heading", {
+      level: 1,
+      name: "Entrar no painel admin",
+    });
+    const card = container.querySelector('[data-slot="card"]');
+    expect(card).not.toBeNull();
+    expect(card).toContainElement(heading);
+    expect(card).toContainElement(screen.getByLabelText("E-mail"));
+    expect(card).toHaveTextContent("CarShop Admin");
+    expect(screen.getAllByRole("main")).toHaveLength(1);
+    expect(screen.getByLabelText("E-mail")).toHaveAttribute("aria-invalid", "false");
+    expect(screen.getByLabelText("Senha")).toHaveAttribute("aria-invalid", "false");
+  });
+
+  it("exibe o skeleton do card como fallback do Suspense enquanto useSearchParams suspende", () => {
+    const neverResolves = new Promise<URLSearchParams>(() => undefined);
+    useSearchParamsMock.mockImplementation(() => use(neverResolves));
+
+    const { container } = render(<AdminLoginPage />);
+
+    const status = screen.getByRole("status");
+    expect(status).toHaveAttribute("aria-busy", "true");
+    expect(status).toHaveTextContent("Carregando formulário de login...");
+    expect(screen.getByRole("main")).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="card"]')).toHaveTextContent(
+      "CarShop Admin",
+    );
+    expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0);
+    expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("E-mail")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Entrar" })).not.toBeInTheDocument();
   });
 
   it("exibe erros de validação quando o formulário é submetido vazio", async () => {

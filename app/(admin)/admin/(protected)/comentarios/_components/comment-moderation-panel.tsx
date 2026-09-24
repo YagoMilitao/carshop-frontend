@@ -13,7 +13,13 @@ import {
   deleteComment,
   getAdminComments,
 } from "@/lib/api/comments.client";
-import { adminWorksQueryKey, getAdminWorks } from "@/lib/api/works.client";
+
+import {
+  AdminEmptyState,
+  AdminErrorState,
+  AdminLoadingState,
+} from "../../_components/admin-states";
+import { useAdminWorkTitles } from "../../_components/use-admin-work-titles";
 
 import {
   buildCommentsHref,
@@ -69,7 +75,7 @@ export function CommentModerationPanel({
 
   const apiStatus = toApiStatus(status);
 
-  const { data, error, isPending, isFetching } = useQuery({
+  const { data, error, isPending, isFetching, refetch } = useQuery({
     queryKey: adminCommentsQueryKey(apiStatus, page, COMMENTS_PER_PAGE),
     queryFn: () =>
       getAdminComments({ status: apiStatus, page, limit: COMMENTS_PER_PAGE }),
@@ -80,11 +86,7 @@ export function CommentModerationPanel({
   });
 
   // Títulos dos works (não bloqueante): sem eles, o item mostra o `workId`.
-  const { data: workTitles } = useQuery({
-    queryKey: adminWorksQueryKey,
-    queryFn: getAdminWorks,
-    select: (works) => new Map(works.map((work) => [work.id, work.title])),
-  });
+  const workTitles = useAdminWorkTitles();
 
   const [editTarget, setEditTarget] = useState<Comment | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -178,41 +180,35 @@ export function CommentModerationPanel({
         id={headingId}
         ref={headingRef}
         tabIndex={-1}
-        className="text-body-lg font-semibold text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="text-body-lg font-semibold text-foreground outline-none focus-visible:ring-3 focus-visible:ring-focus-ring"
       >
         {headingByStatus[status]}
         {data ? ` (${data.total})` : null}
       </h2>
 
-      {isPending && (
-        <output className="text-body-sm text-muted-foreground">
-          Carregando comentários...
-        </output>
-      )}
+      {isPending && <AdminLoadingState label="Carregando comentários..." />}
 
       {error && (
-        <p role="alert" className="text-body-sm text-destructive-text">
-          {getCommentModerationErrorMessage(error)}
-        </p>
+        <AdminErrorState
+          message={getCommentModerationErrorMessage(error)}
+          onRetry={() => void refetch()}
+          isRetrying={isFetching}
+        />
       )}
 
       {data?.items.length === 0 && page === 1 && (
-        <div className="flex flex-col gap-1">
-          <p className="text-body-sm text-muted-foreground">
-            {emptyMessageByStatus[status]}
-          </p>
-          {status === "HIDDEN" && (
-            <p className="text-body-sm text-muted-foreground">
-              Ocultar comentários ainda não está disponível no painel.
-            </p>
-          )}
-        </div>
+        <AdminEmptyState
+          title={emptyMessageByStatus[status]}
+          description={
+            status === "HIDDEN"
+              ? "Ocultar comentários ainda não está disponível no painel."
+              : undefined
+          }
+        />
       )}
 
       {data?.items.length === 0 && page > 1 && (
-        <p className="text-body-sm text-muted-foreground">
-          Nenhum comentário nesta página.
-        </p>
+        <AdminEmptyState title="Nenhum comentário nesta página." />
       )}
 
       {data && data.items.length > 0 && (

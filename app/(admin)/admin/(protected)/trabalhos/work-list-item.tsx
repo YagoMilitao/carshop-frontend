@@ -27,6 +27,10 @@ import {
   sortWorkImages,
 } from "./_components/work-image-grid";
 import { WorkImageUpload } from "./_components/work-image-upload";
+import {
+  workStatusBadgeVariants,
+  workStatusLabels,
+} from "./_components/work-status";
 
 type ImageToRemove = Readonly<{
   image: WorkImage;
@@ -176,7 +180,7 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
 
       await syncWorks();
       focusSectionOnCloseRef.current = true;
-      setRemoveImageStatus("Imagem removida.");
+      setRemoveImageStatus("Imagem excluída.");
       setIsRemoveImagePending(false);
       setImageToRemove(null);
     })();
@@ -184,7 +188,7 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
 
   const onDeleteWorkDialogCloseAutoFocus = (event: Event) => {
     // Diálogo controlado, sem `AlertDialogTrigger`: o Radix mandaria o foco
-    // para o `body`. No cancelar/Esc o foco volta a "Excluir work". Após
+    // para o `body`. No cancelar/Esc o foco volta a "Excluir trabalho". Após
     // uma exclusão bem-sucedida este item é desmontado pelo refetch (junto
     // com o diálogo), então este handler normalmente nem roda; se o item
     // continuar montado (ex.: refetch falhou), o botão ainda existe e
@@ -199,9 +203,9 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
     // O diálogo é controlado e não usa `AlertDialogTrigger`, então o Radix
     // não sabe para onde devolver o foco (iria para o `body`). O foco é
     // gerenciado aqui:
-    // - sucesso ou 404: o botão "Remover" pode não existir mais após o
+    // - sucesso ou 404: o botão "Excluir" pode não existir mais após o
     //   refetch, então o foco vai para o heading da seção;
-    // - cancelar/Esc: volta ao botão "Remover" que abriu o diálogo (ou ao
+    // - cancelar/Esc: volta ao botão "Excluir" que abriu o diálogo (ou ao
     //   heading, se esse botão tiver saído do DOM).
     event.preventDefault();
 
@@ -225,17 +229,14 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
     <li>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between gap-4">
-            <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+            <div className="flex flex-col items-start gap-1.5">
               <CardTitle>{work.title}</CardTitle>
-              <Badge
-                variant={work.status === "published" ? "success" : "secondary"}
-                className="mt-1"
-              >
-                {work.status}
+              <Badge variant={workStatusBadgeVariants[work.status]}>
+                {workStatusLabels[work.status]}
               </Badge>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button type="button" variant="outline" size="sm" asChild>
                 <Link href={`/admin/trabalhos/${work.slug}/editar`}>
                   Editar
@@ -245,10 +246,11 @@ export function WorkListItem({ work }: Readonly<{ work: Work }>) {
                 ref={deleteWorkButtonRef}
                 type="button"
                 variant="destructive"
+                size="sm"
                 disabled={isImageActionPending}
                 onClick={() => setIsDeleteDialogOpen(true)}
               >
-                Excluir work
+                Excluir trabalho
               </Button>
             </div>
           </div>

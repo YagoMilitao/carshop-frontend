@@ -2,7 +2,14 @@ import type { FieldErrors, UseFormRegister } from "react-hook-form";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 import type { WorkFormInput } from "@/schemas/work";
+
+import { workStatusLabels, workStatusOptions } from "./_components/work-status";
 
 type WorkFormFieldsProps = {
   register: UseFormRegister<WorkFormInput>;
@@ -59,13 +66,13 @@ export function WorkFormFields({ register, errors }: Readonly<WorkFormFieldsProp
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="work-description">Descrição</Label>
-        <textarea
+        <Textarea
           id="work-description"
           aria-invalid={errors.description ? "true" : "false"}
           aria-describedby={
             errors.description ? "work-description-error" : undefined
           }
-          className="min-h-24 rounded-lg border border-input bg-transparent px-2.5 py-2 text-body-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="min-h-24"
           {...register("description")}
         />
         {errors.description && (
@@ -115,16 +122,20 @@ export function WorkFormFields({ register, errors }: Readonly<WorkFormFieldsProp
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="work-status">Status</Label>
-        <select
+        {/* `className` do NativeSelect vai para o wrapper (w-fit por padrão). */}
+        <NativeSelect
           id="work-status"
           aria-invalid={errors.status ? "true" : "false"}
           aria-describedby={errors.status ? "work-status-error" : undefined}
-          className="min-h-24 rounded-lg border border-input bg-transparent px-2.5 py-2 text-body-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="w-full sm:w-64"
           {...register("status")}
         >
-          <option value="draft">Rascunho</option>
-          <option value="published">Publicado</option>
-        </select>
+          {workStatusOptions.map((status) => (
+            <NativeSelectOption key={status} value={status}>
+              {workStatusLabels[status]}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
         {errors.status && (
           <p id="work-status-error" className="text-body-sm text-destructive-text">
             {errors.status.message}

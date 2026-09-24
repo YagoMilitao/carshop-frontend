@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu } from "lucide-react";
+import { LuMenu } from "react-icons/lu";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -48,7 +48,7 @@ export function AdminMobileNav() {
           className="lg:hidden"
           aria-label="Abrir menu de navegação"
         >
-          <Menu className="size-5" aria-hidden="true" />
+          <LuMenu className="size-5" aria-hidden="true" />
         </Button>
       </SheetTrigger>
       <SheetContent side="left">

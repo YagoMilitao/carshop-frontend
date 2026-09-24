@@ -125,22 +125,22 @@ describe("WorkListItem", () => {
 
     expect(screen.getByText("Restauração Fusca")).toBeInTheDocument();
 
-    const statusBadge = screen.getByText("published");
+    const statusBadge = screen.getByText("Published");
     expect(statusBadge).toBeInTheDocument();
     expect(statusBadge).toHaveAttribute("data-slot", "badge");
   });
 
-  it("destaca o status 'published' em verde e mantém 'draft' neutro", () => {
+  it("destaca o status 'Published' em verde e mantém 'Draft' neutro", () => {
     const { rerender } = render(<WorkListItem work={work} />);
 
-    expect(screen.getByText("published")).toHaveAttribute(
+    expect(screen.getByText("Published")).toHaveAttribute(
       "data-variant",
       "success",
     );
 
     rerender(<WorkListItem work={{ ...work, status: "draft" }} />);
 
-    expect(screen.getByText("draft")).toHaveAttribute(
+    expect(screen.getByText("Draft")).toHaveAttribute(
       "data-variant",
       "secondary",
     );
@@ -158,15 +158,15 @@ describe("WorkListItem", () => {
     expect(editLink).not.toHaveAttribute("title");
   });
 
-  it("não chama deleteWork apenas ao clicar em 'Excluir work' (exige confirmação)", async () => {
+  it("não chama deleteWork apenas ao clicar em 'Excluir trabalho' (exige confirmação)", async () => {
     const user = userEvent.setup();
 
     render(<WorkListItem work={work} />);
 
-    await user.click(screen.getByRole("button", { name: "Excluir work" }));
+    await user.click(screen.getByRole("button", { name: "Excluir trabalho" }));
 
     expect(
-      await screen.findByRole("heading", { name: "Excluir work" }),
+      await screen.findByRole("heading", { name: "Excluir trabalho" }),
     ).toBeInTheDocument();
     expect(deleteWorkMock).not.toHaveBeenCalled();
   });
@@ -178,8 +178,12 @@ describe("WorkListItem", () => {
 
     render(<WorkListItem work={work} />);
 
-    await user.click(screen.getByRole("button", { name: "Excluir work" }));
-    await user.click(await screen.findByRole("button", { name: "Excluir" }));
+    await user.click(screen.getByRole("button", { name: "Excluir trabalho" }));
+    await user.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Excluir trabalho",
+      }),
+    );
 
     await waitFor(() => expect(deleteWorkMock).toHaveBeenCalledWith("work-1"));
     expect(revalidateWorksTagMock).toHaveBeenCalledTimes(1);
@@ -194,24 +198,24 @@ describe("WorkListItem", () => {
 
     render(<WorkListItem work={work} />);
 
-    await user.click(screen.getByRole("button", { name: "Excluir work" }));
+    await user.click(screen.getByRole("button", { name: "Excluir trabalho" }));
     await user.click(await screen.findByRole("button", { name: "Cancelar" }));
 
     await waitFor(() =>
       expect(
-        screen.queryByRole("heading", { name: "Excluir work" }),
+        screen.queryByRole("heading", { name: "Excluir trabalho" }),
       ).not.toBeInTheDocument(),
     );
     expect(deleteWorkMock).not.toHaveBeenCalled();
   });
 
-  it("devolve o foco ao botão 'Excluir work' ao cancelar ou fechar com Esc o diálogo de exclusão", async () => {
+  it("devolve o foco ao botão 'Excluir trabalho' ao cancelar ou fechar com Esc o diálogo de exclusão", async () => {
     const user = userEvent.setup();
 
     render(<WorkListItem work={work} />);
 
     const deleteWorkButton = screen.getByRole("button", {
-      name: "Excluir work",
+      name: "Excluir trabalho",
     });
 
     await user.click(deleteWorkButton);
@@ -219,20 +223,20 @@ describe("WorkListItem", () => {
 
     await waitFor(() =>
       expect(
-        screen.queryByRole("heading", { name: "Excluir work" }),
+        screen.queryByRole("heading", { name: "Excluir trabalho" }),
       ).not.toBeInTheDocument(),
     );
     await waitFor(() => expect(deleteWorkButton).toHaveFocus());
 
     await user.click(deleteWorkButton);
     expect(
-      await screen.findByRole("heading", { name: "Excluir work" }),
+      await screen.findByRole("heading", { name: "Excluir trabalho" }),
     ).toBeInTheDocument();
     await user.keyboard("{Escape}");
 
     await waitFor(() =>
       expect(
-        screen.queryByRole("heading", { name: "Excluir work" }),
+        screen.queryByRole("heading", { name: "Excluir trabalho" }),
       ).not.toBeInTheDocument(),
     );
     await waitFor(() => expect(deleteWorkButton).toHaveFocus());
@@ -247,8 +251,12 @@ describe("WorkListItem", () => {
 
     render(<WorkListItem work={work} />);
 
-    await user.click(screen.getByRole("button", { name: "Excluir work" }));
-    await user.click(await screen.findByRole("button", { name: "Excluir" }));
+    await user.click(screen.getByRole("button", { name: "Excluir trabalho" }));
+    await user.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Excluir trabalho",
+      }),
+    );
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Falha ao excluir work.",
@@ -265,8 +273,12 @@ describe("WorkListItem", () => {
 
     render(<WorkListItem work={work} />);
 
-    await user.click(screen.getByRole("button", { name: "Excluir work" }));
-    await user.click(await screen.findByRole("button", { name: "Excluir" }));
+    await user.click(screen.getByRole("button", { name: "Excluir trabalho" }));
+    await user.click(
+      within(await screen.findByRole("alertdialog")).getByRole("button", {
+        name: "Excluir trabalho",
+      }),
+    );
 
     await waitFor(() => expect(routerRefreshMock).toHaveBeenCalledTimes(1));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -280,11 +292,11 @@ describe("WorkListItem", () => {
     render(<WorkListItem work={work} />);
 
     await user.click(
-      screen.getByRole("button", { name: "Remover imagem 1: Banco restaurado" }),
+      screen.getByRole("button", { name: "Excluir imagem 1: Banco restaurado" }),
     );
 
     expect(
-      await screen.findByRole("heading", { name: "Remover imagem" }),
+      await screen.findByRole("heading", { name: "Excluir imagem" }),
     ).toBeInTheDocument();
     expect(deleteWorkImageMock).not.toHaveBeenCalled();
 
@@ -295,7 +307,7 @@ describe("WorkListItem", () => {
     );
     await waitFor(() =>
       expect(
-        screen.queryByRole("heading", { name: "Remover imagem" }),
+        screen.queryByRole("heading", { name: "Excluir imagem" }),
       ).not.toBeInTheDocument(),
     );
     expect(revalidateWorksTagMock).toHaveBeenCalledTimes(1);
@@ -305,13 +317,13 @@ describe("WorkListItem", () => {
     expect(routerRefreshMock).toHaveBeenCalledTimes(1);
   });
 
-  it("devolve o foco ao botão 'Remover' ao cancelar ou fechar com Esc o diálogo de remoção", async () => {
+  it("devolve o foco ao botão 'Excluir' ao cancelar ou fechar com Esc o diálogo de remoção", async () => {
     const user = userEvent.setup();
 
     render(<WorkListItem work={work} />);
 
     const removeButton = screen.getByRole("button", {
-      name: "Remover imagem 1: Banco restaurado",
+      name: "Excluir imagem 1: Banco restaurado",
     });
 
     await user.click(removeButton);
@@ -319,20 +331,20 @@ describe("WorkListItem", () => {
 
     await waitFor(() =>
       expect(
-        screen.queryByRole("heading", { name: "Remover imagem" }),
+        screen.queryByRole("heading", { name: "Excluir imagem" }),
       ).not.toBeInTheDocument(),
     );
     await waitFor(() => expect(removeButton).toHaveFocus());
 
     await user.click(removeButton);
     expect(
-      await screen.findByRole("heading", { name: "Remover imagem" }),
+      await screen.findByRole("heading", { name: "Excluir imagem" }),
     ).toBeInTheDocument();
     await user.keyboard("{Escape}");
 
     await waitFor(() =>
       expect(
-        screen.queryByRole("heading", { name: "Remover imagem" }),
+        screen.queryByRole("heading", { name: "Excluir imagem" }),
       ).not.toBeInTheDocument(),
     );
     await waitFor(() => expect(removeButton).toHaveFocus());
@@ -355,7 +367,7 @@ describe("WorkListItem", () => {
     const file = new File(["conteudo"], "foto.png", { type: "image/png" });
     await user.upload(screen.getByLabelText("Adicionar imagem"), file);
     await user.click(
-      screen.getByRole("button", { name: "Remover imagem 1: Banco restaurado" }),
+      screen.getByRole("button", { name: "Excluir imagem 1: Banco restaurado" }),
     );
     await user.click(
       await screen.findByRole("button", { name: "Excluir imagem" }),
@@ -515,7 +527,7 @@ describe("WorkListItem", () => {
     expect(uploadWorkImageMock).not.toHaveBeenCalled();
   });
   describe("remoção de imagem existente (CARSHOP-34)", () => {
-    const REMOVE_BUTTON_NAME = "Remover imagem 1: Banco restaurado";
+    const REMOVE_BUTTON_NAME = "Excluir imagem 1: Banco restaurado";
 
     async function openRemoveDialog(user: ReturnType<typeof userEvent.setup>) {
       await user.click(screen.getByRole("button", { name: REMOVE_BUTTON_NAME }));
@@ -562,7 +574,7 @@ describe("WorkListItem", () => {
         screen.getByText("Nenhuma imagem cadastrada para este trabalho."),
       ).toBeInTheDocument();
       expect(
-        screen.queryByRole("button", { name: /^Remover imagem/ }),
+        screen.queryByRole("button", { name: /^Excluir imagem \d/ }),
       ).not.toBeInTheDocument();
     });
 
@@ -735,7 +747,7 @@ describe("WorkListItem", () => {
       expect(deleteWorkImageMock).not.toHaveBeenCalled();
     });
 
-    it("após sucesso anuncia 'Imagem removida.' e leva o foco ao heading da seção", async () => {
+    it("após sucesso anuncia 'Imagem excluída.' e leva o foco ao heading da seção", async () => {
       deleteWorkImageMock.mockResolvedValue(undefined);
       revalidateWorksTagMock.mockResolvedValue(undefined);
       const user = userEvent.setup();
@@ -756,7 +768,7 @@ describe("WorkListItem", () => {
       );
       expect(
         screen.getByRole("status", { name: "Status da remoção de imagem" }),
-      ).toHaveTextContent("Imagem removida.");
+      ).toHaveTextContent("Imagem excluída.");
       await waitFor(() =>
         expect(
           screen.getByRole("heading", { name: "Imagens (1) do trabalho Restauração Fusca" }),
@@ -781,7 +793,7 @@ describe("WorkListItem", () => {
           screen.getByRole("status", {
             name: "Status da remoção de imagem",
           }),
-        ).toHaveTextContent("Imagem removida."),
+        ).toHaveTextContent("Imagem excluída."),
       );
 
       await openRemoveDialog(user);
@@ -824,7 +836,7 @@ describe("WorkListItem", () => {
 
       expect(screen.getByRole("alertdialog")).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Excluir work", hidden: true }),
+        screen.getByRole("button", { name: "Excluir trabalho", hidden: true }),
       ).toBeDisabled();
 
       resolveDeleteImage();

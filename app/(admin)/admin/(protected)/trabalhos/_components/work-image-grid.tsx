@@ -80,14 +80,14 @@ export function WorkImageGrid({
               {image.isCover && <Badge variant="secondary">Capa</Badge>}
               <Button
                 type="button"
-                variant="outline"
+                variant="destructive"
                 size="sm"
                 className="ml-auto"
                 disabled={disabled}
-                aria-label={`Remover ${actionLabel}`}
+                aria-label={`Excluir ${actionLabel}`}
                 onClick={(event) => onRequestRemove(image, event.currentTarget)}
               >
-                Remover
+                Excluir
               </Button>
             </div>
           </li>

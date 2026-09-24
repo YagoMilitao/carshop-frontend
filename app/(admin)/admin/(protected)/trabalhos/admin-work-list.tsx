@@ -8,35 +8,46 @@ import {
   getAdminWorks,
 } from "@/lib/api/works.client";
 
+import {
+  AdminEmptyState,
+  AdminErrorState,
+  AdminLoadingState,
+} from "../_components/admin-states";
+
 import { WorkListItem } from "./work-list-item";
 
 export function AdminWorkList() {
-  const { data: works, error, isPending } = useQuery({
+  const {
+    data: works,
+    error,
+    isPending,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: adminWorksQueryKey,
     queryFn: getAdminWorks,
   });
 
   if (isPending) {
-    return (
-      <output className="text-body-sm text-muted-foreground">
-        Carregando trabalhos...
-      </output>
-    );
+    return <AdminLoadingState label="Carregando trabalhos..." />;
   }
 
   if (error) {
     return (
-      <p role="alert" className="text-body-sm text-destructive-text">
-        {getApiErrorMessage(error)}
-      </p>
+      <AdminErrorState
+        message={getApiErrorMessage(error)}
+        onRetry={() => void refetch()}
+        isRetrying={isFetching}
+      />
     );
   }
 
   if (works.length === 0) {
     return (
-      <p className="text-body-sm text-muted-foreground">
-        Nenhum work cadastrado.
-      </p>
+      <AdminEmptyState
+        title="Nenhum trabalho cadastrado."
+        description="Use “Novo trabalho” para cadastrar o primeiro."
+      />
     );
   }
 

@@ -19,6 +19,11 @@ import { revalidateWorksTag } from "@/app/(admin)/admin/actions";
 import { WorkFormFields } from "@/app/(admin)/admin/(protected)/trabalhos/work-form-fields";
 import { Button } from "@/components/ui/button";
 import {
+  AdminEmptyState,
+  AdminErrorState,
+  AdminLoadingState,
+} from "@/app/(admin)/admin/(protected)/_components/admin-states";
+import {
   workFormSchema,
   type WorkFormInput,
   type WorkFormOutput,
@@ -47,6 +52,7 @@ export function EditWorkForm({ slug }: Readonly<EditWorkFormProps>) {
     error,
     isFetching,
     isPending,
+    refetch,
   } = useQuery({
     queryKey: adminWorksQueryKey,
     queryFn: getAdminWorks,
@@ -88,35 +94,39 @@ export function EditWorkForm({ slug }: Readonly<EditWorkFormProps>) {
     router.push("/admin/trabalhos");
   };
 
-  if (isPending || (!work && isFetching)) {
+  if (isPending) {
+    return <AdminLoadingState label="Carregando trabalho..." rows={4} />;
+  }
+
+  // Erro antes do loading de refetch: durante o "Tentar novamente" o bloco
+  // de erro continua visível com o botão em estado de retry. Com o work já
+  // em cache, uma falha de refetch em segundo plano não substitui o form.
+  if (error && !work) {
     return (
-      <output className="text-body-sm text-muted-foreground">
-        Carregando trabalho...
-      </output>
+      <AdminErrorState
+        message={getApiErrorMessage(error)}
+        onRetry={() => void refetch()}
+        isRetrying={isFetching}
+      />
     );
   }
 
-  if (error) {
-    return (
-      <p role="alert" className="text-body-sm text-destructive-text">
-        {getApiErrorMessage(error)}
-      </p>
-    );
+  // Cache sem o work (ex.: criado em outra sessão) enquanto refaz o fetch:
+  // loading em vez de um "não encontrado" falso.
+  if (!work && isFetching) {
+    return <AdminLoadingState label="Carregando trabalho..." rows={4} />;
   }
 
   if (!work) {
     return (
-      <div className="flex flex-col gap-2">
-        <p className="text-body-sm text-muted-foreground">
-          Nenhum trabalho encontrado para este identificador.
-        </p>
-        <Link
-          href="/admin/trabalhos"
-          className="text-body-sm text-primary underline underline-offset-4"
-        >
-          Voltar para Trabalhos
-        </Link>
-      </div>
+      <AdminEmptyState
+        title="Nenhum trabalho encontrado para este identificador."
+        action={
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/trabalhos">Voltar para Trabalhos</Link>
+          </Button>
+        }
+      />
     );
   }
 
@@ -134,9 +144,14 @@ export function EditWorkForm({ slug }: Readonly<EditWorkFormProps>) {
         </p>
       )}
 
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Salvando..." : "Salvar"}
-      </Button>
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button variant="outline" asChild>
+          <Link href="/admin/trabalhos">Cancelar</Link>
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Salvando..." : "Salvar"}
+        </Button>
+      </div>
     </form>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Menu, X } from "lucide-react"
+import { LuMenu, LuX } from "react-icons/lu"
 import { cn } from "cn"
 import { navLinks } from "./nav-links"
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,7 @@ export function MobileNav() {
         aria-label={isOpen ? "Fechar menu de navegação" : "Abrir menu de navegação"}
         onClick={() => setIsOpen((prev) => !prev)}
       >
-        {isOpen ? <X className="size-6" aria-hidden="true" /> : <Menu className="size-6" aria-hidden="true" />}
+        {isOpen ? <LuX className="size-6" aria-hidden="true" /> : <LuMenu className="size-6" aria-hidden="true" />}
       </Button>
 
       <div

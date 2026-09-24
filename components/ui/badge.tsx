@@ -14,6 +14,11 @@ const badgeVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive-text focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
         success: "bg-success/15 text-success-text",
+        // Variante aditiva (CARSHOP-148) para status pendentes do Admin.
+        // --warning-text (#d09a4e) sobre bg-warning/15: 5.99:1 sobre
+        // --surface (#151515) e 5.58:1 sobre --surface-warm (#1c1b19),
+        // acima do AA de 4.5:1 para texto normal.
+        warning: "bg-warning/15 text-warning-text",
         outline:
           "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
         ghost:

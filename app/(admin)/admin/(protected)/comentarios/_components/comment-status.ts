@@ -2,7 +2,7 @@ import type { CommentStatus } from "@/lib/api/comments";
 
 import type { CommentFilterStatus } from "./comment-filters";
 
-type CommentStatusBadgeVariant = "outline" | "success" | "secondary";
+type CommentStatusBadgeVariant = "warning" | "success" | "secondary";
 
 export const commentStatusLabels: Readonly<Record<CommentStatus, string>> = {
   PENDING: "Pendente",
@@ -13,7 +13,7 @@ export const commentStatusLabels: Readonly<Record<CommentStatus, string>> = {
 export const commentStatusBadgeVariants: Readonly<
   Record<CommentStatus, CommentStatusBadgeVariant>
 > = {
-  PENDING: "outline",
+  PENDING: "warning",
   APPROVED: "success",
   HIDDEN: "secondary",
 };

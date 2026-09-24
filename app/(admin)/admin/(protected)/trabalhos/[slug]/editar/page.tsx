@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Container } from "@/components/layout/container";
 import { PageSection } from "@/components/layout/page-section";
 
+import { AdminPageHeader } from "../../../_components/admin-page-header";
+
 import { EditWorkForm } from "./edit-work-form";
 
 // Defesa em profundidade, complementar a `app/(admin)/admin/layout.tsx`:
@@ -25,8 +27,8 @@ export default async function EditWorkPage({ params }: Readonly<EditWorkPageProp
 
   return (
     <PageSection spacing="compact" container="none">
-      <Container variant="reading" className="flex flex-col gap-10">
-        <h1 className="text-heading-2 text-foreground">Editar trabalho</h1>
+      <Container variant="reading" className="flex flex-col gap-8">
+        <AdminPageHeader title="Editar trabalho" />
 
         <EditWorkForm slug={slug} />
       </Container>

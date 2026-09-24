@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Work } from "@/lib/api/works";
@@ -81,7 +82,7 @@ describe("AdminWorkList", () => {
     renderAdminWorkList();
 
     expect(
-      await screen.findByText("Nenhum work cadastrado."),
+      await screen.findByText("Nenhum trabalho cadastrado."),
     ).toBeInTheDocument();
   });
 
@@ -93,5 +94,21 @@ describe("AdminWorkList", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Ocorreu um erro inesperado. Tente novamente.",
     );
+  });
+
+  it("permite tentar novamente após falha e exibe a lista ao recuperar", async () => {
+    getAdminWorksMock
+      .mockRejectedValueOnce(new Error("network down"))
+      .mockResolvedValueOnce([draftWork]);
+    const user = userEvent.setup();
+
+    renderAdminWorkList();
+
+    await screen.findByRole("alert");
+    await user.click(screen.getByRole("button", { name: "Tentar novamente" }));
+
+    expect(await screen.findAllByTestId("work-list-item")).toHaveLength(1);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(getAdminWorksMock).toHaveBeenCalledTimes(2);
   });
 });

@@ -1,7 +1,7 @@
 import { AxiosError, AxiosHeaders } from "axios";
 import type { InternalAxiosRequestConfig } from "axios";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const createWorkMock = vi.fn();
@@ -83,6 +83,88 @@ describe("CreateWorkForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     invalidateQueriesMock.mockResolvedValue(undefined);
+  });
+
+  it("renderiza 'Cancelar' como link para /admin/trabalhos ao lado do submit primário", () => {
+    render(<CreateWorkForm />);
+
+    expect(screen.getByRole("link", { name: "Cancelar" })).toHaveAttribute(
+      "href",
+      "/admin/trabalhos",
+    );
+    expect(
+      screen.getByRole("button", { name: "Criar trabalho" }),
+    ).toHaveAttribute("type", "submit");
+  });
+
+  it("bloqueia 'Cancelar' enquanto a criação está em andamento", async () => {
+    let resolveRequest: ((value: { id: string }) => void) | undefined;
+    createWorkMock.mockImplementation(
+      () =>
+        new Promise<{ id: string }>((resolve) => {
+          resolveRequest = resolve;
+        }),
+    );
+    revalidateWorksTagMock.mockResolvedValue(undefined);
+    const user = userEvent.setup();
+
+    render(<CreateWorkForm />);
+    await fillValidForm(user);
+    await user.click(screen.getByRole("button", { name: "Criar trabalho" }));
+
+    const cancelButton = await screen.findByRole("button", {
+      name: "Cancelar",
+    });
+    expect(cancelButton).toBeDisabled();
+    expect(
+      screen.queryByRole("link", { name: "Cancelar" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(cancelButton);
+    expect(routerPushMock).not.toHaveBeenCalled();
+
+    resolveRequest?.({ id: "1" });
+    await waitFor(() => expect(routerPushMock).toHaveBeenCalledWith("/admin"));
+  });
+
+  it("usa NativeSelect com opções Draft/Published (default draft) e Textarea na descrição", () => {
+    render(<CreateWorkForm />);
+
+    const statusSelect = screen.getByRole("combobox", { name: "Status" });
+    expect(statusSelect).toHaveAttribute("data-slot", "native-select");
+    expect(statusSelect).toHaveValue("draft");
+    expect(
+      within(statusSelect)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Draft", "Published"]);
+
+    const description = screen.getByLabelText("Descrição");
+    expect(description.tagName).toBe("TEXTAREA");
+    expect(description).toHaveAttribute("data-slot", "textarea");
+    expect(description).toHaveAttribute("aria-invalid", "false");
+    expect(description).not.toHaveAttribute("aria-describedby");
+    expect(screen.getByLabelText("Identificador da URL")).toHaveAttribute(
+      "aria-describedby",
+      "work-slug-hint",
+    );
+  });
+
+  it("preserva aria-invalid/aria-describedby da Textarea quando a descrição é inválida", async () => {
+    const user = userEvent.setup();
+
+    render(<CreateWorkForm />);
+    await user.click(screen.getByRole("button", { name: "Criar trabalho" }));
+
+    const description = screen.getByLabelText("Descrição");
+    await waitFor(() =>
+      expect(description).toHaveAttribute("aria-invalid", "true"),
+    );
+    expect(description).toHaveAttribute(
+      "aria-describedby",
+      "work-description-error",
+    );
+    expect(document.getElementById("work-description-error")).toBeInTheDocument();
   });
 
   it("não submete e exibe erros de validação quando campos obrigatórios estão vazios", async () => {
