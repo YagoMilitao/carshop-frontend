@@ -62,7 +62,7 @@ export function ProjectPreview({
     <Link
       href={`/portfolio/${work.slug}`}
       aria-label={work.title}
-      className="group flex flex-col gap-4 rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="group flex flex-col gap-4 rounded-lg outline-hidden focus-visible:ring-3 focus-visible:ring-focus-ring"
     >
       <div className="overflow-hidden rounded-lg">
         <WorkImageThumb

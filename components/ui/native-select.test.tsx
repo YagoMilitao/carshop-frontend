@@ -42,4 +42,41 @@ describe("NativeSelect", () => {
       "sm",
     );
   });
+
+  it("usa altura h-9 e text-body-sm por padrão, alinhado ao Input (A-08)", () => {
+    render(
+      <NativeSelect aria-label="Categoria">
+        <NativeSelectOption value="a">A</NativeSelectOption>
+      </NativeSelect>,
+    );
+
+    const select = screen.getByRole("combobox", { name: "Categoria" });
+    const classes = select.className.split(" ");
+    expect(classes).toContain("h-9");
+    expect(classes).not.toContain("h-8");
+    expect(classes).toContain("text-body-sm");
+    expect(classes).not.toContain("text-sm");
+    expect(classes).toContain("data-[size=sm]:h-7");
+  });
+
+  it("usa o anel de foco canônico e aria-invalid não sobrescreve o foco (A-01/A-03)", () => {
+    render(
+      <NativeSelect aria-label="Status" aria-invalid="true">
+        <NativeSelectOption value="a">A</NativeSelectOption>
+      </NativeSelect>,
+    );
+
+    const select = screen.getByRole("combobox", { name: "Status" });
+    expect(select).toHaveClass(
+      "outline-hidden",
+      "focus-visible:ring-focus-ring",
+      "aria-invalid:border-destructive",
+    );
+    const classes = select.className.split(" ");
+    expect(classes).not.toContain("outline-none");
+    expect(classes).not.toContain("focus-visible:ring-ring/50");
+    for (const token of classes) {
+      expect(token).not.toMatch(/^(dark:)?aria-invalid:ring-/);
+    }
+  });
 });

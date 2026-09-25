@@ -55,7 +55,7 @@ export function HomeHero({ hero }: Readonly<HomeHeroProps>) {
               </span>
               <Link
                 href={`/portfolio/${hero.work.slug}`}
-                className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg text-body font-semibold text-foreground outline-none hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg text-body font-semibold text-foreground outline-hidden hover:text-primary focus-visible:ring-3 focus-visible:ring-focus-ring"
               >
                 {hero.work.title}
                 <LuArrowRight aria-hidden="true" className="size-4 shrink-0" />

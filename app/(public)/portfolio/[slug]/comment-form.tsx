@@ -121,7 +121,7 @@ export function CommentForm({ workId }: Readonly<CommentFormProps>) {
           id="comment-content"
           aria-invalid={errors.content ? "true" : "false"}
           aria-describedby={errors.content ? "comment-content-error" : undefined}
-          className="min-h-32 rounded-lg border border-input bg-transparent px-2.5 py-2 text-body-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="min-h-32 rounded-lg border border-input bg-transparent px-2.5 py-2 text-body-sm outline-hidden placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-focus-ring"
           {...register("content")}
         />
         {errors.content && (

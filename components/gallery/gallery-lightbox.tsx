@@ -75,7 +75,7 @@ export function GalleryLightbox({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="flex max-h-[calc(100dvh-2rem)] flex-col gap-4 overflow-y-auto bg-background/95 p-4 sm:max-w-5xl motion-reduce:data-open:animate-none motion-reduce:data-closed:animate-none"
+        className="flex max-h-[calc(100dvh-2rem)] flex-col gap-4 overflow-y-auto bg-background p-4 sm:max-w-5xl motion-reduce:data-open:animate-none motion-reduce:data-closed:animate-none"
         onKeyDown={handleKeyDown}
         onCloseAutoFocus={(event) => {
           if (restoreFocusRef.current) {
@@ -98,7 +98,7 @@ export function GalleryLightbox({
               <button
                 type="button"
                 aria-label="Close"
-                className="inline-flex size-11 items-center justify-center self-end rounded-full text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="inline-flex size-11 items-center justify-center self-end rounded-lg text-foreground outline-hidden hover:bg-muted focus-visible:ring-3 focus-visible:ring-focus-ring"
               >
                 <LuX className="size-5" aria-hidden="true" />
               </button>
@@ -130,7 +130,7 @@ export function GalleryLightbox({
                     type="button"
                     onClick={goToPrevious}
                     aria-label="Previous image"
-                    className="absolute left-2 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 text-foreground shadow-md outline-none hover:bg-background focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="absolute left-2 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-lg bg-background/80 text-foreground outline-hidden hover:bg-background focus-visible:ring-3 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     <LuChevronLeft className="size-5" aria-hidden="true" />
                   </button>
@@ -138,7 +138,7 @@ export function GalleryLightbox({
                     type="button"
                     onClick={goToNext}
                     aria-label="Next image"
-                    className="absolute right-2 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 text-foreground shadow-md outline-none hover:bg-background focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="absolute right-2 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-lg bg-background/80 text-foreground outline-hidden hover:bg-background focus-visible:ring-3 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     <LuChevronRight className="size-5" aria-hidden="true" />
                   </button>

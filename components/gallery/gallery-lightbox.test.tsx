@@ -282,4 +282,45 @@ describe("GalleryLightbox", () => {
     );
     expect(useReducedMotionMock).toHaveBeenCalled();
   });
+
+  it("conteúdo opaco e botões sem pílula/sombra, com foco canônico (A-05/A-10)", () => {
+    render(
+      <GalleryLightbox
+        images={images}
+        selectedIndex={0}
+        onOpenChange={vi.fn()}
+        onNavigate={vi.fn()}
+        fallbackAlt="Fusca 1978"
+        restoreFocusRef={restoreFocusRef}
+      />,
+    );
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveClass("bg-background");
+    expect(dialog).not.toHaveClass("bg-background/95");
+    expect(dialog.className).not.toMatch(/backdrop-blur/);
+
+    const controls = [
+      screen.getByRole("button", { name: "Close" }),
+      screen.getByRole("button", { name: "Previous image" }),
+      screen.getByRole("button", { name: "Next image" }),
+    ];
+    for (const control of controls) {
+      const classes = control.className.split(" ");
+      expect(classes).toContain("rounded-lg");
+      expect(classes).not.toContain("rounded-full");
+      expect(classes).not.toContain("shadow-md");
+      expect(classes).toContain("outline-hidden");
+      expect(classes).toContain("focus-visible:ring-focus-ring");
+      expect(classes).not.toContain("focus-visible:ring-ring/50");
+    }
+
+    for (const name of ["Previous image", "Next image"]) {
+      expect(screen.getByRole("button", { name })).toHaveClass(
+        "bg-background/80",
+        "focus-visible:ring-offset-2",
+        "focus-visible:ring-offset-background",
+      );
+    }
+  });
 });

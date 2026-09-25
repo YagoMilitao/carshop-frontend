@@ -42,7 +42,7 @@ export function BackToHomeLink() {
   return (
     <Link
       href="/"
-      className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg text-nav text-foreground outline-none hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg text-nav text-foreground outline-hidden hover:text-primary focus-visible:ring-3 focus-visible:ring-focus-ring"
     >
       Back to home
       <LuArrowRight aria-hidden="true" className="size-4 shrink-0" />

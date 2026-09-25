@@ -33,7 +33,7 @@ export function Footer() {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="rounded-lg text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="rounded-lg text-muted-foreground outline-hidden hover:text-foreground focus-visible:ring-3 focus-visible:ring-focus-ring"
                 >
                   {link.label}
                 </Link>
@@ -51,7 +51,7 @@ export function Footer() {
                     href={link.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-lg text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="rounded-lg text-muted-foreground outline-hidden hover:text-foreground focus-visible:ring-3 focus-visible:ring-focus-ring"
                   >
                     {link.label}
                   </a>

@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 }
 
 const textLinkClassName =
-  'inline-flex min-h-11 w-fit items-center gap-2 rounded-lg text-body font-semibold text-foreground outline-none transition-colors hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50'
+  'inline-flex min-h-11 w-fit items-center gap-2 rounded-lg text-body font-semibold text-foreground outline-hidden transition-colors hover:text-primary focus-visible:ring-3 focus-visible:ring-focus-ring'
 
 export default async function AboutPage() {
   let works: Work[] = []

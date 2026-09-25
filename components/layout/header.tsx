@@ -10,7 +10,7 @@ export function Header() {
       <Container variant="page" className="flex h-16 items-center justify-between">
         <Link
           href="/"
-          className="rounded-lg text-heading-4 text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="rounded-lg text-heading-4 text-foreground outline-hidden focus-visible:ring-3 focus-visible:ring-focus-ring"
         >
           CarShop
         </Link>
@@ -22,7 +22,7 @@ export function Header() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="rounded-lg text-nav text-foreground outline-none hover:text-foreground/80 focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="rounded-lg text-nav text-foreground outline-hidden hover:text-foreground/80 focus-visible:ring-3 focus-visible:ring-focus-ring"
                   >
                     {link.label}
                   </Link>
