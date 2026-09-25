@@ -90,7 +90,7 @@ export function ProjectGallery({
           setSelectedIndex(viewerIndex)
         }}
         aria-label={`View image ${viewerIndex + 1} of ${total}: ${alt}`}
-        className="group block w-full cursor-zoom-in rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="group block w-full cursor-zoom-in rounded-lg outline-hidden focus-visible:ring-3 focus-visible:ring-focus-ring"
       >
         <div className="overflow-hidden rounded-lg">
           <WorkImageThumb

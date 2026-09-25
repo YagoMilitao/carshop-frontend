@@ -39,7 +39,7 @@ export function MobileNav() {
                 <Link
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="block rounded-lg px-3 py-3 text-sm font-medium text-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="block rounded-lg px-3 py-3 text-sm font-medium text-foreground outline-hidden hover:bg-muted focus-visible:ring-3 focus-visible:ring-focus-ring"
                 >
                   {link.label}
                 </Link>

@@ -37,7 +37,12 @@
   --border: #302e2a;
   /* Separação forte (hover, grupos em foco, divisores de alto contraste). */
   --border-strong: #47433d;
-  --input: #302e2a;
+  /* Borda de campos de formulário, separada de --border (conflito C-1 de
+     CARSHOP-149): #302e2a dava 1.44:1, abaixo do 3:1 exigido para limites
+     de componentes de UI (WCAG 1.4.11). Mesma receita da borda do Button
+     outline (muted-foreground/60): ~3.52:1 sobre --background e ~3.44:1
+     sobre --card/--popover. */
+  --input: color-mix(in srgb, var(--muted-foreground) 60%, transparent);
   --ring: #b56a3b;
   /* Alias semântico do foco de teclado; mesmo valor de --ring hoje, mas
      nomeado para reforçar sua intenção (docs/design/colors.md #Focus-Ring). */
@@ -226,7 +231,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-focus-ring;
   }
   body {
     @apply bg-background text-foreground;

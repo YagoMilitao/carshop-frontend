@@ -48,4 +48,15 @@ describe("Badge", () => {
     expect(link).toHaveAttribute("data-slot", "badge");
     expect(link).toHaveClass("text-warning-text");
   });
+
+  it("usa o anel de foco canônico sem override na variante destructive (A-01)", () => {
+    for (const variant of ["default", "destructive", "warning"] as const) {
+      const classes = badgeVariants({ variant }).split(" ");
+      expect(classes).toContain("focus-visible:ring-focus-ring");
+      expect(classes).not.toContain("focus-visible:ring-ring/50");
+      for (const token of classes) {
+        expect(token).not.toMatch(/^(dark:)?focus-visible:ring-destructive/);
+      }
+    }
+  });
 });

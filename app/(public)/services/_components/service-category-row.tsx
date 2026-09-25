@@ -16,7 +16,7 @@ type ServiceCategoryRowProps = {
 }
 
 const linkClassName =
-  "inline-flex min-h-11 w-fit items-center gap-2 rounded-lg outline-none transition-colors hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50"
+  "inline-flex min-h-11 w-fit items-center gap-2 rounded-lg outline-hidden transition-colors hover:text-primary focus-visible:ring-3 focus-visible:ring-focus-ring"
 
 function formatProjectCount(count: number): string {
   return count === 1 ? "1 project" : `${count} projects`

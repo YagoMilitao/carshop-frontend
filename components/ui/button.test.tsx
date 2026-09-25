@@ -104,4 +104,30 @@ describe("Button", () => {
     expect(link).toHaveAttribute("data-slot", "button");
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
+
+  it("usa o anel de foco canônico com offset e outline-hidden (A-02)", () => {
+    render(<Button>Foco</Button>);
+
+    const button = screen.getByRole("button", { name: "Foco" });
+    expect(button).toHaveClass(
+      "outline-hidden",
+      "focus-visible:ring-3",
+      "focus-visible:ring-focus-ring",
+      "focus-visible:ring-offset-2",
+      "focus-visible:ring-offset-background",
+    );
+    const classes = button.className.split(" ");
+    expect(classes).not.toContain("outline-none");
+    expect(classes).not.toContain("focus-visible:ring-ring/50");
+  });
+
+  it("variant destructive não sobrescreve o anel de foco canônico (A-02)", () => {
+    render(<Button variant="destructive">Remover</Button>);
+
+    const button = screen.getByRole("button", { name: "Remover" });
+    expect(button).toHaveClass("focus-visible:ring-focus-ring");
+    for (const token of button.className.split(" ")) {
+      expect(token).not.toMatch(/^(dark:)?focus-visible:(ring|border)-destructive/);
+    }
+  });
 });

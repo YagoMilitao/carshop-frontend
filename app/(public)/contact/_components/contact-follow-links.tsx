@@ -24,7 +24,7 @@ export function ContactFollowLinks({ links }: Readonly<ContactFollowLinksProps>)
               href={link.href}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-11 w-fit items-center rounded-lg text-body font-semibold text-foreground outline-none transition-colors hover:text-primary focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="inline-flex min-h-11 w-fit items-center rounded-lg text-body font-semibold text-foreground outline-hidden transition-colors hover:text-primary focus-visible:ring-3 focus-visible:ring-focus-ring"
             >
               {link.label}{" "}
               <span className="sr-only">(opens in a new tab)</span>

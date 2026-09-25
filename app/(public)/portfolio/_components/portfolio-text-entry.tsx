@@ -12,7 +12,7 @@ export function PortfolioTextEntry({ work }: Readonly<PortfolioTextEntryProps>) 
     <Link
       href={`/portfolio/${work.slug}`}
       aria-label={work.title}
-      className="group flex min-h-11 items-start gap-4 rounded-lg py-6 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 lg:grid lg:grid-cols-12 lg:gap-x-8"
+      className="group flex min-h-11 items-start gap-4 rounded-lg py-6 outline-hidden focus-visible:ring-3 focus-visible:ring-focus-ring lg:grid lg:grid-cols-12 lg:gap-x-8"
     >
       <div className="flex min-w-0 flex-1 flex-col gap-2 lg:col-span-10 lg:grid lg:grid-cols-10 lg:gap-x-8">
         <span className="text-label text-muted-foreground lg:col-span-3 lg:pt-1">
