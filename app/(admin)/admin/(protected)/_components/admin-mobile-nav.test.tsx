@@ -53,6 +53,12 @@ describe("AdminMobileNav", () => {
     expect(
       screen.getByRole("link", { name: "Comentários" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Imagem da Home" }),
+    ).toHaveAttribute("href", "/admin/imagem-da-home");
+    expect(
+      screen.getByRole("navigation").querySelectorAll("a"),
+    ).toHaveLength(4);
   });
 
   it("fecha o drawer ao navegar por um item de menu", async () => {

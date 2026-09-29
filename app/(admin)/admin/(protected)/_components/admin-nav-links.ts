@@ -1,6 +1,7 @@
 /**
  * Itens reais de navegação do admin (decisões do `architect`, CARSHOP-152,
- * CARSHOP-35 — "Comentários" — e CARSHOP-148). A navegação lista apenas
+ * CARSHOP-35 — "Comentários" —, CARSHOP-148 e CARSHOP-160 — "Imagem da
+ * Home"). A navegação lista apenas
  * seções; ações como "Novo trabalho" vivem como CTA na página da seção
  * (`/admin/trabalhos`). Não inventar seções ("Usuários"/"Configurações")
  * sem decisão de arquitetura adicional.
@@ -20,6 +21,7 @@ export const adminNavLinks: readonly AdminNavLinkItem[] = [
   { href: "/admin", label: "Dashboard", match: "exact" },
   { href: "/admin/trabalhos", label: "Trabalhos", match: "prefix" },
   { href: "/admin/comentarios", label: "Comentários", match: "prefix" },
+  { href: "/admin/imagem-da-home", label: "Imagem da Home", match: "prefix" },
 ];
 
 export function isAdminNavItemActive(
