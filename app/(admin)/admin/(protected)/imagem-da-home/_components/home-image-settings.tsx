@@ -87,7 +87,9 @@ export function HomeImageSettings() {
   );
   const selection = selectedMatch ? pendingSelection : null;
   const hasChange =
-    selection !== null && !isSameHomeImageRef(selection, activeRef);
+    !homeImageQuery.isFetching &&
+    selection !== null &&
+    !isSameHomeImageRef(selection, activeRef);
   const checkedRef = selection ?? activeRef;
 
   const summary =
@@ -157,7 +159,7 @@ export function HomeImageSettings() {
           onRetry={() => void candidates.refetch()}
           checkedRef={checkedRef}
           activeRef={activeRef}
-          disabled={mutation.isPending}
+          disabled={homeImageQuery.isFetching || mutation.isPending}
           onSelect={onSelect}
         />
 

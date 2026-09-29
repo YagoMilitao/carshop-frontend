@@ -4,7 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { WorkImageThumb } from "@/components/gallery/work-image-thumb";
 import type { WorkImage } from "@/lib/api/works";
 
-import { getWorkImageLabel } from "../../trabalhos/_components/work-image-grid";
+import {
+  getWorkImageActionLabel,
+  getWorkImageLabel,
+} from "../../trabalhos/_components/work-image-grid";
 
 import type { HomeImageRef } from "./home-image-candidates";
 
@@ -37,9 +40,10 @@ export function HomeImageCandidateOption({
   onSelect,
 }: HomeImageCandidateOptionProps) {
   const imageLabel = getWorkImageLabel(image, index, workTitle);
+  const actionLabel = getWorkImageActionLabel(image, index, workTitle);
   const accessibleName = isActive
-    ? `${imageLabel} (imagem atual da Home)`
-    : imageLabel;
+    ? `${actionLabel} (imagem atual da Home)`
+    : actionLabel;
 
   return (
     <label className="relative block cursor-pointer has-disabled:cursor-not-allowed">

@@ -115,6 +115,31 @@ describe("HomeImageSettings", () => {
     expect(screen.queryByRole("button", SAVE)).not.toBeInTheDocument();
   });
 
+  it("aguarda a imagem atual antes de habilitar seleção e salvamento", async () => {
+    const user = userEvent.setup();
+    const pendingCurrentImage = deferred<HomeImage | null>();
+    getHomeImageMock.mockReturnValue(pendingCurrentImage.promise);
+    getAdminWorksMock.mockResolvedValue(works);
+
+    renderSettings();
+
+    const candidate = await screen.findByRole("radio", {
+      name: "imagem 1: Painel em madeira",
+    });
+    expect(candidate).toBeDisabled();
+    expect(screen.getByRole("button", SAVE)).toBeDisabled();
+
+    await user.click(candidate);
+    expect(candidate).not.toBeChecked();
+    expect(setHomeImageMock).not.toHaveBeenCalled();
+
+    pendingCurrentImage.resolve(activeImage);
+
+    await waitFor(() => expect(candidate).toBeEnabled());
+    await user.click(candidate);
+    expect(screen.getByRole("button", SAVE)).toBeEnabled();
+  });
+
   it("exibe a imagem atual com metadados e marca a ativa com 'Na Home'", async () => {
     getHomeImageMock.mockResolvedValue(activeImage);
     getAdminWorksMock.mockResolvedValue(works);
@@ -130,7 +155,7 @@ describe("HomeImageSettings", () => {
     ).toBeInTheDocument();
 
     const activeRadio = await screen.findByRole("radio", {
-      name: "Banco dianteiro em couro (imagem atual da Home)",
+      name: "imagem 1: Banco dianteiro em couro (imagem atual da Home)",
     });
     expect(activeRadio).toBeChecked();
     expect(screen.getAllByText("Na Home")).toHaveLength(1);
@@ -143,6 +168,28 @@ describe("HomeImageSettings", () => {
     expect(screen.queryByRole("group", { name: "Rascunho" })).not.toBeInTheDocument();
     expect(screen.getByText("Nenhuma alteração")).toBeInTheDocument();
     expect(screen.getByRole("button", SAVE)).toBeDisabled();
+  });
+
+  it("diferencia os nomes acessíveis quando imagens repetem o mesmo alt", async () => {
+    getHomeImageMock.mockResolvedValue(null);
+    getAdminWorksMock.mockResolvedValue([
+      makeWork("w1", {
+        title: "Bancos em couro",
+        images: [
+          makeImage("a1", 0, { alt: "Detalhe do banco" }),
+          makeImage("a2", 1, { alt: "Detalhe do banco" }),
+        ],
+      }),
+    ]);
+
+    renderSettings();
+
+    expect(
+      await screen.findByRole("radio", { name: "imagem 1: Detalhe do banco" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: "imagem 2: Detalhe do banco" }),
+    ).toBeInTheDocument();
   });
 
   it("usa o workId como título quando a lista de candidatas falha, e 'Sem texto alternativo'", async () => {
@@ -211,7 +258,7 @@ describe("HomeImageSettings", () => {
 
     expect(
       await screen.findByRole("radio", {
-        name: "Banco dianteiro em couro (imagem atual da Home)",
+        name: "imagem 1: Banco dianteiro em couro (imagem atual da Home)",
       }),
     ).toBeChecked();
     expect(getHomeImageMock).toHaveBeenCalledTimes(2);
@@ -245,13 +292,13 @@ describe("HomeImageSettings", () => {
     renderSettings();
 
     const activeRadio = await screen.findByRole("radio", {
-      name: "Banco dianteiro em couro (imagem atual da Home)",
+      name: "imagem 1: Banco dianteiro em couro (imagem atual da Home)",
     });
     activeRadio.focus();
     await user.keyboard("{ArrowRight}");
 
     const second = screen.getByRole("radio", {
-      name: "Imagem 2 do trabalho Bancos em couro",
+      name: "imagem 2 do trabalho Bancos em couro",
     });
     expect(second).toHaveFocus();
     expect(second).toBeChecked();
@@ -261,7 +308,7 @@ describe("HomeImageSettings", () => {
 
     await user.keyboard("{ArrowRight}");
     expect(
-      screen.getByRole("radio", { name: "Painel em madeira" }),
+      screen.getByRole("radio", { name: "imagem 1: Painel em madeira" }),
     ).toBeChecked();
   });
 
@@ -273,7 +320,7 @@ describe("HomeImageSettings", () => {
     renderSettings();
 
     await user.click(
-      await screen.findByRole("radio", { name: "Painel em madeira" }),
+      await screen.findByRole("radio", { name: "imagem 1: Painel em madeira" }),
     );
     expect(screen.getByRole("button", SAVE)).toBeEnabled();
 
@@ -281,7 +328,7 @@ describe("HomeImageSettings", () => {
 
     expect(
       screen.getByRole("radio", {
-        name: "Banco dianteiro em couro (imagem atual da Home)",
+        name: "imagem 1: Banco dianteiro em couro (imagem atual da Home)",
       }),
     ).toBeChecked();
     expect(screen.getByRole("button", SAVE)).toBeDisabled();
@@ -298,11 +345,11 @@ describe("HomeImageSettings", () => {
     renderSettings();
 
     await user.click(
-      await screen.findByRole("radio", { name: "Painel em madeira" }),
+      await screen.findByRole("radio", { name: "imagem 1: Painel em madeira" }),
     );
     await user.click(
       screen.getByRole("radio", {
-        name: "Banco dianteiro em couro (imagem atual da Home)",
+        name: "imagem 1: Banco dianteiro em couro (imagem atual da Home)",
       }),
     );
 
@@ -326,7 +373,7 @@ describe("HomeImageSettings", () => {
     renderSettings();
 
     await user.click(
-      await screen.findByRole("radio", { name: "Painel em madeira" }),
+      await screen.findByRole("radio", { name: "imagem 1: Painel em madeira" }),
     );
     await user.click(screen.getByRole("button", SAVE));
 
@@ -353,7 +400,7 @@ describe("HomeImageSettings", () => {
     ).toHaveFocus();
     expect(
       screen.getByRole("radio", {
-        name: "Painel em madeira (imagem atual da Home)",
+        name: "imagem 1: Painel em madeira (imagem atual da Home)",
       }),
     ).toBeChecked();
     expect(screen.getAllByText("Na Home")).toHaveLength(1);
@@ -371,7 +418,7 @@ describe("HomeImageSettings", () => {
     renderSettings();
 
     await user.click(
-      await screen.findByRole("radio", { name: "Painel em madeira" }),
+      await screen.findByRole("radio", { name: "imagem 1: Painel em madeira" }),
     );
     const form = screen.getByRole("button", SAVE).closest("form");
     expect(form).not.toBeNull();
@@ -398,7 +445,7 @@ describe("HomeImageSettings", () => {
       renderSettings();
 
       await user.click(
-        await screen.findByRole("radio", { name: "Painel em madeira" }),
+        await screen.findByRole("radio", { name: "imagem 1: Painel em madeira" }),
       );
 
       // Após o refetch, o work w2 deixou de ser elegível.
@@ -417,12 +464,12 @@ describe("HomeImageSettings", () => {
       // Seleção derivada: a candidata sumiu → volta à ativa, sem alteração.
       await waitFor(() =>
         expect(
-          screen.queryByRole("radio", { name: "Painel em madeira" }),
+          screen.queryByRole("radio", { name: "imagem 1: Painel em madeira" }),
         ).not.toBeInTheDocument(),
       );
       expect(
         screen.getByRole("radio", {
-          name: "Banco dianteiro em couro (imagem atual da Home)",
+          name: "imagem 1: Banco dianteiro em couro (imagem atual da Home)",
         }),
       ).toBeChecked();
       expect(screen.getByRole("button", SAVE)).toBeDisabled();
@@ -439,7 +486,7 @@ describe("HomeImageSettings", () => {
     renderSettings();
 
     await user.click(
-      await screen.findByRole("radio", { name: "Painel em madeira" }),
+      await screen.findByRole("radio", { name: "imagem 1: Painel em madeira" }),
     );
 
     // Contrato: a referência salva é revalidada a cada leitura pública; o
@@ -457,13 +504,15 @@ describe("HomeImageSettings", () => {
     await waitFor(() =>
       expect(
         screen.queryByRole("radio", {
-          name: "Banco dianteiro em couro (imagem atual da Home)",
+          name: "imagem 1: Banco dianteiro em couro (imagem atual da Home)",
         }),
       ).not.toBeInTheDocument(),
     );
     expect(screen.queryByText("Na Home")).not.toBeInTheDocument();
     // A seleção pendente (w2/b1) continua válida e agora difere da ativa (null).
-    expect(screen.getByRole("radio", { name: "Painel em madeira" })).toBeChecked();
+    expect(
+      screen.getByRole("radio", { name: "imagem 1: Painel em madeira" }),
+    ).toBeChecked();
     expect(screen.getByRole("button", SAVE)).toBeEnabled();
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Este trabalho não está mais publicado. A lista foi atualizada; escolha outra imagem.",
@@ -503,7 +552,7 @@ describe("HomeImageSettings", () => {
     renderSettings();
 
     await user.click(
-      await screen.findByRole("radio", { name: "Painel em madeira" }),
+      await screen.findByRole("radio", { name: "imagem 1: Painel em madeira" }),
     );
     await user.click(screen.getByRole("button", SAVE));
 
@@ -513,11 +562,13 @@ describe("HomeImageSettings", () => {
     expect(getAdminWorksMock).toHaveBeenCalledTimes(1);
     expect(getHomeImageMock).toHaveBeenCalledTimes(1);
     // Mantém a seleção para nova tentativa.
-    expect(screen.getByRole("radio", { name: "Painel em madeira" })).toBeChecked();
+    expect(
+      screen.getByRole("radio", { name: "imagem 1: Painel em madeira" }),
+    ).toBeChecked();
     expect(screen.getByRole("button", SAVE)).toBeEnabled();
 
     await user.click(
-      screen.getByRole("radio", { name: "Imagem 2 do trabalho Bancos em couro" }),
+      screen.getByRole("radio", { name: "imagem 2 do trabalho Bancos em couro" }),
     );
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
