@@ -3,7 +3,11 @@ import { cn } from "@/lib/utils";
 import type { WorkImage } from "@/lib/api/works";
 
 type WorkImageThumbProps = {
-  image: WorkImage;
+  /**
+   * Apenas `url`/`alt` são usados; o tipo estreito permite reaproveitar o
+   * wrapper para a imagem da Home configurada no Admin (CARSHOP-161).
+   */
+  image: Pick<WorkImage, "url" | "alt">;
   /** Usado quando `image.alt` vem vazio do backend. */
   fallbackAlt: string;
   sizes: string;

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import type { Work, WorkImage } from '@/lib/api/works'
-import type { HomeWork } from '../_lib/select-home-works'
+import type { HomeHeroContent } from '../_lib/select-home-works'
 import { HomeHero } from './home-hero'
 
-function makeHero(alt = 'Interior em couro caramelo'): HomeWork {
+function makeHero(alt = 'Interior em couro caramelo'): HomeHeroContent {
   const image: WorkImage = {
     id: 'img-1',
     url: 'https://res.cloudinary.com/demo/img-1.jpg',
@@ -57,7 +57,7 @@ describe('HomeHero', () => {
     )
   })
 
-  it('com hero: imagem com priority (não lazy) e sizes do hero', () => {
+  it('com hero: imagem com preload (não lazy) e sizes do hero', () => {
     render(<HomeHero hero={makeHero()} />)
 
     const image = screen.getByAltText('Interior em couro caramelo')
@@ -82,5 +82,60 @@ describe('HomeHero', () => {
     render(<HomeHero hero={makeHero('')} />)
 
     expect(screen.getByAltText('Bronco 1972')).toBeInTheDocument()
+  })
+
+  it('com hero: wrapper 4:3 e figura com legenda quando o work é resolvido', () => {
+    const { container } = render(<HomeHero hero={makeHero()} />)
+
+    expect(container.querySelector('figure')).not.toBeNull()
+    expect(container.querySelector('figcaption')).not.toBeNull()
+    expect(container.querySelector('img')?.parentElement).toHaveClass('aspect-4/3')
+  })
+
+  describe('imagem configurada sem work resolvido', () => {
+    const configured: HomeHeroContent = {
+      image: { url: 'https://res.cloudinary.com/demo/home.jpg', alt: 'Banco bordado à mão' },
+      work: null,
+    }
+
+    it('renderiza a imagem sem figura, legenda ou link do projeto', () => {
+      const { container } = render(<HomeHero hero={configured} />)
+
+      expect(screen.getByAltText('Banco bordado à mão')).toBeInTheDocument()
+      expect(container.querySelector('figure')).toBeNull()
+      expect(container.querySelector('figcaption')).toBeNull()
+      expect(container.querySelector('a[href^="/portfolio/"]')).toBeNull()
+    })
+
+    it('mantém layout de duas colunas, preload e sizes', () => {
+      const { container } = render(<HomeHero hero={configured} />)
+
+      const image = container.querySelector('img')
+      expect(image).not.toHaveAttribute('loading', 'lazy')
+      expect(image).toHaveAttribute(
+        'sizes',
+        '(min-width: 1280px) 660px, (min-width: 1024px) 55vw, 100vw',
+      )
+      expect(image?.parentElement).toHaveClass('aspect-4/3')
+      expect(container.querySelector('.lg\\:grid-cols-12')).not.toBeNull()
+    })
+
+    it('alt vazio sem work: imagem decorativa (alt="")', () => {
+      const { container } = render(
+        <HomeHero hero={{ ...configured, image: { ...configured.image, alt: '' } }} />,
+      )
+
+      const image = container.querySelector('img')
+      expect(image).toHaveAttribute('alt', '')
+      expect(screen.queryByRole('img')).not.toBeInTheDocument()
+    })
+  })
+
+  it('alt configurado tem precedência sobre o título do work', () => {
+    const hero = makeHero()
+    render(<HomeHero hero={{ ...hero, image: { url: hero.image.url, alt: 'Alt do Admin' } }} />)
+
+    expect(screen.getByAltText('Alt do Admin')).toBeInTheDocument()
+    expect(screen.queryByAltText('Bronco 1972')).not.toBeInTheDocument()
   })
 })

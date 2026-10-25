@@ -4,6 +4,7 @@ import { useId, useRef, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { revalidateHomeImageTag } from "@/app/(admin)/admin/actions";
 import type { HomeImage } from "@/lib/api/home-image";
 import {
   getHomeImage,
@@ -30,8 +31,11 @@ import { useHomeImageCandidates } from "./use-home-image-candidates";
  * lê a imagem atual (`GET /home-image`) e as candidatas, e salva a nova
  * seleção (`PATCH /admin/home-image`) apenas com `{ workId, imageId }`.
  *
- * Ponto de extensão para CARSHOP-161 (revalidação da Home pública): o
- * `onSuccess` da mutação.
+ * Revalidação da Home pública (CARSHOP-161): o `onSuccess` da mutação
+ * dispara `revalidateHomeImageTag()` (fire-and-forget) para invalidar o
+ * fetch server-side de `GET /home-image`. Uma falha dessa invalidação não
+ * desfaz o salvamento — a janela `revalidate` do fetch é a rede de
+ * segurança.
  */
 export function HomeImageSettings() {
   const queryClient = useQueryClient();
@@ -56,6 +60,9 @@ export function HomeImageSettings() {
     mutationFn: setHomeImage,
     onSuccess: (image) => {
       queryClient.setQueryData<HomeImage | null>(homeImageQueryKey, image);
+      void revalidateHomeImageTag().catch((error: unknown) =>
+        console.error("Falha ao revalidar a imagem da Home:", error),
+      );
       setPendingSelection(null);
       toast.success("Imagem da Home atualizada.");
       currentHeadingRef.current?.focus();

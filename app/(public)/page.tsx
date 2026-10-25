@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { clientEnv } from "@/lib/env/client"
+import { getHomeImage, type HomeImage } from "@/lib/api/home-image.server"
 import { getWorks, type Work } from "@/lib/api/works"
 import { selectHomeWorks } from "./_lib/select-home-works"
 import { HomeHero } from "./_components/home-hero"
@@ -21,17 +22,32 @@ export const metadata: Metadata = {
 }
 
 export default async function HomePage() {
-  let works: Work[] = []
+  const [worksResult, homeImageResult] = await Promise.allSettled([
+    getWorks(),
+    getHomeImage(),
+  ])
 
-  try {
-    works = await getWorks()
-  } catch (error) {
-    // Degradação silenciosa: a Home continua útil sem a API (Hero
-    // tipográfico + Final CTA), sem toast nem mensagem de estado.
-    console.error("Falha ao buscar works na Home:", error)
+  // Degradação silenciosa e independente: a Home continua útil sem a API
+  // (Hero tipográfico + Final CTA) e, sem a imagem configurada, usa o
+  // fallback de `selectHomeWorks` — sem toast nem mensagem de estado.
+  let works: Work[] = []
+  if (worksResult.status === "fulfilled") {
+    works = worksResult.value
+  } else {
+    console.error("Falha ao buscar works na Home:", worksResult.reason)
   }
 
-  const { hero, featured } = selectHomeWorks(works)
+  let homeImage: HomeImage | null = null
+  if (homeImageResult.status === "fulfilled") {
+    homeImage = homeImageResult.value
+  } else {
+    console.error(
+      "Falha ao buscar a imagem principal da Home:",
+      homeImageResult.reason,
+    )
+  }
+
+  const { hero, featured } = selectHomeWorks(works, homeImage)
 
   return (
     <>
