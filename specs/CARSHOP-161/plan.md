@@ -259,13 +259,52 @@ Verifiable: `npm run test -- lib/api/home-image` green; `npm run typecheck`.
      alt behavior.
 7. **No commits** unless explicitly requested by the user.
 
+### Phase 7 — Post-review: recover from an unavailable remote asset
+
+This phase addresses the review finding that an allowed Cloudinary URL can
+still return `404` or fail in the browser. It does not change the backend
+contract, cache strategy, or primary server-side selection.
+
+1. Keep `HomePage` and `HomeHero` as Server Components. Add a route-local
+   Client Component at the smallest boundary inside the Hero, responsible only
+   for the responsive grid, current media/caption and `next/image` `onError`.
+   Pass the server-rendered headline/copy/CTAs as `children`; do not clientify
+   `PageSection`, `HomeCtaActions`, `Button`, `FeaturedWorks`, or the page.
+2. `HomeHero` converts the primary `hero` and the cover images already present
+   in `featured` into narrow, serializable media candidates (image URL/alt plus
+   optional real caption data). Reuse `isAllowedRemoteImageUrl` for every
+   candidate and deduplicate by URL while preserving order.
+3. The client boundary renders the primary candidate first. On a resource
+   error, advance through eligible covers in order; caption/link/alt always
+   follow the active candidate. When all candidates fail, remove media,
+   caption and link and switch to the existing typographic Hero layout.
+4. Only the primary candidate uses `preload`. Candidates activated after an
+   error use `loading="eager"`; keep `fill`, the existing `sizes`,
+   `aspect-4/3`, and `object-cover`. Key the rendered image by URL and reset the
+   interactive boundary when the candidate URL list changes after navigation
+   or revalidation. Preserve the media container while switching candidates so
+   those retries do not cause layout shift.
+5. Add focused tests for: primary error -> first eligible cover; caption/link/
+   alt update; successive errors; duplicate or disallowed URLs skipped;
+   exhaustion -> typographic Hero with headline/CTAs intact; configured image
+   without a resolved work; `preload` only on the primary and eager loading on
+   fallbacks. Cover an error observed before hydration if the implementation
+   includes the architect-recommended completed-image/ref guard.
+6. Update the Home row in `docs/rules/rendering.md`: the page remains ISR and a
+   Server Component, with one isolated Client island in the Hero solely for
+   resource-load recovery.
+
+Verifiable: focused Hero tests pass, then repeat Phase 6 validation. Runtime
+validation must include a configured allowed URL whose resource returns an
+error and confirm both cover fallback and eventual typographic degradation.
+
 ## DoD → steps mapping
 
 | Spec scope / DoD item | Phase / step |
 | --- | --- |
 | Home reads real `GET /home-image`; configured image is primary | Phases 1, 2, 4 |
 | Admin change reflected without redeploy | Phase 5 + tags/revalidate (Phase 1) |
-| Safe fallback for `null`/failure/unavailable asset | Phases 1 (parse), 2 (allowlist, fallback), 4 |
+| Safe fallback for `null`/request failure/invalid host/unavailable asset | Phases 1 (parse), 2 (allowlist, fallback), 4, 7 |
 | `next/image` preload, `sizes`, stable aspect ratio | Phase 3 |
 | Alt only from real data | Phase 3 |
 | Featured de-duplication | Phase 2 |

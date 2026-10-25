@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
 import type { Work, WorkImage } from '@/lib/api/works'
-import type { HomeHeroContent } from '../_lib/select-home-works'
+import type { HomeHeroContent, HomeWork } from '../_lib/select-home-works'
 import { HomeHero } from './home-hero'
 
 function makeHero(alt = 'Interior em couro caramelo'): HomeHeroContent {
@@ -28,6 +28,38 @@ function makeHero(alt = 'Interior em couro caramelo'): HomeHeroContent {
     updatedAt: '2024-01-02T00:00:00.000Z',
     deletedAt: null,
   }
+  return { work, image }
+}
+
+function makeFeatured(
+  id: string,
+  overrides: Partial<Pick<WorkImage, 'url' | 'alt'>> = {},
+): HomeWork {
+  const image: WorkImage = {
+    id: `img-${id}`,
+    url: `https://res.cloudinary.com/demo/img-${id}.jpg`,
+    publicId: `img-${id}`,
+    alt: `Interior ${id}`,
+    isCover: true,
+    order: 0,
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-02T00:00:00.000Z',
+    ...overrides,
+  }
+  const work: Work = {
+    id,
+    slug: `project-${id}`,
+    title: `Project ${id}`,
+    description: 'Descrição',
+    category: `categoria ${id}`,
+    tags: [],
+    images: [image],
+    status: 'published',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-02T00:00:00.000Z',
+    deletedAt: null,
+  }
+
   return { work, image }
 }
 
@@ -137,5 +169,113 @@ describe('HomeHero', () => {
 
     expect(screen.getByAltText('Alt do Admin')).toBeInTheDocument()
     expect(screen.queryByAltText('Bronco 1972')).not.toBeInTheDocument()
+  })
+
+  describe('falha real no carregamento do asset remoto', () => {
+    it('troca para a primeira capa elegível com alt, legenda, link e eager loading', () => {
+      const configured: HomeHeroContent = {
+        image: {
+          url: 'https://res.cloudinary.com/demo/home.jpg',
+          alt: 'Imagem configurada',
+        },
+        work: null,
+      }
+      const fallback = makeFeatured('2')
+
+      render(<HomeHero hero={configured} featured={[fallback]} />)
+
+      const primary = screen.getByAltText('Imagem configurada')
+      expect(primary).not.toHaveAttribute('loading', 'lazy')
+
+      fireEvent.error(primary)
+
+      const recovered = screen.getByAltText('Interior 2')
+      expect(recovered).toHaveAttribute('loading', 'eager')
+      expect(screen.getByText('categoria 2')).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Project 2' })).toHaveAttribute(
+        'href',
+        '/portfolio/project-2',
+      )
+    })
+
+    it('ignora URLs repetidas ou não permitidas e percorre os próximos candidatos', () => {
+      const hero = makeHero()
+      const duplicate = makeFeatured('2', { url: hero.image.url })
+      const disallowed = makeFeatured('3', { url: 'https://cdn.example.com/img-3.jpg' })
+      const firstEligible = makeFeatured('4')
+      const secondEligible = makeFeatured('5')
+
+      render(
+        <HomeHero
+          hero={hero}
+          featured={[duplicate, disallowed, firstEligible, secondEligible]}
+        />,
+      )
+
+      fireEvent.error(screen.getByAltText('Interior em couro caramelo'))
+      expect(screen.getByAltText('Interior 4')).toBeInTheDocument()
+
+      fireEvent.error(screen.getByAltText('Interior 4'))
+      expect(screen.getByAltText('Interior 5')).toBeInTheDocument()
+    })
+
+    it('ao esgotar os candidatos remove mídia e legenda e mantém o Hero tipográfico', () => {
+      const fallback = makeFeatured('2')
+      const { container } = render(
+        <HomeHero hero={makeHero()} featured={[fallback]} />,
+      )
+
+      fireEvent.error(screen.getByAltText('Interior em couro caramelo'))
+      fireEvent.error(screen.getByAltText('Interior 2'))
+
+      expect(container.querySelector('img')).toBeNull()
+      expect(container.querySelector('figure')).toBeNull()
+      expect(container.querySelector('figcaption')).toBeNull()
+      expect(container.querySelector('.lg\\:grid-cols-12')).toBeNull()
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: 'Crafted for your car. Built for the road.',
+        }),
+      ).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'View Our Work' })).toBeInTheDocument()
+    })
+
+    it('recupera uma falha concluída antes da hidratação', async () => {
+      const completeSpy = vi
+        .spyOn(HTMLImageElement.prototype, 'complete', 'get')
+        .mockReturnValue(true)
+      const currentSrcSpy = vi
+        .spyOn(HTMLImageElement.prototype, 'currentSrc', 'get')
+        .mockImplementation(function (this: HTMLImageElement) {
+          return this.alt === 'Imagem configurada' ? this.src : ''
+        })
+      const naturalWidthSpy = vi
+        .spyOn(HTMLImageElement.prototype, 'naturalWidth', 'get')
+        .mockImplementation(function (this: HTMLImageElement) {
+          return this.alt === 'Imagem configurada' ? 0 : 640
+        })
+
+      try {
+        render(
+          <HomeHero
+            hero={{
+              image: {
+                url: 'https://res.cloudinary.com/demo/home.jpg',
+                alt: 'Imagem configurada',
+              },
+              work: null,
+            }}
+            featured={[makeFeatured('2')]}
+          />,
+        )
+
+        expect(await screen.findByAltText('Interior 2')).toBeInTheDocument()
+      } finally {
+        completeSpy.mockRestore()
+        currentSrcSpy.mockRestore()
+        naturalWidthSpy.mockRestore()
+      }
+    })
   })
 })

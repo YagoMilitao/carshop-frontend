@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import type { HomeImage } from '@/lib/api/home-image'
 import type { Work, WorkImage } from '@/lib/api/works'
 
@@ -323,6 +323,27 @@ describe('HomePage (public)', () => {
       expect(within(heroSection).getByRole('link', { name: 'Work 3' })).toHaveAttribute(
         'href',
         '/portfolio/work-3',
+      )
+    })
+
+    it('usa a primeira capa de featured quando o asset configurado falha no navegador', async () => {
+      getWorksMock.mockResolvedValue(works)
+      getHomeImageMock.mockResolvedValue(homeImage)
+      const { container } = await renderHome()
+
+      fireEvent.error(screen.getByAltText('Imagem escolhida no Admin'))
+
+      const heroSection = container.querySelector<HTMLElement>(
+        'section[aria-labelledby="home-hero-heading"]',
+      )
+      expect(heroSection).not.toBeNull()
+      if (!heroSection) return
+
+      const fallback = within(heroSection).getByAltText('Interior 1-cover')
+      expect(fallback).toHaveAttribute('loading', 'eager')
+      expect(within(heroSection).getByRole('link', { name: 'Work 1' })).toHaveAttribute(
+        'href',
+        '/portfolio/work-1',
       )
     })
 

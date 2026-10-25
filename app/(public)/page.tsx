@@ -51,7 +51,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <HomeHero hero={hero} />
+      <HomeHero hero={hero} featured={featured} />
       {featured.length >= 1 && <FeaturedWorks featured={featured} />}
       <FinalCta />
     </>
