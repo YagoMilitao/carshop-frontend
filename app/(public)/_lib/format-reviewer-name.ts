@@ -25,7 +25,7 @@ export function formatReviewerName(authorName: string): string | null {
   }
 
   for (let index = rest.length - 1; index >= 0; index -= 1) {
-    const letter = rest[index]?.match(LETTER_PATTERN)?.[0]
+    const letter = LETTER_PATTERN.exec(rest[index] ?? "")?.[0]
 
     if (letter !== undefined) {
       return `${first} ${letter.toLocaleUpperCase("en-US")}.`

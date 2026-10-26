@@ -78,15 +78,16 @@ export function selectHomeReviews(
     })
   }
 
-  return candidates
-    .sort((a, b) => {
-      if (a.timestamp !== b.timestamp) {
-        return b.timestamp - a.timestamp
-      }
+  candidates.sort((a, b) => {
+    if (a.timestamp !== b.timestamp) {
+      return b.timestamp - a.timestamp
+    }
 
-      // `id`s já deduplicados: nunca iguais aqui.
-      return a.review.id < b.review.id ? -1 : 1
-    })
+    // `id`s já deduplicados: nunca iguais aqui.
+    return a.review.id < b.review.id ? -1 : 1
+  })
+
+  return candidates
     .slice(0, HOME_REVIEWS_LIMIT)
     .map(({ review }) => review)
 }
