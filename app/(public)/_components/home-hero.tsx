@@ -1,69 +1,86 @@
-import Link from "next/link"
-import { LuArrowRight } from "react-icons/lu"
-import { WorkImageThumb } from "@/components/gallery/work-image-thumb"
 import { PageSection } from "@/components/layout/page-section"
-import { cn } from "@/lib/utils"
-import type { HomeWork } from "../_lib/select-home-works"
+import { isAllowedRemoteImageUrl } from "../_lib/is-allowed-remote-image-url"
+import type {
+  HomeHeroContent,
+  HomeWork,
+} from "../_lib/select-home-works"
 import { HomeCtaActions } from "./home-cta-actions"
+import {
+  HomeHeroLayout,
+  type HeroMediaCandidate,
+} from "./home-hero-layout"
 
 type HomeHeroProps = {
-  hero: HomeWork | null
+  hero: HomeHeroContent | null
+  featured?: readonly HomeWork[]
 }
 
-export function HomeHero({ hero }: Readonly<HomeHeroProps>) {
+/**
+ * Converte os dados de domínio em candidatos estreitos e serializáveis para a
+ * ilha Client. A ordem é estável: imagem principal e depois capas de featured.
+ */
+function createMediaCandidates(
+  hero: HomeHeroContent | null,
+  featured: readonly HomeWork[],
+): HeroMediaCandidate[] {
+  if (!hero) return []
+
+  const sources: readonly HomeHeroContent[] = [hero, ...featured]
+  const seenUrls = new Set<string>()
+  const candidates: HeroMediaCandidate[] = []
+
+  for (const source of sources) {
+    if (
+      seenUrls.has(source.image.url) ||
+      !isAllowedRemoteImageUrl(source.image.url)
+    ) {
+      continue
+    }
+
+    seenUrls.add(source.image.url)
+    candidates.push({
+      image: {
+        url: source.image.url,
+        alt: source.image.alt || source.work?.title || "",
+      },
+      caption: source.work
+        ? {
+            category: source.work.category,
+            title: source.work.title,
+            href: `/portfolio/${source.work.slug}`,
+          }
+        : null,
+    })
+  }
+
+  return candidates
+}
+
+export function HomeHero({
+  hero,
+  featured = [],
+}: Readonly<HomeHeroProps>) {
+  const candidates = createMediaCandidates(hero, featured)
+  const candidatesKey = candidates
+    .map((candidate) => candidate.image.url)
+    .join("\n")
+
   return (
     <PageSection spacing="compact" aria-labelledby="home-hero-heading">
-      <div
-        className={cn(
-          "grid grid-cols-1 gap-10",
-          hero && "lg:grid-cols-12 lg:items-center lg:gap-12",
-        )}
-      >
-        <div
-          className={cn(
-            "flex flex-col gap-6",
-            hero ? "lg:col-span-5" : "max-w-5xl",
-          )}
+      <HomeHeroLayout key={candidatesKey} candidates={candidates}>
+        <h1
+          id="home-hero-heading"
+          className="text-display-xl text-foreground"
         >
-          <h1
-            id="home-hero-heading"
-            className="text-display-xl text-foreground"
-          >
-            Crafted for your car. Built for the road.
-          </h1>
-          <p className="text-body-lg text-secondary-foreground">
-            Upholstery · Restoration · Custom Work
-          </p>
-          <div className="pt-2">
-            <HomeCtaActions />
-          </div>
+          Crafted for your car. Built for the road.
+        </h1>
+        <p className="text-body-lg text-secondary-foreground">
+          Upholstery · Restoration · Custom Work
+        </p>
+        <div className="pt-2">
+          <HomeCtaActions />
         </div>
-
-        {hero && (
-          <figure className="flex flex-col gap-3 lg:col-span-7">
-            {/* Único `priority` da página: imagem crítica acima da dobra. */}
-            <WorkImageThumb
-              image={hero.image}
-              fallbackAlt={hero.work.title}
-              sizes="(min-width: 1280px) 660px, (min-width: 1024px) 55vw, 100vw"
-              priority
-              className="aspect-4/3"
-            />
-            <figcaption className="flex flex-col gap-1">
-              <span className="text-label text-muted-foreground">
-                {hero.work.category}
-              </span>
-              <Link
-                href={`/portfolio/${hero.work.slug}`}
-                className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg text-body font-semibold text-foreground outline-hidden hover:text-primary focus-visible:ring-3 focus-visible:ring-focus-ring"
-              >
-                {hero.work.title}
-                <LuArrowRight aria-hidden="true" className="size-4 shrink-0" />
-              </Link>
-            </figcaption>
-          </figure>
-        )}
-      </div>
+      </HomeHeroLayout>
     </PageSection>
   )
 }

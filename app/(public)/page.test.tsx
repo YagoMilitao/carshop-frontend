@@ -1,8 +1,10 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, within } from '@testing-library/react'
+import type { HomeImage } from '@/lib/api/home-image'
 import type { Work, WorkImage } from '@/lib/api/works'
 
 const getWorksMock = vi.fn<() => Promise<Work[]>>()
+const getHomeImageMock = vi.fn<() => Promise<HomeImage | null>>()
 const toastErrorMock = vi.fn()
 
 vi.mock('server-only', () => ({}))
@@ -10,6 +12,10 @@ vi.mock('server-only', () => ({}))
 vi.mock('@/lib/api/works', () => ({
   getWorks: () => getWorksMock(),
   getCoverImage: (work: Work) => work.images.find((image) => image.isCover),
+}))
+
+vi.mock('@/lib/api/home-image.server', () => ({
+  getHomeImage: () => getHomeImageMock(),
 }))
 
 vi.mock('sonner', () => ({
@@ -66,6 +72,10 @@ function expectDegradedHome() {
 }
 
 describe('HomePage (public)', () => {
+  beforeEach(() => {
+    getHomeImageMock.mockResolvedValue(null)
+  })
+
   afterEach(() => {
     vi.clearAllMocks()
     vi.restoreAllMocks()
@@ -272,6 +282,175 @@ describe('HomePage (public)', () => {
     expect(metadata.alternates?.canonical).toBe('http://localhost:3000/')
     expect(metadata.openGraph).toMatchObject({
       description: 'Automotive upholstery, restoration and custom interior work.',
+    })
+  })
+
+  describe('com imagem principal configurada no Admin (GET /home-image)', () => {
+    const works = ['1', '2', '3', '4', '5'].map((id) => makeWork(id))
+    const homeImage: HomeImage = {
+      workId: '3',
+      imageId: 'home-img',
+      url: 'https://res.cloudinary.com/demo/home.jpg',
+      alt: 'Imagem escolhida no Admin',
+    }
+
+    function getOurWorkHrefs(): (string | null)[] {
+      const section = screen
+        .getByRole('heading', { level: 2, name: 'Our Work' })
+        .closest('section')
+      if (!section) return []
+
+      return within(section)
+        .getAllByRole('link')
+        .map((link) => link.getAttribute('href'))
+        .filter((href) => href?.startsWith('/portfolio/'))
+    }
+
+    it('usa a imagem configurada como Hero (única não lazy) com legenda do work resolvido', async () => {
+      getWorksMock.mockResolvedValue(works)
+      getHomeImageMock.mockResolvedValue(homeImage)
+      const { container } = await renderHome()
+
+      const preloaded = screen
+        .getAllByRole('img')
+        .filter((image) => image.getAttribute('loading') !== 'lazy')
+      expect(preloaded).toHaveLength(1)
+      expect(preloaded[0]).toHaveAttribute('alt', 'Imagem escolhida no Admin')
+
+      const heroSection = container.querySelector<HTMLElement>('section[aria-labelledby="home-hero-heading"]')
+      expect(heroSection).not.toBeNull()
+      if (!heroSection) return
+      expect(within(heroSection).getByRole('link', { name: 'Work 3' })).toHaveAttribute(
+        'href',
+        '/portfolio/work-3',
+      )
+    })
+
+    it('usa a primeira capa de featured quando o asset configurado falha no navegador', async () => {
+      getWorksMock.mockResolvedValue(works)
+      getHomeImageMock.mockResolvedValue(homeImage)
+      const { container } = await renderHome()
+
+      fireEvent.error(screen.getByAltText('Imagem escolhida no Admin'))
+
+      const heroSection = container.querySelector<HTMLElement>(
+        'section[aria-labelledby="home-hero-heading"]',
+      )
+      expect(heroSection).not.toBeNull()
+      if (!heroSection) return
+
+      const fallback = within(heroSection).getByAltText('Interior 1-cover')
+      expect(fallback).toHaveAttribute('loading', 'eager')
+      expect(within(heroSection).getByRole('link', { name: 'Work 1' })).toHaveAttribute(
+        'href',
+        '/portfolio/work-1',
+      )
+    })
+
+    it('não repete o work de origem em "Our Work"', async () => {
+      getWorksMock.mockResolvedValue(works)
+      getHomeImageMock.mockResolvedValue(homeImage)
+      await renderHome()
+
+      expect(getOurWorkHrefs()).toEqual([
+        '/portfolio/work-1',
+        '/portfolio/work-2',
+        '/portfolio/work-4',
+      ])
+    })
+
+    it('imagem null: Hero é a capa do primeiro work (comportamento atual)', async () => {
+      getWorksMock.mockResolvedValue(works)
+      getHomeImageMock.mockResolvedValue(null)
+      await renderHome()
+
+      expect(screen.getByAltText('Interior 1-cover')).not.toHaveAttribute('loading', 'lazy')
+      expect(getOurWorkHrefs()).toEqual([
+        '/portfolio/work-2',
+        '/portfolio/work-3',
+        '/portfolio/work-4',
+      ])
+    })
+
+    it('getHomeImage() falha: fallback, console.error e nenhum toast', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      getWorksMock.mockResolvedValue(works)
+      getHomeImageMock.mockRejectedValue(new Error('429'))
+      await renderHome()
+
+      expect(screen.getByAltText('Interior 1-cover')).not.toHaveAttribute('loading', 'lazy')
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Falha ao buscar a imagem principal da Home:',
+        expect.any(Error),
+      )
+      expect(toastErrorMock).not.toHaveBeenCalled()
+    })
+
+    it('ambas as chamadas falham: Home degradada com um console.error por falha', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      getWorksMock.mockRejectedValue(new Error('works off'))
+      getHomeImageMock.mockRejectedValue(new Error('home-image off'))
+      await renderHome()
+
+      expectDegradedHome()
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(2)
+    })
+
+    it('works falha e imagem configurada: Hero com imagem, sem legenda nem "Our Work"', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      getWorksMock.mockRejectedValue(new Error('works off'))
+      getHomeImageMock.mockResolvedValue(homeImage)
+      const { container } = await renderHome()
+
+      expect(screen.getAllByRole('img')).toHaveLength(1)
+      expect(screen.getByAltText('Imagem escolhida no Admin')).toBeInTheDocument()
+      expect(container.querySelector('figcaption')).toBeNull()
+      expect(container.querySelector('a[href^="/portfolio/"]')).toBeNull()
+      expect(screen.queryByRole('heading', { name: 'Our Work' })).not.toBeInTheDocument()
+    })
+
+    it('alt vazio com work resolvido: usa o título do work como alt', async () => {
+      getWorksMock.mockResolvedValue(works)
+      getHomeImageMock.mockResolvedValue({ ...homeImage, alt: '' })
+      await renderHome()
+
+      const preloaded = screen
+        .getAllByRole('img')
+        .filter((image) => image.getAttribute('loading') !== 'lazy')
+      expect(preloaded).toHaveLength(1)
+      expect(preloaded[0]).toHaveAttribute('alt', 'Work 3')
+      expect(preloaded[0]).toHaveAttribute('src', expect.stringContaining('home.jpg'))
+    })
+
+    it('alt vazio com work não resolvido: imagem decorativa, sem legenda', async () => {
+      getWorksMock.mockResolvedValue(works)
+      getHomeImageMock.mockResolvedValue({ ...homeImage, workId: 'removido', alt: '' })
+      const { container } = await renderHome()
+
+      const heroSection = container.querySelector<HTMLElement>(
+        'section[aria-labelledby="home-hero-heading"]',
+      )
+      expect(heroSection).not.toBeNull()
+      if (!heroSection) return
+      const heroImage = heroSection.querySelector('img')
+      expect(heroImage).toHaveAttribute('alt', '')
+      expect(heroImage).toHaveAttribute('src', expect.stringContaining('home.jpg'))
+      expect(heroSection.querySelector('figure')).toBeNull()
+      expect(heroSection.querySelector('a[href^="/portfolio/"]')).toBeNull()
+      expect(getOurWorkHrefs()).toEqual([
+        '/portfolio/work-1',
+        '/portfolio/work-2',
+        '/portfolio/work-3',
+      ])
+    })
+
+    it('host não permitido: fallback para a capa do primeiro work', async () => {
+      getWorksMock.mockResolvedValue(works)
+      getHomeImageMock.mockResolvedValue({ ...homeImage, url: 'https://cdn.example.com/home.jpg' })
+      await renderHome()
+
+      expect(screen.queryByAltText('Imagem escolhida no Admin')).not.toBeInTheDocument()
+      expect(screen.getByAltText('Interior 1-cover')).not.toHaveAttribute('loading', 'lazy')
     })
   })
 })

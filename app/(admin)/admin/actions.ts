@@ -3,6 +3,7 @@
 import { updateTag } from "next/cache";
 
 import { workCommentsTag } from "@/lib/api/comments";
+import { HOME_IMAGE_TAG } from "@/lib/api/home-image";
 
 /**
  * Server Actions restritas a invalidação do Next Data Cache. **Nunca**
@@ -21,9 +22,17 @@ import { workCommentsTag } from "@/lib/api/comments";
  */
 
 export async function revalidateWorksTag(): Promise<void> {
-  updateTag("works");
+  await updateTag("works");
 }
 
 export async function revalidateCommentsTag(workId: string): Promise<void> {
-  updateTag(workCommentsTag(workId));
+  await updateTag(workCommentsTag(workId));
+}
+
+/**
+ * Invalida o fetch server-side de `GET /home-image` usado pela Home pública
+ * (CARSHOP-161). Chamada após salvar a seleção em `/admin/imagem-da-home`.
+ */
+export async function revalidateHomeImageTag(): Promise<void> {
+  await updateTag(HOME_IMAGE_TAG);
 }

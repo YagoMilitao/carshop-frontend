@@ -11,6 +11,8 @@ function removeTrailingSlashes(value) {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    // Espelhado por `app/(public)/_lib/is-allowed-remote-image-url.ts`
+    // (fallback da imagem da Home): manter ambos sincronizados.
     remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com" }],
   },
   async redirects() {

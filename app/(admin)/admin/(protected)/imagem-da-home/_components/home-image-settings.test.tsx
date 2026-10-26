@@ -14,6 +14,7 @@ const setHomeImageMock =
   vi.fn<(payload: SetHomeImagePayload) => Promise<HomeImage>>();
 const getAdminWorksMock = vi.fn<() => Promise<Work[]>>();
 const toastSuccessMock = vi.fn();
+const revalidateHomeImageTagMock = vi.fn<() => Promise<void>>();
 const toastErrorMock = vi.fn();
 
 vi.mock("@/lib/api/home-image.client", () => ({
@@ -25,6 +26,10 @@ vi.mock("@/lib/api/home-image.client", () => ({
 vi.mock("@/lib/api/works.client", () => ({
   adminWorksQueryKey: ["admin", "works"],
   getAdminWorks: () => getAdminWorksMock(),
+}));
+
+vi.mock("@/app/(admin)/admin/actions", () => ({
+  revalidateHomeImageTag: () => revalidateHomeImageTagMock(),
 }));
 
 vi.mock("sonner", () => ({
@@ -97,6 +102,7 @@ const SAVE = { name: "Salvar imagem da Home" } as const;
 describe("HomeImageSettings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    revalidateHomeImageTagMock.mockResolvedValue(undefined);
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
@@ -571,5 +577,77 @@ describe("HomeImageSettings", () => {
       screen.getByRole("radio", { name: "imagem 2 do trabalho Bancos em couro" }),
     );
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  describe("revalidação da Home pública (CARSHOP-161)", () => {
+    const saved: HomeImage = {
+      workId: "w2",
+      imageId: "b1",
+      url: "https://res.cloudinary.com/demo/image/upload/b1.jpg",
+      alt: "Painel em madeira",
+    };
+
+    async function selectAndSave(user: ReturnType<typeof userEvent.setup>) {
+      await user.click(
+        await screen.findByRole("radio", { name: "imagem 1: Painel em madeira" }),
+      );
+      await user.click(screen.getByRole("button", SAVE));
+    }
+
+    it("chama revalidateHomeImageTag uma vez após salvar com sucesso", async () => {
+      const user = userEvent.setup();
+      getHomeImageMock.mockResolvedValue(activeImage);
+      getAdminWorksMock.mockResolvedValue(works);
+      setHomeImageMock.mockResolvedValue(saved);
+
+      renderSettings();
+      await selectAndSave(user);
+
+      await waitFor(() =>
+        expect(toastSuccessMock).toHaveBeenCalledWith("Imagem da Home atualizada."),
+      );
+      expect(revalidateHomeImageTagMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("não chama revalidateHomeImageTag quando o salvamento falha", async () => {
+      const user = userEvent.setup();
+      getHomeImageMock.mockResolvedValue(activeImage);
+      getAdminWorksMock.mockResolvedValue(works);
+      setHomeImageMock.mockRejectedValue(createAxiosError(500));
+
+      renderSettings();
+      await selectAndSave(user);
+
+      expect(await screen.findByRole("alert")).toBeInTheDocument();
+      expect(revalidateHomeImageTagMock).not.toHaveBeenCalled();
+    });
+
+    it("falha da revalidação não afeta o sucesso do salvamento e é registrada", async () => {
+      const user = userEvent.setup();
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      const failure = new Error("revalidate failed");
+      revalidateHomeImageTagMock.mockRejectedValue(failure);
+      getHomeImageMock.mockResolvedValue(activeImage);
+      getAdminWorksMock.mockResolvedValue(works);
+      setHomeImageMock.mockResolvedValue(saved);
+
+      renderSettings();
+      await selectAndSave(user);
+
+      await waitFor(() =>
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "Falha ao revalidar a imagem da Home:",
+          failure,
+        ),
+      );
+      expect(toastSuccessMock).toHaveBeenCalledWith("Imagem da Home atualizada.");
+      expect(toastErrorMock).not.toHaveBeenCalled();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(queryClient.getQueryData(["home-image"])).toEqual(saved);
+
+      consoleErrorSpy.mockRestore();
+    });
   });
 });

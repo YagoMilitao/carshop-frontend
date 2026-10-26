@@ -11,7 +11,11 @@ vi.mock("next/cache", () => ({
   updateTag: (...args: unknown[]) => updateTagMock(...args),
 }));
 
-import { revalidateCommentsTag, revalidateWorksTag } from "./actions";
+import {
+  revalidateCommentsTag,
+  revalidateHomeImageTag,
+  revalidateWorksTag,
+} from "./actions";
 import { workCommentsTag } from "@/lib/api/comments";
 
 describe("app/(admin)/admin/actions", () => {
@@ -32,6 +36,15 @@ describe("app/(admin)/admin/actions", () => {
       await revalidateCommentsTag("work-1");
 
       expect(updateTagMock).toHaveBeenCalledWith(workCommentsTag("work-1"));
+    });
+  });
+
+  describe("revalidateHomeImageTag", () => {
+    it("chama updateTag('home-image')", async () => {
+      await revalidateHomeImageTag();
+
+      expect(updateTagMock).toHaveBeenCalledTimes(1);
+      expect(updateTagMock).toHaveBeenCalledWith("home-image");
     });
   });
 });
