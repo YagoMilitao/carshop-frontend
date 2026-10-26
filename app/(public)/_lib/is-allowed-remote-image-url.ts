@@ -5,7 +5,7 @@
  * Uma URL fora desta lista faria `next/image` lançar no render; a Home
  * trata essa URL como ausente e usa o fallback (CARSHOP-161).
  */
-const ALLOWED_REMOTE_IMAGE_HOSTS: readonly string[] = ["res.cloudinary.com"]
+const ALLOWED_REMOTE_IMAGE_HOSTS: ReadonlySet<string> = new Set(["res.cloudinary.com"])
 
 export function isAllowedRemoteImageUrl(url: string): boolean {
   let parsed: URL
@@ -16,5 +16,5 @@ export function isAllowedRemoteImageUrl(url: string): boolean {
     return false
   }
 
-  return parsed.protocol === "https:" && ALLOWED_REMOTE_IMAGE_HOSTS.includes(parsed.hostname)
+  return parsed.protocol === "https:" && ALLOWED_REMOTE_IMAGE_HOSTS.has(parsed.hostname)
 }

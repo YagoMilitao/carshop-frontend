@@ -22,11 +22,11 @@ import { HOME_IMAGE_TAG } from "@/lib/api/home-image";
  */
 
 export async function revalidateWorksTag(): Promise<void> {
-  updateTag("works");
+  await updateTag("works");
 }
 
 export async function revalidateCommentsTag(workId: string): Promise<void> {
-  updateTag(workCommentsTag(workId));
+  await updateTag(workCommentsTag(workId));
 }
 
 /**
@@ -34,5 +34,5 @@ export async function revalidateCommentsTag(workId: string): Promise<void> {
  * (CARSHOP-161). Chamada após salvar a seleção em `/admin/imagem-da-home`.
  */
 export async function revalidateHomeImageTag(): Promise<void> {
-  updateTag(HOME_IMAGE_TAG);
+  await updateTag(HOME_IMAGE_TAG);
 }
