@@ -2,7 +2,7 @@ import "server-only";
 
 import { serverEnv } from "@/lib/env/server";
 import { HttpError } from "./errors";
-import { withRetryBackoff } from "./retry";
+import { withRetryBackoff, type RetryOptions } from "./retry";
 
 /**
  * Camada de acesso a dados de leitura pública de `Comment` (backend
@@ -34,29 +34,61 @@ export function workCommentsTag(workId: string): string {
   return `work-comments-${workId}`;
 }
 
+export type GetWorkCommentsOptions = {
+  /** Orçamento de retry; ausente → padrão de `withRetryBackoff` (ADR-019). */
+  retry?: RetryOptions;
+  /** Limite de duração de cada tentativa; ausente → sem timeout. */
+  timeoutMs?: number;
+};
+
 /**
  * `GET /works/:workId/comments` (público, lista apenas comentários
  * aprovados — filtro aplicado pelo backend).
+ *
+ * Sem `options` o comportamento é o original (usado por
+ * `/portfolio/[slug]`). Com `timeoutMs`, cada tentativa usa um
+ * `AbortController` novo (mesmo padrão de `getWorks`/`getHomeImage`). A URL,
+ * `revalidate` e `tags` não mudam em nenhum caso: o Data Cache é
+ * compartilhado entre a página do projeto e a Home, e a invalidação por tag
+ * feita na moderação (`revalidateCommentsTag`) vale para ambas.
  */
-export async function getWorkComments(workId: string): Promise<Comment[]> {
+export async function getWorkComments(
+  workId: string,
+  options?: GetWorkCommentsOptions,
+): Promise<Comment[]> {
+  const timeoutMs = options?.timeoutMs;
+
   return withRetryBackoff(async () => {
-    const response = await fetch(
-      `${serverEnv.apiUrl}/works/${workId}/comments`,
-      {
-        next: {
-          revalidate: WORK_COMMENTS_REVALIDATE_SECONDS,
-          tags: [workCommentsTag(workId)],
+    const controller =
+      timeoutMs === undefined ? undefined : new AbortController();
+    const timeoutId = controller
+      ? setTimeout(() => controller.abort(), timeoutMs)
+      : undefined;
+
+    try {
+      const response = await fetch(
+        `${serverEnv.apiUrl}/works/${workId}/comments`,
+        {
+          ...(controller ? { signal: controller.signal } : {}),
+          next: {
+            revalidate: WORK_COMMENTS_REVALIDATE_SECONDS,
+            tags: [workCommentsTag(workId)],
+          },
         },
-      },
-    );
-
-    if (!response.ok) {
-      throw new HttpError(
-        `Falha ao buscar comentários: ${response.status}`,
-        response.status,
       );
-    }
 
-    return (await response.json()) as Comment[];
-  });
+      if (!response.ok) {
+        throw new HttpError(
+          `Falha ao buscar comentários: ${response.status}`,
+          response.status,
+        );
+      }
+
+      return (await response.json()) as Comment[];
+    } finally {
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+    }
+  }, options?.retry);
 }

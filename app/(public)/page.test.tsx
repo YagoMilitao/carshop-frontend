@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import type { Comment } from '@/lib/api/comments'
 import type { HomeImage } from '@/lib/api/home-image'
 import type { Work, WorkImage } from '@/lib/api/works'
 
 const getWorksMock = vi.fn<() => Promise<Work[]>>()
 const getHomeImageMock = vi.fn<() => Promise<HomeImage | null>>()
+const getWorkCommentsMock = vi.fn<(workId: string) => Promise<Comment[]>>()
 const toastErrorMock = vi.fn()
 
 vi.mock('server-only', () => ({}))
@@ -16,6 +18,10 @@ vi.mock('@/lib/api/works', () => ({
 
 vi.mock('@/lib/api/home-image.server', () => ({
   getHomeImage: () => getHomeImageMock(),
+}))
+
+vi.mock('@/lib/api/comments', () => ({
+  getWorkComments: (workId: string) => getWorkCommentsMock(workId),
 }))
 
 vi.mock('sonner', () => ({
@@ -74,6 +80,7 @@ function expectDegradedHome() {
 describe('HomePage (public)', () => {
   beforeEach(() => {
     getHomeImageMock.mockResolvedValue(null)
+    getWorkCommentsMock.mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -451,6 +458,135 @@ describe('HomePage (public)', () => {
 
       expect(screen.queryByAltText('Imagem escolhida no Admin')).not.toBeInTheDocument()
       expect(screen.getByAltText('Interior 1-cover')).not.toHaveAttribute('loading', 'lazy')
+    })
+  })
+
+  describe('#reviews (comentários aprovados, CARSHOP-170)', () => {
+    const works = ['1', '2', '3', '4', '5'].map((id) => makeWork(id))
+
+    function makeComment(id: string, workId: string, createdAt: string): Comment {
+      return {
+        id,
+        workId,
+        authorName: 'Yago Militão',
+        content: `Great job ${id}`,
+        status: 'APPROVED',
+        createdAt,
+        updatedAt: createdAt,
+      }
+    }
+
+    function getReviewsSection(container: HTMLElement): HTMLElement | null {
+      return container.querySelector<HTMLElement>('section#reviews')
+    }
+
+    it('com reviews: renderiza #reviews entre "Our Work" e o CTA final', async () => {
+      getWorksMock.mockResolvedValue(works)
+      getWorkCommentsMock.mockImplementation(async (workId) =>
+        workId === '2' ? [makeComment('c1', '2', '2026-06-05T12:00:00.000Z')] : [],
+      )
+      const { container } = await renderHome()
+
+      const labelledBy = Array.from(container.querySelectorAll('section')).map((section) =>
+        section.getAttribute('aria-labelledby'),
+      )
+      expect(labelledBy).toEqual([
+        'home-hero-heading',
+        'our-work-heading',
+        'reviews-heading',
+        'final-cta-heading',
+      ])
+
+      const section = getReviewsSection(container)
+      expect(section).not.toBeNull()
+      if (!section) return
+      const scoped = within(section)
+      expect(scoped.getByRole('heading', { level: 2, name: 'Reviews' })).toBeInTheDocument()
+      expect(scoped.getByText('Great job c1')).toBeInTheDocument()
+      expect(scoped.getByText('Yago M.')).toBeInTheDocument()
+      expect(section.textContent).not.toContain('Militão')
+      expect(scoped.getByRole('link', { name: 'Work 2' })).toHaveAttribute(
+        'href',
+        '/portfolio/work-2',
+      )
+    })
+
+    it('limita o fan-out aos 6 primeiros works e exibe no máximo 3 reviews', async () => {
+      const manyWorks = ['1', '2', '3', '4', '5', '6', '7', '8'].map((id) => makeWork(id))
+      getWorksMock.mockResolvedValue(manyWorks)
+      getWorkCommentsMock.mockImplementation(async (workId) => [
+        makeComment(`c-${workId}`, workId, `2026-0${workId}-01T00:00:00.000Z`),
+      ])
+      const { container } = await renderHome()
+
+      expect(getWorkCommentsMock).toHaveBeenCalledTimes(6)
+      const section = getReviewsSection(container)
+      expect(section).not.toBeNull()
+      if (!section) return
+      expect(within(section).getAllByRole('listitem')).toHaveLength(3)
+      expect(section.textContent).toContain('Great job c-6')
+      expect(section.textContent).not.toContain('Great job c-7')
+    })
+
+    it('sem comentários aprovados: #reviews ausente e restante da Home intacto', async () => {
+      getWorksMock.mockResolvedValue(works)
+      const { container } = await renderHome()
+
+      expect(getReviewsSection(container)).toBeNull()
+      expect(screen.queryByRole('heading', { name: 'Reviews' })).not.toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 2, name: 'Our Work' })).toBeInTheDocument()
+    })
+
+    it('falha parcial: exibe os reviews dos works que responderam', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      getWorksMock.mockResolvedValue(works)
+      getWorkCommentsMock.mockImplementation(async (workId) => {
+        if (workId === '1') throw new Error('429')
+        return workId === '3' ? [makeComment('c3', '3', '2026-06-01T00:00:00.000Z')] : []
+      })
+      const { container } = await renderHome()
+
+      const section = getReviewsSection(container)
+      expect(section).not.toBeNull()
+      expect(section?.textContent).toContain('Great job c3')
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(1)
+      expect(toastErrorMock).not.toHaveBeenCalled()
+    })
+
+    it('falha total: #reviews ausente, Home renderiza e nenhum toast', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      getWorksMock.mockResolvedValue(works)
+      getWorkCommentsMock.mockRejectedValue(new Error('backend off'))
+      const { container } = await renderHome()
+
+      expect(getReviewsSection(container)).toBeNull()
+      expect(screen.getByRole('heading', { level: 2, name: 'Our Work' })).toBeInTheDocument()
+      expect(toastErrorMock).not.toHaveBeenCalled()
+    })
+
+    it('getWorks() falha: nenhum fan-out e #reviews ausente', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      getWorksMock.mockRejectedValue(new Error('works off'))
+      const { container } = await renderHome()
+
+      expect(getWorkCommentsMock).not.toHaveBeenCalled()
+      expect(getReviewsSection(container)).toBeNull()
+      expectDegradedHome()
+    })
+
+    it('#reviews renderiza mesmo quando "Our Work" é omitida', async () => {
+      const noCover = [makeWork('1', { hasCover: false })]
+      getWorksMock.mockResolvedValue(noCover)
+      getWorkCommentsMock.mockResolvedValue([
+        makeComment('c1', '1', '2026-06-01T00:00:00.000Z'),
+      ])
+      const { container } = await renderHome()
+
+      expect(screen.queryByRole('heading', { name: 'Our Work' })).not.toBeInTheDocument()
+      const labelledBy = Array.from(container.querySelectorAll('section')).map((section) =>
+        section.getAttribute('aria-labelledby'),
+      )
+      expect(labelledBy).toEqual(['home-hero-heading', 'reviews-heading', 'final-cta-heading'])
     })
   })
 })
