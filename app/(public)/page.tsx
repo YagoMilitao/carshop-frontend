@@ -3,8 +3,10 @@ import { clientEnv } from "@/lib/env/client"
 import { getHomeImage, type HomeImage } from "@/lib/api/home-image.server"
 import { getWorks, type Work } from "@/lib/api/works"
 import { selectHomeWorks } from "./_lib/select-home-works"
+import { getHomeReviews } from "./_lib/get-home-reviews"
 import { HomeHero } from "./_components/home-hero"
 import { FeaturedWorks } from "./_components/featured-works"
+import { HomeReviews } from "./_components/home-reviews"
 import { FinalCta } from "./_components/final-cta"
 
 const description =
@@ -49,10 +51,15 @@ export default async function HomePage() {
 
   const { hero, featured } = selectHomeWorks(works, homeImage)
 
+  // Depende da listagem de works (fan-out limitado por work); nunca rejeita.
+  // Sem dados ou em falha, `#reviews` é omitida (sem âncora).
+  const reviews = await getHomeReviews(works)
+
   return (
     <>
       <HomeHero hero={hero} featured={featured} />
       {featured.length >= 1 && <FeaturedWorks featured={featured} />}
+      <HomeReviews reviews={reviews} />
       <FinalCta />
     </>
   )

@@ -1,20 +1,10 @@
 import type { Comment } from "@/lib/api/comments"
 import { ErrorToast } from "@/components/feedback/error-toast"
 import { CommentForm } from "../comment-form"
+import { formatCommentDate } from "@/app/(public)/_lib/format-comment-date"
 
 const COMMENTS_ERROR_MESSAGE =
   "We couldn't load comments right now. Please try again later."
-
-const commentDateFormatter = new Intl.DateTimeFormat("en-US", {
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-  timeZone: "UTC",
-})
-
-function formatCommentDate(isoDate: string): string {
-  return commentDateFormatter.format(new Date(isoDate))
-}
 
 type ProjectCommentsProps = {
   workId: string
