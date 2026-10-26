@@ -22,6 +22,14 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
+function waitForAbort(signal: AbortSignal): Promise<Response> {
+  return new Promise((_resolve, reject) => {
+    signal.addEventListener("abort", () => reject(signal.reason), {
+      once: true,
+    });
+  });
+}
+
 const approvedComment: Comment = {
   id: "c-1",
   workId: "work-1",
@@ -145,17 +153,12 @@ describe("lib/api/comments", () => {
       const fetchMock = vi.fn<typeof fetch>((_input, init) => {
         const signal = init?.signal;
 
-        if (!signal) {
+        if (!(signal instanceof AbortSignal)) {
           return Promise.reject(new Error("AbortSignal ausente"));
         }
 
         signals.push(signal);
-
-        return new Promise((_resolve, reject) => {
-          signal.addEventListener("abort", () => reject(signal.reason), {
-            once: true,
-          });
-        });
+        return waitForAbort(signal);
       });
       vi.stubGlobal("fetch", fetchMock);
 

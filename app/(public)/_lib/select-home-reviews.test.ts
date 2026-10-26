@@ -60,15 +60,29 @@ describe('selectHomeReviews', () => {
     expect(review).not.toHaveProperty('updatedAt')
   })
 
-  it('descarta comentários que não estão APPROVED', () => {
-    const result = selectHomeReviews(
-      [
+  it.each([
+    {
+      condition: 'status diferente de APPROVED',
+      comments: [
         makeComment('pending', { status: 'PENDING' }),
         makeComment('hidden', { status: 'HIDDEN' }),
         makeComment('ok'),
       ],
-      works,
-    )
+    },
+    {
+      condition: 'createdAt inválido',
+      comments: [makeComment('bad', { createdAt: 'not-a-date' }), makeComment('ok')],
+    },
+    {
+      condition: 'nome derivado vazio',
+      comments: [makeComment('noname', { authorName: '   ' }), makeComment('ok')],
+    },
+    {
+      condition: 'work ausente da listagem',
+      comments: [makeComment('orphan', { workId: 'removido' }), makeComment('ok')],
+    },
+  ])('descarta entradas com $condition', ({ comments }) => {
+    const result = selectHomeReviews(comments, works)
 
     expect(result.map((review) => review.id)).toEqual(['ok'])
   })
@@ -85,33 +99,6 @@ describe('selectHomeReviews', () => {
 
     expect(result).toHaveLength(1)
     expect(result[0]?.content).toBe('Great work\nThanks')
-  })
-
-  it('descarta createdAt inválido', () => {
-    const result = selectHomeReviews(
-      [makeComment('bad', { createdAt: 'not-a-date' }), makeComment('ok')],
-      works,
-    )
-
-    expect(result.map((review) => review.id)).toEqual(['ok'])
-  })
-
-  it('descarta quando o nome derivado é vazio', () => {
-    const result = selectHomeReviews(
-      [makeComment('noname', { authorName: '   ' }), makeComment('ok')],
-      works,
-    )
-
-    expect(result.map((review) => review.id)).toEqual(['ok'])
-  })
-
-  it('descarta comentários cujo work não está na listagem', () => {
-    const result = selectHomeReviews(
-      [makeComment('orphan', { workId: 'removido' }), makeComment('ok')],
-      works,
-    )
-
-    expect(result.map((review) => review.id)).toEqual(['ok'])
   })
 
   it('remove duplicados por id (mantém a primeira ocorrência válida)', () => {
