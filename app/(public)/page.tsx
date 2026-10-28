@@ -4,11 +4,13 @@ import { getHomeImage, type HomeImage } from "@/lib/api/home-image.server"
 import { getWorks, type Work } from "@/lib/api/works"
 import { getSocialLinks } from "@/lib/social-links"
 import { selectHomeWorks } from "./_lib/select-home-works"
+import { selectHomeAboutImage } from "./_lib/select-home-about-image"
 import { getHomeReviews } from "./_lib/get-home-reviews"
 import { groupWorksByCategory } from "./_lib/group-works-by-category"
 import { HomeHero } from "./_components/home-hero"
 import { HomeServices } from "./_components/home-services"
 import { FeaturedWorks } from "./_components/featured-works"
+import { HomeAbout } from "./_components/home-about"
 import { HomeReviews } from "./_components/home-reviews"
 import { FinalCta } from "./_components/final-cta"
 
@@ -54,6 +56,10 @@ export default async function HomePage() {
 
   const { hero, featured } = selectHomeWorks(works, homeImage)
 
+  // `#about` sempre renderiza; a foto reaproveita a mesma listagem (sem nova
+  // requisição) e nunca repete Hero/"Our Work". Sem candidato, `null`.
+  const aboutImage = selectHomeAboutImage(works, { hero, featured })
+
   // Depende da listagem de works (fan-out limitado por work); nunca rejeita.
   // Sem dados ou em falha, `#reviews` é omitida (sem âncora).
   const reviews = await getHomeReviews(works)
@@ -67,6 +73,7 @@ export default async function HomePage() {
       <HomeHero hero={hero} featured={featured} />
       <HomeServices categories={groupWorksByCategory(works)} />
       {featured.length >= 1 && <FeaturedWorks featured={featured} />}
+      <HomeAbout image={aboutImage} />
       <HomeReviews reviews={reviews} />
       <FinalCta socialLinks={socialLinks} />
     </>

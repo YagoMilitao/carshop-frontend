@@ -80,6 +80,10 @@ function getContactSection(): HTMLElement | null {
   return document.querySelector<HTMLElement>('section#contact')
 }
 
+function getAboutSection(): HTMLElement | null {
+  return document.querySelector<HTMLElement>('section#about')
+}
+
 function expectDegradedHome() {
   expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
   const services = getServicesSection()
@@ -99,6 +103,10 @@ function expectDegradedHome() {
   expect(
     screen.getByRole('heading', { level: 2, name: 'Ready to transform your interior?' }),
   ).toBeInTheDocument()
+  const about = getAboutSection()
+  expect(about).not.toBeNull()
+  expect(about).toHaveAttribute('aria-labelledby', 'home-about-heading')
+  expect(about?.querySelector('img')).toBeNull()
   expect(screen.queryByRole('img')).not.toBeInTheDocument()
   expect(screen.queryByRole('heading', { name: 'Our Work' })).not.toBeInTheDocument()
   expect(screen.queryByRole('link', { name: 'View all projects' })).not.toBeInTheDocument()
@@ -142,7 +150,8 @@ describe('HomePage (public)', () => {
         (image) => image.getAttribute('loading') !== 'lazy',
       )
 
-      expect(images).toHaveLength(4)
+      // Hero (work-1) + "Our Work" (work-2..4) + `#about` (work-5, lazy).
+      expect(images).toHaveLength(5)
       expect(prioritized).toHaveLength(1)
       expect(prioritized[0]).toHaveAttribute('alt', 'Interior 1-cover')
       expect(
@@ -260,6 +269,7 @@ describe('HomePage (public)', () => {
         'home-hero-heading',
         'services-heading',
         'our-work-heading',
+        'home-about-heading',
         'home-contact-heading',
       ])
     })
@@ -297,13 +307,30 @@ describe('HomePage (public)', () => {
       makeWork('3', { hasCover: false }),
       makeWork('4'),
     ])
-    await renderHome()
+    const { container } = await renderHome()
 
-    expect(screen.queryByRole('link', { name: 'Work 1' })).not.toBeInTheDocument()
+    const heroAndOurWork = Array.from(container.querySelectorAll('section')).filter(
+      (section) =>
+        section.getAttribute('aria-labelledby') === 'home-hero-heading' ||
+        section.getAttribute('aria-labelledby') === 'our-work-heading',
+    )
+    expect(heroAndOurWork).toHaveLength(2)
+    for (const section of heroAndOurWork) {
+      expect(within(section).queryByRole('link', { name: 'Work 1' })).not.toBeInTheDocument()
+    }
     expect(screen.queryByRole('link', { name: 'Work 3' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Work 2' })).toHaveAttribute('href', '/portfolio/work-2')
     expect(screen.getByRole('link', { name: 'Work 4' })).toHaveAttribute('href', '/portfolio/work-4')
-    expect(screen.getAllByRole('img')).toHaveLength(2)
+
+    // `#about` usa a imagem (não capa) do work-1, fora de Hero/"Our Work".
+    const about = getAboutSection()
+    expect(about).not.toBeNull()
+    if (!about) return
+    expect(within(about).getByRole('link', { name: 'Work 1' })).toHaveAttribute(
+      'href',
+      '/portfolio/work-1',
+    )
+    expect(screen.getAllByRole('img')).toHaveLength(3)
   })
 
   it('com uma única capa: Hero com imagem e sem seção "Our Work"', async () => {
@@ -369,6 +396,62 @@ describe('HomePage (public)', () => {
         .map((item) => item.textContent?.replace('·', '')),
     ).toEqual(['bancos', 'volantes'])
     expect(section.querySelector('img')).toBeNull()
+  })
+
+  describe('#about (CARSHOP-169)', () => {
+    it('com 5 works: #about após "Our Work" com a foto lazy do work-5', async () => {
+      getWorksMock.mockResolvedValue(['1', '2', '3', '4', '5'].map((id) => makeWork(id)))
+      await renderHome()
+
+      const about = getAboutSection()
+      expect(about).not.toBeNull()
+      if (!about) return
+      expect(
+        within(about).getByRole('heading', { level: 2, name: 'Hello, we are DreamUP' }),
+      ).toBeInTheDocument()
+      expect(within(about).getByAltText('Interior 5-cover')).toHaveAttribute('loading', 'lazy')
+      expect(within(about).getByRole('link', { name: 'Work 5' })).toHaveAttribute(
+        'href',
+        '/portfolio/work-5',
+      )
+      expect(getWorksMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('com imagem do Admin (workId 3): #about usa o work-5, fora de Hero e "Our Work"', async () => {
+      getWorksMock.mockResolvedValue(['1', '2', '3', '4', '5'].map((id) => makeWork(id)))
+      getHomeImageMock.mockResolvedValue({
+        workId: '3',
+        imageId: 'home-img',
+        url: 'https://res.cloudinary.com/demo/home.jpg',
+        alt: 'Imagem escolhida no Admin',
+      })
+      await renderHome()
+
+      const about = getAboutSection()
+      expect(about).not.toBeNull()
+      if (!about) return
+      const links = within(about)
+        .getAllByRole('link')
+        .map((link) => link.getAttribute('href'))
+      expect(links).toEqual(['/portfolio/work-5'])
+      expect(getWorksMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('getWorks() falha: #about presente, apenas tipográfica', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      getWorksMock.mockRejectedValue(new Error('works off'))
+      await renderHome()
+
+      const about = getAboutSection()
+      expect(about).not.toBeNull()
+      if (!about) return
+      expect(within(about).getByRole('heading', { level: 2 })).toHaveTextContent(
+        'Hello, we are DreamUP',
+      )
+      expect(about.querySelector('img')).toBeNull()
+      expect(about.querySelector('figure')).toBeNull()
+      expect(getWorksMock).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe('#contact (CARSHOP-171)', () => {
@@ -673,6 +756,7 @@ describe('HomePage (public)', () => {
         'home-hero-heading',
         'services-heading',
         'our-work-heading',
+        'home-about-heading',
         'reviews-heading',
         'home-contact-heading',
       ])
@@ -769,6 +853,7 @@ describe('HomePage (public)', () => {
       expect(labelledBy).toEqual([
         'home-hero-heading',
         'services-heading',
+        'home-about-heading',
         'reviews-heading',
         'home-contact-heading',
       ])
