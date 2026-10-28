@@ -20,26 +20,24 @@ describe('ContactPage (public)', () => {
     vi.clearAllMocks()
   })
 
-  it('renderiza um único h1, o eyebrow e a copy aprovada', async () => {
+  it('renderiza um único h1 e o eyebrow, sem a frase "coming soon"', async () => {
     getSocialLinksMock.mockReturnValue([])
-    await renderContact()
+    const { container } = await renderContact()
 
     const headings = screen.getAllByRole('heading', { level: 1 })
     expect(headings).toHaveLength(1)
     expect(headings[0]).toHaveTextContent('Ready to transform your interior?')
     expect(screen.getByText('Contact')).toBeInTheDocument()
-    expect(
-      screen.getByText('Quote requests are coming soon. In the meantime, see our completed work.'),
-    ).toBeInTheDocument()
+    expect(container.textContent ?? '').not.toMatch(/coming soon|quote requests/i)
   })
 
-  it('mantém "Get a Quote" desabilitado e "View Our Work" para /portfolio', async () => {
+  it('"Get a Quote" é um link para /#contact e "View Our Work" para /portfolio', async () => {
     getSocialLinksMock.mockReturnValue([])
     await renderContact()
 
-    const quote = screen.getByRole('button', { name: 'Get a Quote (coming soon)' })
-    expect(quote).toBeDisabled()
-    expect(quote).toHaveAttribute('aria-disabled', 'true')
+    const quote = screen.getByRole('link', { name: 'Get a Quote' })
+    expect(quote).toHaveAttribute('href', '/#contact')
+    expect(quote).not.toHaveAttribute('aria-disabled')
     expect(screen.getByRole('link', { name: 'View Our Work' })).toHaveAttribute(
       'href',
       '/portfolio',

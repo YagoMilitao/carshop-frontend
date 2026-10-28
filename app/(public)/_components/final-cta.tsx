@@ -1,18 +1,72 @@
+import Link from "next/link"
+import { LuArrowRight } from "react-icons/lu"
 import { PageSection } from "@/components/layout/page-section"
+import { ContactFollowLinks } from "@/components/contact/contact-follow-links"
+import { CONTACT_SECTION_ID } from "@/components/contact/contact-anchor"
+import { ContactSectionFocus } from "@/components/contact/contact-section-focus"
+import type { SocialLink } from "@/lib/social-links"
+import { cn } from "@/lib/utils"
 import { HomeCtaActions } from "./home-cta-actions"
 
-export function FinalCta() {
+type FinalCtaProps = {
+  socialLinks: readonly SocialLink[]
+}
+
+/**
+ * Seção `#contact` da Home (CARSHOP-171): fechamento do funil, sempre
+ * presente e independente da API de works. Usa apenas canais reais — links
+ * sociais configurados no ambiente e a página `/contact`; sem formulário
+ * nem dados de contato inventados.
+ *
+ * `tabIndex={-1}` permite mover o foco para a seção ao navegar para
+ * `/#contact`: `ContactSectionFocus` na chegada (troca de rota ou carga
+ * direta) e `ContactAnchorLink` na mesma página. Ordem do DOM = leitura no mobile (sem CSS
+ * `order`).
+ */
+export function FinalCta({ socialLinks }: Readonly<FinalCtaProps>) {
+  const hasSocialLinks = socialLinks.length > 0
+
   return (
     <PageSection
       spacing="standard"
-      className="border-t border-border"
-      aria-labelledby="final-cta-heading"
+      id={CONTACT_SECTION_ID}
+      tabIndex={-1}
+      aria-labelledby="home-contact-heading"
+      className="border-t border-border outline-hidden"
     >
-      <div className="flex max-w-4xl flex-col gap-8">
-        <h2 id="final-cta-heading" className="text-display-lg text-foreground">
-          Ready to transform your interior?
-        </h2>
-        <HomeCtaActions />
+      <ContactSectionFocus />
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-12",
+          hasSocialLinks && "lg:grid-cols-12 lg:items-start lg:gap-8",
+        )}
+      >
+        <div
+          className={cn(
+            "flex flex-col gap-8",
+            hasSocialLinks ? "lg:col-span-7" : "max-w-4xl",
+          )}
+        >
+          <h2 id="home-contact-heading" className="text-display-lg text-foreground">
+            Ready to transform your interior?
+          </h2>
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+            <HomeCtaActions showQuoteLink={false} />
+            <Link
+              href="/contact"
+              className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg text-nav text-foreground outline-hidden hover:text-primary focus-visible:ring-3 focus-visible:ring-focus-ring"
+            >
+              Contact CarShop
+              <LuArrowRight aria-hidden="true" className="size-4 shrink-0" />
+            </Link>
+          </div>
+        </div>
+
+        {hasSocialLinks && (
+          <div className="lg:col-span-4 lg:col-start-9">
+            <ContactFollowLinks links={socialLinks} headingLevel={3} />
+          </div>
+        )}
       </div>
     </PageSection>
   )

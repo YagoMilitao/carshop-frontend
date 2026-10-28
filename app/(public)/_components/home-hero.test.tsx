@@ -75,7 +75,7 @@ describe('HomeHero', () => {
       'href',
       '/portfolio',
     )
-    expect(screen.getByRole('button', { name: 'Get a Quote (coming soon)' })).toBeDisabled()
+    expect(screen.getByRole('link', { name: 'Get a Quote' })).toHaveAttribute('href', '/#contact')
   })
 
   it('sem hero: versão tipográfica, sem imagem nem figura', () => {

@@ -1,6 +1,6 @@
-import Link from "next/link"
 import { LuArrowRight } from "react-icons/lu"
 import { PageSection } from "@/components/layout/page-section"
+import { ContactAnchorLink } from "@/components/contact/contact-anchor-link"
 import type { ServiceCategory } from "../_lib/group-works-by-category"
 
 /**
@@ -89,13 +89,12 @@ export function HomeServices({ categories }: Readonly<HomeServicesProps>) {
           )}
         </div>
 
-        <Link
-          href="/contact"
+        <ContactAnchorLink
           className="inline-flex min-h-11 w-fit items-center gap-2 self-start rounded-lg text-nav text-foreground outline-hidden hover:text-primary focus-visible:ring-3 focus-visible:ring-focus-ring lg:col-span-4 lg:col-start-1 lg:row-start-2"
         >
           Contact CarShop
           <LuArrowRight aria-hidden="true" className="size-4 shrink-0" />
-        </Link>
+        </ContactAnchorLink>
       </div>
     </PageSection>
   )

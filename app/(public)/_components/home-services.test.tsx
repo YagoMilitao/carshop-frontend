@@ -118,18 +118,18 @@ describe('HomeServices', () => {
     expect(section.querySelector('ul')).toBeNull()
     expect(within(section).getByRole('link', { name: 'Contact CarShop' })).toHaveAttribute(
       'href',
-      '/contact',
+      '/#contact',
     )
   })
 
-  it('CTA "Contact CarShop" aponta para /contact e não há "Get a Quote"', () => {
+  it('CTA "Contact CarShop" aponta para /#contact e não há "Get a Quote"', () => {
     const { container } = renderServices(makeCategories(['bancos']))
     const section = getSection(container)
 
     const links = within(section).getAllByRole('link')
     expect(links).toHaveLength(1)
     expect(links[0]).toHaveAccessibleName('Contact CarShop')
-    expect(links[0]).toHaveAttribute('href', '/contact')
+    expect(links[0]).toHaveAttribute('href', '/#contact')
     expect(within(section).queryByText(/get a quote/i)).not.toBeInTheDocument()
     expect(within(section).queryByRole('button')).not.toBeInTheDocument()
   })

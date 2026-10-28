@@ -2,21 +2,30 @@ import type { SocialLink } from "@/lib/social-links"
 
 type ContactFollowLinksProps = {
   links: readonly SocialLink[]
+  /** Nível do heading conforme a hierarquia da página hospedeira. */
+  headingLevel?: 2 | 3
 }
 
 /**
- * Canais sociais realmente configurados (CARSHOP-147). Recebe os links
- * via prop — a leitura do ambiente fica na página (server-only).
+ * Canais sociais realmente configurados (CARSHOP-147), compartilhados entre
+ * `/contact` e a seção `#contact` da Home (CARSHOP-171). Recebe os links
+ * via prop — a leitura do ambiente fica no Server Component hospedeiro
+ * (server-only).
  */
-export function ContactFollowLinks({ links }: Readonly<ContactFollowLinksProps>) {
+export function ContactFollowLinks({
+  links,
+  headingLevel = 2,
+}: Readonly<ContactFollowLinksProps>) {
+  const Heading = headingLevel === 3 ? "h3" : "h2"
+
   return (
     <section
       aria-labelledby="contact-follow-heading"
       className="flex flex-col gap-4 border-t border-border pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8"
     >
-      <h2 id="contact-follow-heading" className="text-heading-4 text-foreground">
+      <Heading id="contact-follow-heading" className="text-heading-4 text-foreground">
         Follow CarShop
-      </h2>
+      </Heading>
       <ul className="flex flex-col">
         {links.map((link) => (
           <li key={link.label}>

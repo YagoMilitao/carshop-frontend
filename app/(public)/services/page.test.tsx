@@ -26,7 +26,7 @@ function expectHeaderAndCtas() {
     'href',
     '/portfolio',
   )
-  expect(screen.getByRole('button', { name: 'Get a Quote (coming soon)' })).toBeDisabled()
+  expect(screen.getByRole('link', { name: 'Get a Quote' })).toHaveAttribute('href', '/#contact')
 }
 
 describe('ServicesPage (public)', () => {
