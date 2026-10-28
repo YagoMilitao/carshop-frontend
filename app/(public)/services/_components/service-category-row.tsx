@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import {
   SERVICE_PROJECT_LINKS_LIMIT,
   type ServiceCategory,
-} from "../_lib/group-works-by-category"
+} from "@/app/(public)/_lib/group-works-by-category"
 
 type ServiceCategoryRowProps = {
   category: ServiceCategory

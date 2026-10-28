@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import type { Work, WorkImage } from '@/lib/api/works'
-import type { ServiceCategory } from '../_lib/group-works-by-category'
+import type { ServiceCategory } from '@/app/(public)/_lib/group-works-by-category'
 
 vi.mock('server-only', () => ({}))
 

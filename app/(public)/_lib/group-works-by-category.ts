@@ -1,6 +1,6 @@
 import type { Work } from "@/lib/api/works"
-import type { ProjectPreviewItem } from "../../_components/project-preview"
-import { resolvePreviewImage } from "../../portfolio/_lib/resolve-preview-image"
+import type { ProjectPreviewItem } from "../_components/project-preview"
+import { resolvePreviewImage } from "../portfolio/_lib/resolve-preview-image"
 
 export type ServiceCategory = {
   key: string

@@ -66,8 +66,22 @@ async function renderHome() {
   return render(await HomePage())
 }
 
+function getServicesSection(): HTMLElement | null {
+  return document.querySelector<HTMLElement>('section#services')
+}
+
 function expectDegradedHome() {
   expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
+  const services = getServicesSection()
+  expect(services).not.toBeNull()
+  expect(services).toHaveAttribute('aria-labelledby', 'services-heading')
+  expect(screen.getByRole('heading', { level: 2, name: 'Services' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Contact CarShop' })).toHaveAttribute(
+    'href',
+    '/contact',
+  )
+  expect(screen.queryByText('Project categories')).not.toBeInTheDocument()
+  expect(screen.queryByRole('list', { name: 'Project categories' })).not.toBeInTheDocument()
   expect(
     screen.getByRole('heading', { level: 2, name: 'Ready to transform your interior?' }),
   ).toBeInTheDocument()
@@ -226,7 +240,37 @@ describe('HomePage (public)', () => {
       const labelledBy = Array.from(container.querySelectorAll('section')).map((section) =>
         section.getAttribute('aria-labelledby'),
       )
-      expect(labelledBy).toEqual(['home-hero-heading', 'our-work-heading', 'final-cta-heading'])
+      expect(labelledBy).toEqual([
+        'home-hero-heading',
+        'services-heading',
+        'our-work-heading',
+        'final-cta-heading',
+      ])
+    })
+
+    it('renderiza #services logo após o Hero, com pilares, categorias reais e CTA para /contact', async () => {
+      getWorksMock.mockResolvedValue(works)
+      await renderHome()
+
+      const section = getServicesSection()
+      expect(section).not.toBeNull()
+      if (!section) return
+
+      const scoped = within(section)
+      expect(scoped.getByRole('heading', { level: 2, name: 'Services' })).toBeInTheDocument()
+      for (const pillar of ['Upholstery', 'Restoration', 'Custom Work']) {
+        expect(scoped.getByText(pillar)).toBeInTheDocument()
+      }
+      const evidence = scoped.getByRole('list', { name: 'Project categories' })
+      expect(within(evidence).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+        'bancos',
+      ])
+      expect(scoped.getByRole('link', { name: 'Contact CarShop' })).toHaveAttribute(
+        'href',
+        '/contact',
+      )
+      expect(section.querySelector('img')).toBeNull()
+      expect(getWorksMock).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -259,6 +303,7 @@ describe('HomePage (public)', () => {
     await renderHome()
 
     expectDegradedHome()
+    expect(getWorksMock).toHaveBeenCalledTimes(1)
   })
 
   it('quando getWorks() falha: degrada silenciosamente e registra console.error', async () => {
@@ -268,6 +313,46 @@ describe('HomePage (public)', () => {
 
     expectDegradedHome()
     expect(consoleErrorSpy).toHaveBeenCalled()
+    expect(getWorksMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('#services usa as categorias reais da API, na ordem recebida, limitadas a 6', async () => {
+    const categories = ['bancos', 'Teto solar', 'volantes', 'portas', 'painel', 'tapetes', 'capotas']
+    getWorksMock.mockResolvedValue(
+      categories.map((category, index) => ({ ...makeWork(String(index + 1)), category })),
+    )
+    await renderHome()
+
+    const section = getServicesSection()
+    expect(section).not.toBeNull()
+    if (!section) return
+    const evidence = within(section).getByRole('list', { name: 'Project categories' })
+    expect(
+      within(evidence)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent?.replace('·', '')),
+    ).toEqual(categories.slice(0, 6))
+    expect(getWorksMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('#services exibe categorias mesmo quando nenhum work tem capa (evidência não depende de imagem)', async () => {
+    getWorksMock.mockResolvedValue([
+      { ...makeWork('1', { hasCover: false }), category: 'bancos' },
+      { ...makeWork('2', { hasCover: false }), category: 'Bancos' },
+      { ...makeWork('3', { hasCover: false }), category: 'volantes' },
+    ])
+    await renderHome()
+
+    const section = getServicesSection()
+    expect(section).not.toBeNull()
+    if (!section) return
+    const evidence = within(section).getByRole('list', { name: 'Project categories' })
+    expect(
+      within(evidence)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent?.replace('·', '')),
+    ).toEqual(['bancos', 'volantes'])
+    expect(section.querySelector('img')).toBeNull()
   })
 
   it('não usa copy proibida nem strings de estado em pt-BR', async () => {
@@ -393,6 +478,21 @@ describe('HomePage (public)', () => {
       expect(toastErrorMock).not.toHaveBeenCalled()
     })
 
+    it('getHomeImage() falha: #services mantém as categorias reais (degradação independente)', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      getWorksMock.mockResolvedValue(works)
+      getHomeImageMock.mockRejectedValue(new Error('429'))
+      await renderHome()
+
+      const section = document.querySelector<HTMLElement>('section#services')
+      expect(section).not.toBeNull()
+      if (!section) return
+      const evidence = within(section).getByRole('list', { name: 'Project categories' })
+      expect(within(evidence).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+        'bancos',
+      ])
+    })
+
     it('ambas as chamadas falham: Home degradada com um console.error por falha', async () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       getWorksMock.mockRejectedValue(new Error('works off'))
@@ -492,6 +592,7 @@ describe('HomePage (public)', () => {
       )
       expect(labelledBy).toEqual([
         'home-hero-heading',
+        'services-heading',
         'our-work-heading',
         'reviews-heading',
         'final-cta-heading',
@@ -586,7 +687,12 @@ describe('HomePage (public)', () => {
       const labelledBy = Array.from(container.querySelectorAll('section')).map((section) =>
         section.getAttribute('aria-labelledby'),
       )
-      expect(labelledBy).toEqual(['home-hero-heading', 'reviews-heading', 'final-cta-heading'])
+      expect(labelledBy).toEqual([
+        'home-hero-heading',
+        'services-heading',
+        'reviews-heading',
+        'final-cta-heading',
+      ])
     })
   })
 })
