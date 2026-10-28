@@ -4,7 +4,9 @@ import { getHomeImage, type HomeImage } from "@/lib/api/home-image.server"
 import { getWorks, type Work } from "@/lib/api/works"
 import { selectHomeWorks } from "./_lib/select-home-works"
 import { getHomeReviews } from "./_lib/get-home-reviews"
+import { groupWorksByCategory } from "./_lib/group-works-by-category"
 import { HomeHero } from "./_components/home-hero"
+import { HomeServices } from "./_components/home-services"
 import { FeaturedWorks } from "./_components/featured-works"
 import { HomeReviews } from "./_components/home-reviews"
 import { FinalCta } from "./_components/final-cta"
@@ -58,6 +60,7 @@ export default async function HomePage() {
   return (
     <>
       <HomeHero hero={hero} featured={featured} />
+      <HomeServices categories={groupWorksByCategory(works)} />
       {featured.length >= 1 && <FeaturedWorks featured={featured} />}
       <HomeReviews reviews={reviews} />
       <FinalCta />

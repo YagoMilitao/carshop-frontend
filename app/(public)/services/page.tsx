@@ -3,7 +3,7 @@ import { clientEnv } from '@/lib/env/client'
 import { getWorks, type Work } from '@/lib/api/works'
 import { PageSection } from '@/components/layout/page-section'
 import { HomeCtaActions } from '../_components/home-cta-actions'
-import { groupWorksByCategory } from './_lib/group-works-by-category'
+import { groupWorksByCategory } from '@/app/(public)/_lib/group-works-by-category'
 import { ServiceCategoryRow } from './_components/service-category-row'
 
 const description =
