@@ -4,7 +4,7 @@ import { getSocialLinks } from '@/lib/social-links'
 import { PageSection } from '@/components/layout/page-section'
 import { cn } from '@/lib/utils'
 import { HomeCtaActions } from '../_components/home-cta-actions'
-import { ContactFollowLinks } from './_components/contact-follow-links'
+import { ContactFollowLinks } from '@/components/contact/contact-follow-links'
 
 const description =
   'Contact CarShop about automotive upholstery, restoration and custom interior work.'
@@ -47,10 +47,6 @@ export default function ContactPage() {
           <h1 id="contact-heading" className="text-display-lg text-foreground">
             Ready to transform your interior?
           </h1>
-          <p className="text-body-lg text-secondary-foreground">
-            Quote requests are coming soon. In the meantime, see our completed
-            work.
-          </p>
           <div className="pt-2">
             <HomeCtaActions />
           </div>

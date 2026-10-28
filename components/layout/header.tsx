@@ -3,6 +3,7 @@ import { navLinks } from "./nav-links"
 import { MobileNav } from "./mobile-nav"
 import { Container } from "./container"
 import { Button } from "@/components/ui/button"
+import { ContactAnchorLink } from "@/components/contact/contact-anchor-link"
 
 export function Header() {
   return (
@@ -31,13 +32,8 @@ export function Header() {
             </ul>
           </nav>
 
-          <Button
-            variant="default"
-            disabled
-            aria-disabled="true"
-            aria-label="Get a Quote (coming soon)"
-          >
-            Get a Quote
+          <Button asChild variant="default">
+            <ContactAnchorLink>Get a Quote</ContactAnchorLink>
           </Button>
         </div>
 

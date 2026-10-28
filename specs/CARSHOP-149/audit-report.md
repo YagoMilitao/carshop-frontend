@@ -36,7 +36,7 @@ Legenda de status: **Corrigido** (nesta task) · **Registrado → FU-N**
 | A-10 | MEDIUM | `/portfolio/[slug]` lightbox | `components/gallery/gallery-lightbox.tsx:101,133,141` | `components.md` (radius, shadows), foco sobre foto | `rounded-full` → `rounded-lg`; `shadow-md` removido; `bg-background/80` mantido; setas com `ring-focus-ring ring-offset-2 ring-offset-background`. `size-11`, `showCloseButton={false}`, reduced motion em 2 camadas e retorno de foco preservados | Corrigido |
 | A-11 | MEDIUM | Admin | `dialog.tsx:133`, `alert-dialog.tsx:107`, `sheet.tsx:117` | `typography.md` "Admin Typography" | Proposta: `font-sans text-body font-semibold` | Registrado → FU-4 |
 | A-12 | MEDIUM | `/portfolio/[slug]` | `comment-form.tsx:120-126` | Reuso de primitives | Migrar `<textarea>` cru para `Textarea` | Registrado → FU-4 |
-| A-13 | MEDIUM | Header público | `header.tsx:34-41`, `mobile-nav.tsx:52-60`, `button.tsx:7` | `colors.md` "Disabled State" (~2.0:1) | Tratamento visual do "Get a Quote" desabilitado | Registrado → FU-5 |
+| A-13 | MEDIUM | Header público | `header.tsx:34-41`, `mobile-nav.tsx:52-60`, `button.tsx:7` | `colors.md` "Disabled State" (~2.0:1) | Tratamento visual do "Get a Quote" desabilitado | Registrado → FU-5 — **obsoleto desde CARSHOP-171** ("Get a Quote" agora é link habilitado) |
 | A-14 | MEDIUM | Header/footer públicos | `header.tsx:19`, `mobile-nav.tsx:22,35`, `footer.tsx:30,46` | WCAG 3.1.2 (labels pt-BR em página en-US) | Traduzir `aria-label`s | Registrado → FU-2 |
 | A-15 | MEDIUM | Global | `app/layout.tsx:48` | Tokens de cor (`colors.md`) | Toaster nos tokens escuros | Registrado → FU-3 |
 | A-16 | MEDIUM | Público md+ | `header.tsx:25`, `footer.tsx:36,54` | Touch targets ≥ 44px | Aumentar área clicável | Registrado → FU-1 |

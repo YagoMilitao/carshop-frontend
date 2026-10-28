@@ -6,6 +6,7 @@ import { LuMenu, LuX } from "react-icons/lu"
 import { cn } from "@/lib/utils"
 import { navLinks } from "./nav-links"
 import { Button } from "@/components/ui/button"
+import { ContactAnchorLink } from "@/components/contact/contact-anchor-link"
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false)
@@ -49,14 +50,10 @@ export function MobileNav() {
         </nav>
 
         <div className="border-t border-border p-4">
-          <Button
-            variant="default"
-            className="w-full"
-            disabled
-            aria-disabled="true"
-            aria-label="Get a Quote (coming soon)"
-          >
-            Get a Quote
+          <Button asChild variant="default" className="w-full">
+            <ContactAnchorLink onClick={() => setIsOpen(false)}>
+              Get a Quote
+            </ContactAnchorLink>
           </Button>
         </div>
       </div>

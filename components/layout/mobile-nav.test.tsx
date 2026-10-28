@@ -67,7 +67,7 @@ describe("MobileNav", () => {
     expect(toggle.className).toContain("size-11");
   });
 
-  it("renderiza o CTA 'Get a Quote' desabilitado dentro do painel mobile", async () => {
+  it("renderiza o CTA 'Get a Quote' como link para /#contact e fecha o painel ao clicar", async () => {
     const user = userEvent.setup();
     render(<MobileNav />);
 
@@ -75,10 +75,38 @@ describe("MobileNav", () => {
 
     const panel = screen.getByRole("navigation", { name: "Navegação principal (mobile)" })
       .parentElement as HTMLElement;
-    const cta = within(panel).getByRole("button", { name: "Get a Quote (coming soon)" });
+    const cta = within(panel).getByRole("link", { name: "Get a Quote" });
 
-    expect(cta).toBeDisabled();
-    expect(cta).toHaveAttribute("aria-disabled", "true");
+    expect(cta).toHaveAttribute("href", "/#contact");
+    expect(cta).not.toHaveAttribute("aria-disabled");
+
+    await user.click(cta);
+
+    expect(screen.getByRole("button", { name: "Abrir menu de navegação" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+  });
+
+  it("com #contact montada, clicar em 'Get a Quote' fecha o painel e foca a seção", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <MobileNav />
+        <section id="contact" tabIndex={-1} aria-label="Contact section" />
+      </>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Abrir menu de navegação" }));
+    const panel = screen.getByRole("navigation", { name: "Navegação principal (mobile)" })
+      .parentElement as HTMLElement;
+    await user.click(within(panel).getByRole("link", { name: "Get a Quote" }));
+
+    expect(screen.getByRole("button", { name: "Abrir menu de navegação" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(screen.getByRole("region", { name: "Contact section" })).toHaveFocus();
   });
 
   it("renderiza o container do MobileNav oculto a partir de md (md:hidden), visível apenas no mobile", () => {

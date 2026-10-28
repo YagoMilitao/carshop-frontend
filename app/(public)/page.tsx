@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { clientEnv } from "@/lib/env/client"
 import { getHomeImage, type HomeImage } from "@/lib/api/home-image.server"
 import { getWorks, type Work } from "@/lib/api/works"
+import { getSocialLinks } from "@/lib/social-links"
 import { selectHomeWorks } from "./_lib/select-home-works"
 import { getHomeReviews } from "./_lib/get-home-reviews"
 import { groupWorksByCategory } from "./_lib/group-works-by-category"
@@ -32,7 +33,7 @@ export default async function HomePage() {
   ])
 
   // Degradação silenciosa e independente: a Home continua útil sem a API
-  // (Hero tipográfico + Final CTA) e, sem a imagem configurada, usa o
+  // (Hero tipográfico + `#contact`) e, sem a imagem configurada, usa o
   // fallback de `selectHomeWorks` — sem toast nem mensagem de estado.
   let works: Work[] = []
   if (worksResult.status === "fulfilled") {
@@ -57,13 +58,17 @@ export default async function HomePage() {
   // Sem dados ou em falha, `#reviews` é omitida (sem âncora).
   const reviews = await getHomeReviews(works)
 
+  // Síncrono e server-only (env); `#contact` sempre renderiza e só omite o
+  // bloco de canais quando nenhum link social está configurado.
+  const socialLinks = getSocialLinks()
+
   return (
     <>
       <HomeHero hero={hero} featured={featured} />
       <HomeServices categories={groupWorksByCategory(works)} />
       {featured.length >= 1 && <FeaturedWorks featured={featured} />}
       <HomeReviews reviews={reviews} />
-      <FinalCta />
+      <FinalCta socialLinks={socialLinks} />
     </>
   )
 }

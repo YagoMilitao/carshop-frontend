@@ -47,20 +47,19 @@ describe("Header", () => {
     ).toBeInTheDocument();
   });
 
-  it("renderiza o CTA 'Get a Quote' desabilitado, sem destino funcional", () => {
+  it("renderiza o CTA 'Get a Quote' como link para /#contact", () => {
     render(<Header />);
 
-    // O CTA aparece duas vezes no DOM: uma na área desktop (hidden md:flex)
-    // e outra dentro do painel do MobileNav (ver mobile-nav.test.tsx).
-    const ctaButtons = screen.getAllByRole("button", { name: "Get a Quote (coming soon)" });
-    expect(ctaButtons.length).toBeGreaterThan(0);
+    // O CTA desktop fica na área `hidden md:flex`; o do MobileNav só entra
+    // na árvore de acessibilidade com o painel aberto (ver mobile-nav.test.tsx).
+    const desktopGroup = screen.getByRole("navigation", { name: "Navegação principal" })
+      .parentElement as HTMLElement;
+    const cta = within(desktopGroup).getByRole("link", { name: "Get a Quote" });
 
-    ctaButtons.forEach((cta) => {
-      expect(cta).toBeDisabled();
-      expect(cta).toHaveAttribute("aria-disabled", "true");
-      expect(cta.tagName).toBe("BUTTON");
-      expect(cta).not.toHaveAttribute("href");
-    });
+    expect(cta).toHaveAttribute("href", "/#contact");
+    expect(cta.tagName).toBe("A");
+    expect(cta).not.toHaveAttribute("aria-disabled");
+    expect(cta).not.toHaveAttribute("aria-label");
   });
 
   it("agrupa navegação desktop e CTA num bloco visível apenas a partir de md (hidden md:flex)", () => {
@@ -83,7 +82,8 @@ describe("Header", () => {
         expect(link.className).toContain("focus-visible:ring");
       });
 
-    const [desktopCta] = screen.getAllByRole("button", { name: "Get a Quote (coming soon)" });
+    const desktopGroup = desktopNav.parentElement as HTMLElement;
+    const desktopCta = within(desktopGroup).getByRole("link", { name: "Get a Quote" });
     expect(desktopCta.className).toMatch(/focus-visible:ring|ring-\[3px\]/);
   });
 

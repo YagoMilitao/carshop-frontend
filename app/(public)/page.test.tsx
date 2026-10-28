@@ -2,12 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import type { Comment } from '@/lib/api/comments'
 import type { HomeImage } from '@/lib/api/home-image'
+import type { SocialLink } from '@/lib/social-links'
 import type { Work, WorkImage } from '@/lib/api/works'
 
 const getWorksMock = vi.fn<() => Promise<Work[]>>()
 const getHomeImageMock = vi.fn<() => Promise<HomeImage | null>>()
 const getWorkCommentsMock = vi.fn<(workId: string) => Promise<Comment[]>>()
 const toastErrorMock = vi.fn()
+const getSocialLinksMock = vi.fn<() => SocialLink[]>()
 
 vi.mock('server-only', () => ({}))
 
@@ -18,6 +20,10 @@ vi.mock('@/lib/api/works', () => ({
 
 vi.mock('@/lib/api/home-image.server', () => ({
   getHomeImage: () => getHomeImageMock(),
+}))
+
+vi.mock('@/lib/social-links', () => ({
+  getSocialLinks: () => getSocialLinksMock(),
 }))
 
 vi.mock('@/lib/api/comments', () => ({
@@ -70,16 +76,24 @@ function getServicesSection(): HTMLElement | null {
   return document.querySelector<HTMLElement>('section#services')
 }
 
+function getContactSection(): HTMLElement | null {
+  return document.querySelector<HTMLElement>('section#contact')
+}
+
 function expectDegradedHome() {
   expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
   const services = getServicesSection()
   expect(services).not.toBeNull()
+  if (!services) return
   expect(services).toHaveAttribute('aria-labelledby', 'services-heading')
   expect(screen.getByRole('heading', { level: 2, name: 'Services' })).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: 'Contact CarShop' })).toHaveAttribute(
+  expect(within(services).getByRole('link', { name: 'Contact CarShop' })).toHaveAttribute(
     'href',
-    '/contact',
+    '/#contact',
   )
+  const contact = getContactSection()
+  expect(contact).not.toBeNull()
+  expect(contact).toHaveAttribute('aria-labelledby', 'home-contact-heading')
   expect(screen.queryByText('Project categories')).not.toBeInTheDocument()
   expect(screen.queryByRole('list', { name: 'Project categories' })).not.toBeInTheDocument()
   expect(
@@ -95,6 +109,7 @@ describe('HomePage (public)', () => {
   beforeEach(() => {
     getHomeImageMock.mockResolvedValue(null)
     getWorkCommentsMock.mockResolvedValue([])
+    getSocialLinksMock.mockReturnValue([])
   })
 
   afterEach(() => {
@@ -172,7 +187,7 @@ describe('HomePage (public)', () => {
       expect(screen.getByAltText('Work 2')).toBeInTheDocument()
     })
 
-    it('renderiza os CTAs: "View Our Work" para /portfolio e "Get a Quote" desabilitado', async () => {
+    it('renderiza os CTAs: "View Our Work" para /portfolio e "Get a Quote" (Hero) para /#contact', async () => {
       getWorksMock.mockResolvedValue(works)
       await renderHome()
 
@@ -182,14 +197,15 @@ describe('HomePage (public)', () => {
         expect(link).toHaveAttribute('href', '/portfolio')
       }
 
-      const quoteButtons = screen.getAllByRole('button', {
-        name: 'Get a Quote (coming soon)',
-      })
-      expect(quoteButtons).toHaveLength(2)
-      for (const button of quoteButtons) {
-        expect(button).toBeDisabled()
-        expect(button).toHaveAttribute('aria-disabled', 'true')
-      }
+      // Só o Hero exibe "Get a Quote"; dentro de `#contact` ele é omitido.
+      const quoteLinks = screen.getAllByRole('link', { name: 'Get a Quote' })
+      expect(quoteLinks).toHaveLength(1)
+      expect(quoteLinks[0]).toHaveAttribute('href', '/#contact')
+      expect(screen.queryByRole('button', { name: /get a quote/i })).not.toBeInTheDocument()
+      const contact = getContactSection()
+      expect(contact).not.toBeNull()
+      if (!contact) return
+      expect(within(contact).queryByRole('link', { name: 'Get a Quote' })).not.toBeInTheDocument()
     })
 
     it('compõe "Our Work" com 1 dominante + itens de apoio (≥2 capas em featured)', async () => {
@@ -244,11 +260,11 @@ describe('HomePage (public)', () => {
         'home-hero-heading',
         'services-heading',
         'our-work-heading',
-        'final-cta-heading',
+        'home-contact-heading',
       ])
     })
 
-    it('renderiza #services logo após o Hero, com pilares, categorias reais e CTA para /contact', async () => {
+    it('renderiza #services logo após o Hero, com pilares, categorias reais e CTA para /#contact', async () => {
       getWorksMock.mockResolvedValue(works)
       await renderHome()
 
@@ -267,7 +283,7 @@ describe('HomePage (public)', () => {
       ])
       expect(scoped.getByRole('link', { name: 'Contact CarShop' })).toHaveAttribute(
         'href',
-        '/contact',
+        '/#contact',
       )
       expect(section.querySelector('img')).toBeNull()
       expect(getWorksMock).toHaveBeenCalledTimes(1)
@@ -298,7 +314,7 @@ describe('HomePage (public)', () => {
     expect(screen.queryByRole('heading', { name: 'Our Work' })).not.toBeInTheDocument()
   })
 
-  it('com lista vazia: Hero tipográfico e Final CTA, sem imagens nem "Our Work"', async () => {
+  it('com lista vazia: Hero tipográfico e #contact, sem imagens nem "Our Work"', async () => {
     getWorksMock.mockResolvedValue([])
     await renderHome()
 
@@ -353,6 +369,69 @@ describe('HomePage (public)', () => {
         .map((item) => item.textContent?.replace('·', '')),
     ).toEqual(['bancos', 'volantes'])
     expect(section.querySelector('img')).toBeNull()
+  })
+
+  describe('#contact (CARSHOP-171)', () => {
+    it('é a última seção, sempre presente, com "Contact CarShop" para /contact', async () => {
+      getWorksMock.mockResolvedValue([])
+      const { container } = await renderHome()
+
+      const sections = Array.from(container.querySelectorAll('section'))
+      const contact = getContactSection()
+      expect(contact).not.toBeNull()
+      if (!contact) return
+      expect(sections.at(-1)).toBe(contact)
+      expect(contact).toHaveAttribute('tabindex', '-1')
+      expect(within(contact).getByRole('link', { name: 'Contact CarShop' })).toHaveAttribute(
+        'href',
+        '/contact',
+      )
+      expect(within(contact).queryByRole('list')).not.toBeInTheDocument()
+      expect(getSocialLinksMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('com links sociais configurados: exibe "Follow CarShop" (h3) dentro de #contact', async () => {
+      getWorksMock.mockResolvedValue([])
+      getSocialLinksMock.mockReturnValue([
+        { href: 'https://instagram.com/example', label: 'Instagram' },
+      ])
+      await renderHome()
+
+      const contact = getContactSection()
+      expect(contact).not.toBeNull()
+      if (!contact) return
+      expect(
+        within(contact).getByRole('heading', { level: 3, name: 'Follow CarShop' }),
+      ).toBeInTheDocument()
+      expect(
+        within(contact).getByRole('link', { name: 'Instagram (opens in a new tab)' }),
+      ).toHaveAttribute('href', 'https://instagram.com/example')
+    })
+
+    it('cria uma única âncora #contact, sem #quote, e não publica dados de contato inventados', async () => {
+      getWorksMock.mockResolvedValue([makeWork('1'), makeWork('2')])
+      getSocialLinksMock.mockReturnValue([
+        { href: 'https://instagram.com/example', label: 'Instagram' },
+      ])
+      const { container } = await renderHome()
+
+      expect(container.querySelectorAll('#contact')).toHaveLength(1)
+      expect(container.querySelector('#quote')).toBeNull()
+      expect(container.querySelector('a[href*="#quote"]')).toBeNull()
+      expect(container.querySelector('a[href^="tel:"]')).toBeNull()
+      expect(container.querySelector('a[href^="mailto:"]')).toBeNull()
+      expect(container.querySelector('form')).toBeNull()
+      expect(container.textContent ?? '').not.toMatch(/coming soon/i)
+
+      // Todo link para a âncora usa o caminho absoluto `/#contact`.
+      const anchorLinks = Array.from(
+        container.querySelectorAll<HTMLAnchorElement>('a[href*="#contact"]'),
+      )
+      expect(anchorLinks.length).toBeGreaterThan(0)
+      for (const link of anchorLinks) {
+        expect(link).toHaveAttribute('href', '/#contact')
+      }
+    })
   })
 
   it('não usa copy proibida nem strings de estado em pt-BR', async () => {
@@ -595,7 +674,7 @@ describe('HomePage (public)', () => {
         'services-heading',
         'our-work-heading',
         'reviews-heading',
-        'final-cta-heading',
+        'home-contact-heading',
       ])
 
       const section = getReviewsSection(container)
@@ -691,7 +770,7 @@ describe('HomePage (public)', () => {
         'home-hero-heading',
         'services-heading',
         'reviews-heading',
-        'final-cta-heading',
+        'home-contact-heading',
       ])
     })
   })
