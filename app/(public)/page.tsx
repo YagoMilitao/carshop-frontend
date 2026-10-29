@@ -12,6 +12,7 @@ import { HomeServices } from "./_components/home-services"
 import { FeaturedWorks } from "./_components/featured-works"
 import { HomeAbout } from "./_components/home-about"
 import { HomeReviews } from "./_components/home-reviews"
+import { HomeProcess } from "./_components/home-process"
 import { FinalCta } from "./_components/final-cta"
 
 const description =
@@ -75,6 +76,7 @@ export default async function HomePage() {
       {featured.length >= 1 && <FeaturedWorks featured={featured} />}
       <HomeAbout image={aboutImage} />
       <HomeReviews reviews={reviews} />
+      <HomeProcess />
       <FinalCta socialLinks={socialLinks} />
     </>
   )
