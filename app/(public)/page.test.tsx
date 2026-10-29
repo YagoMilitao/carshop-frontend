@@ -270,6 +270,7 @@ describe('HomePage (public)', () => {
         'services-heading',
         'our-work-heading',
         'home-about-heading',
+        'home-process-heading',
         'home-contact-heading',
       ])
     })
@@ -517,12 +518,24 @@ describe('HomePage (public)', () => {
     })
   })
 
-  it('não renderiza #process sem conteúdo aprovado (CARSHOP-168)', async () => {
+  it('renderiza #process com o conteúdo aprovado, antes de #contact (CARSHOP-168)', async () => {
     getWorksMock.mockResolvedValue(['1', '2', '3', '4', '5'].map((id) => makeWork(id)))
     const { container } = await renderHome()
 
-    expect(container.querySelector('#process')).toBeNull()
-    expect(container.querySelector('#home-process-heading')).toBeNull()
+    const process = container.querySelector<HTMLElement>('section#process')
+    expect(process).not.toBeNull()
+    if (!process) return
+    expect(process).toHaveAttribute('aria-labelledby', 'home-process-heading')
+    expect(
+      within(process).getByRole('heading', { level: 2, name: 'From quote to pickup' }),
+    ).toBeInTheDocument()
+    expect(within(process).getAllByRole('listitem').map((item) => item.querySelector('p')?.textContent)).toEqual([
+      'Request a quote',
+      'We get in touch',
+      'The work happens at our shop',
+      'Pick up at the shop',
+    ])
+    expect(process.nextElementSibling).toBe(container.querySelector('section#contact'))
   })
 
   it('não usa copy proibida nem strings de estado em pt-BR', async () => {
@@ -766,6 +779,7 @@ describe('HomePage (public)', () => {
         'our-work-heading',
         'home-about-heading',
         'reviews-heading',
+        'home-process-heading',
         'home-contact-heading',
       ])
 
@@ -863,6 +877,7 @@ describe('HomePage (public)', () => {
         'services-heading',
         'home-about-heading',
         'reviews-heading',
+        'home-process-heading',
         'home-contact-heading',
       ])
     })

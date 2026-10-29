@@ -7,18 +7,38 @@ export type HomeProcessContent = {
   steps: readonly [HomeProcessStep, ...HomeProcessStep[]]
 }
 
-/** Sem conteúdo aprovado (CARSHOP-168): a seção não renderiza. */
-export const HOME_PROCESS_CONTENT: HomeProcessContent | null = null
+/** Conteúdo do processo aprovado pelo usuário (CARSHOP-168). */
+export const HOME_PROCESS_CONTENT: HomeProcessContent = {
+  heading: "From quote to pickup",
+  steps: [
+    {
+      title: "Request a quote",
+      description: "Reach out through our contact page or social channels and tell us about your vehicle and what you have in mind.",
+    },
+    {
+      title: "We get in touch",
+      description: "Our team contacts you to talk through your project.",
+    },
+    {
+      title: "The work happens at our shop",
+      description: "Your vehicle stays with us while the interior is done.",
+    },
+    {
+      title: "Pick up at the shop",
+      description: "Your vehicle is ready for pickup at our shop.",
+    },
+  ],
+}
 
 type HomeProcessProps = {
-  /** Permite testar a estrutura sem publicar copy não aprovada. */
+  /** Permite testar a estrutura com fixtures; `null` omite a seção. */
   content?: HomeProcessContent | null
 }
 
 /**
- * `#process` (CARSHOP-168): só estrutura. Enquanto não houver etapas reais
- * aprovadas, `content` é `null` e nem a seção nem a âncora existem (mesmo
- * padrão condicional de `#reviews`).
+ * `#process` (CARSHOP-168): etapas aprovadas em `HOME_PROCESS_CONTENT`. Se
+ * `content` for `null`, nem a seção nem a âncora existem (mesmo padrão
+ * condicional de `#reviews`).
  *
  * Heading em bloco próprio e lista em largura total abaixo: 1 coluna no
  * mobile, 2 no `md` e uma linha com colunas iguais no `lg` (uma por etapa).
@@ -46,7 +66,7 @@ export function HomeProcess({
         <ol className="grid grid-cols-1 gap-y-10 md:grid-cols-2 md:gap-x-8 lg:col-span-12 lg:grid-cols-none lg:grid-flow-col lg:auto-cols-fr">
           {content.steps.map((step, index) => (
             <li
-              key={step.title}
+              key={`${index}-${step.title}`}
               className="flex flex-col gap-4 border-t border-border pt-6"
             >
               <span aria-hidden="true" className="text-label tabular-nums text-muted-foreground">
