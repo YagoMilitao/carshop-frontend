@@ -517,6 +517,14 @@ describe('HomePage (public)', () => {
     })
   })
 
+  it('não renderiza #process sem conteúdo aprovado (CARSHOP-168)', async () => {
+    getWorksMock.mockResolvedValue(['1', '2', '3', '4', '5'].map((id) => makeWork(id)))
+    const { container } = await renderHome()
+
+    expect(container.querySelector('#process')).toBeNull()
+    expect(container.querySelector('#home-process-heading')).toBeNull()
+  })
+
   it('não usa copy proibida nem strings de estado em pt-BR', async () => {
     getWorksMock.mockResolvedValue([])
     const { container } = await renderHome()
