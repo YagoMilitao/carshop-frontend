@@ -23,7 +23,7 @@ describe("Footer", () => {
 
     const currentYear = new Date().getFullYear();
     expect(
-      screen.getByText(`© ${currentYear} CarShop. Todos os direitos reservados.`),
+      screen.getByText(`© ${currentYear} DreamUP Auto Interiors. Todos os direitos reservados.`),
     ).toBeInTheDocument();
   });
 

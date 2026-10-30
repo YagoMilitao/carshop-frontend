@@ -21,18 +21,18 @@ describe('RootLayout', () => {
 
   it('define metadata base (title, description e metadataBase)', () => {
     expect(metadata.title).toEqual({
-      default: 'CarShop',
-      template: '%s | CarShop',
+      default: 'DreamUP Auto Interiors',
+      template: '%s | DreamUP Auto Interiors',
     })
     expect(metadata.description).toBe(
-      'CarShop — automotive upholstery services.',
+      'DreamUP Auto Interiors — automotive upholstery services.',
     )
     expect(metadata.metadataBase).toBeInstanceOf(URL)
   })
 
   it('define Open Graph base (siteName, locale e type)', () => {
     expect(metadata.openGraph).toMatchObject({
-      siteName: 'CarShop',
+      siteName: 'DreamUP Auto Interiors',
       locale: 'en_US',
       type: 'website',
     })

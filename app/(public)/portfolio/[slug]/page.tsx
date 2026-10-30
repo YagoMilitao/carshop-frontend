@@ -40,10 +40,10 @@ export async function generateMetadata({
   const cover = getCoverImage(work)
 
   return {
-    title: `${work.title} — CarShop`,
+    title: `${work.title} — DreamUP Auto Interiors`,
     description: work.description,
     openGraph: {
-      title: `${work.title} — CarShop`,
+      title: `${work.title} — DreamUP Auto Interiors`,
       description: work.description,
       type: 'article',
       ...(cover

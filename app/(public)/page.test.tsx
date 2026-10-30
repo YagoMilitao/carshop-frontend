@@ -4,6 +4,7 @@ import type { Comment } from '@/lib/api/comments'
 import type { HomeImage } from '@/lib/api/home-image'
 import type { SocialLink } from '@/lib/social-links'
 import type { Work, WorkImage } from '@/lib/api/works'
+import { HOME_SECTION_IDS } from './_lib/home-anchors'
 
 const getWorksMock = vi.fn<() => Promise<Work[]>>()
 const getHomeImageMock = vi.fn<() => Promise<HomeImage | null>>()
@@ -91,7 +92,7 @@ function expectDegradedHome() {
   if (!services) return
   expect(services).toHaveAttribute('aria-labelledby', 'services-heading')
   expect(screen.getByRole('heading', { level: 2, name: 'Services' })).toBeInTheDocument()
-  expect(within(services).getByRole('link', { name: 'Contact CarShop' })).toHaveAttribute(
+  expect(within(services).getByRole('link', { name: 'Contact DreamUP' })).toHaveAttribute(
     'href',
     '/#contact',
   )
@@ -267,15 +268,56 @@ describe('HomePage (public)', () => {
       )
       expect(labelledBy).toEqual([
         'home-hero-heading',
-        'services-heading',
         'our-work-heading',
-        'home-about-heading',
+        'services-heading',
         'home-process-heading',
+        'home-about-heading',
         'home-contact-heading',
+      ])
+      expect(Array.from(container.querySelectorAll('section')).map((section) => section.id)).toEqual([
+        'hero',
+        'our-work',
+        'services',
+        'process',
+        'about',
+        'contact',
       ])
     })
 
-    it('renderiza #services logo após o Hero, com pilares, categorias reais e CTA para /#contact', async () => {
+    it('identifica toda seção com um id estável de HOME_SECTION_IDS, sem duplicatas (CARSHOP-162)', async () => {
+      getWorksMock.mockResolvedValue(works)
+      getWorkCommentsMock.mockImplementation(async (workId) =>
+        workId === '2'
+          ? [
+              {
+                id: 'c1',
+                workId: '2',
+                authorName: 'Yago Militão',
+                content: 'Great job',
+                status: 'APPROVED',
+                createdAt: '2026-06-05T12:00:00.000Z',
+                updatedAt: '2026-06-05T12:00:00.000Z',
+              },
+            ]
+          : [],
+      )
+      const { container } = await renderHome()
+
+      const knownIds: readonly string[] = Object.values(HOME_SECTION_IDS)
+      const ids = Array.from(container.querySelectorAll('section')).map((section) => section.id)
+      expect(ids).toHaveLength(knownIds.length)
+      for (const id of ids) {
+        expect(id).not.toBe('')
+        expect(knownIds).toContain(id)
+      }
+      expect(new Set(ids).size).toBe(ids.length)
+      expect(container.querySelector('section#hero')).toHaveAttribute(
+        'aria-labelledby',
+        'home-hero-heading',
+      )
+    })
+
+    it('renderiza #services logo após "Our Work", com pilares, categorias reais e CTA para /#contact', async () => {
       getWorksMock.mockResolvedValue(works)
       await renderHome()
 
@@ -292,7 +334,7 @@ describe('HomePage (public)', () => {
       expect(within(evidence).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
         'bancos',
       ])
-      expect(scoped.getByRole('link', { name: 'Contact CarShop' })).toHaveAttribute(
+      expect(scoped.getByRole('link', { name: 'Contact DreamUP' })).toHaveAttribute(
         'href',
         '/#contact',
       )
@@ -332,6 +374,68 @@ describe('HomePage (public)', () => {
       '/portfolio/work-1',
     )
     expect(screen.getAllByRole('img')).toHaveLength(3)
+  })
+
+  describe('ordem e ids na Home degradada (CARSHOP-162)', () => {
+    const degradedOrder = ['hero', 'services', 'process', 'about', 'contact']
+
+    function getSectionIds(container: HTMLElement): string[] {
+      return Array.from(container.querySelectorAll('section')).map((section) => section.id)
+    }
+
+    it('sem "Our Work" e sem reviews (lista vazia): mantém a ordem relativa das seções restantes', async () => {
+      getWorksMock.mockResolvedValue([])
+      const { container } = await renderHome()
+
+      expect(getSectionIds(container)).toEqual(degradedOrder)
+      expect(container.querySelector('#our-work')).toBeNull()
+      expect(container.querySelector('#reviews')).toBeNull()
+    })
+
+    it('getWorks() e getHomeImage() falham: mesma ordem degradada, sem âncoras órfãs', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      getWorksMock.mockRejectedValue(new Error('works off'))
+      getHomeImageMock.mockRejectedValue(new Error('home-image off'))
+      const { container } = await renderHome()
+
+      expect(getSectionIds(container)).toEqual(degradedOrder)
+      // Nenhum link interno aponta para uma seção que não foi renderizada.
+      const hashTargets = Array.from(
+        container.querySelectorAll<HTMLAnchorElement>('a[href^="/#"]'),
+      ).map((link) => (link.getAttribute('href') ?? '').slice(2))
+      for (const target of hashTargets) {
+        expect(container.querySelector(`#${target}`)).not.toBeNull()
+      }
+    })
+
+    it('com todas as seções: cada id de HOME_SECTION_IDS aparece exatamente uma vez no documento', async () => {
+      getWorksMock.mockResolvedValue(['1', '2', '3', '4', '5'].map((id) => makeWork(id)))
+      getWorkCommentsMock.mockImplementation(async (workId) =>
+        workId === '2'
+          ? [
+              {
+                id: 'c1',
+                workId: '2',
+                authorName: 'Yago Militão',
+                content: 'Great job',
+                status: 'APPROVED',
+                createdAt: '2026-06-05T12:00:00.000Z',
+                updatedAt: '2026-06-05T12:00:00.000Z',
+              },
+            ]
+          : [],
+      )
+      const { container } = await renderHome()
+
+      for (const id of Object.values(HOME_SECTION_IDS)) {
+        const matches = container.querySelectorAll(`[id="${id}"]`)
+        expect(matches).toHaveLength(1)
+        expect(matches[0]?.tagName).toBe('SECTION')
+        const labelledBy = matches[0]?.getAttribute('aria-labelledby') ?? ''
+        expect(labelledBy).not.toBe('')
+        expect(container.querySelector(`[id="${labelledBy}"]`)).not.toBeNull()
+      }
+    })
   })
 
   it('com uma única capa: Hero com imagem e sem seção "Our Work"', async () => {
@@ -400,7 +504,7 @@ describe('HomePage (public)', () => {
   })
 
   describe('#about (CARSHOP-169)', () => {
-    it('com 5 works: #about após "Our Work" com a foto lazy do work-5', async () => {
+    it('com 5 works: #about com a foto lazy do work-5', async () => {
       getWorksMock.mockResolvedValue(['1', '2', '3', '4', '5'].map((id) => makeWork(id)))
       await renderHome()
 
@@ -516,19 +620,16 @@ describe('HomePage (public)', () => {
       expect(ourWork).toHaveFocus()
     })
 
-    it('#our-work fica depois de #services e antes de #about', async () => {
+    it('#our-work fica logo após o Hero e antes de #services (CARSHOP-162)', async () => {
       getWorksMock.mockResolvedValue(['1', '2', '3', '4', '5'].map((id) => makeWork(id)))
       const { container } = await renderHome()
 
-      const ids = Array.from(container.querySelectorAll('section'))
-        .map((section) => section.id)
-        .filter((id) => id !== '')
-      const services = ids.indexOf('services')
-      const ourWork = ids.indexOf('our-work')
-      const about = ids.indexOf('about')
-      expect(services).toBeGreaterThanOrEqual(0)
-      expect(ourWork).toBe(services + 1)
-      expect(about).toBe(ourWork + 1)
+      const hero = container.querySelector('section#hero')
+      const ourWork = container.querySelector('section#our-work')
+      expect(hero).not.toBeNull()
+      expect(ourWork).not.toBeNull()
+      expect(hero?.nextElementSibling).toBe(ourWork)
+      expect(ourWork?.nextElementSibling).toBe(container.querySelector('section#services'))
     })
 
     it('com uma única capa (featured vazio): ambos → /portfolio e sem #our-work', async () => {
@@ -601,7 +702,7 @@ describe('HomePage (public)', () => {
   })
 
   describe('#contact (CARSHOP-171)', () => {
-    it('é a última seção, sempre presente, com "Contact CarShop" para /contact', async () => {
+    it('é a última seção, sempre presente, com "Contact DreamUP" para /#contact', async () => {
       getWorksMock.mockResolvedValue([])
       const { container } = await renderHome()
 
@@ -611,15 +712,15 @@ describe('HomePage (public)', () => {
       if (!contact) return
       expect(sections.at(-1)).toBe(contact)
       expect(contact).toHaveAttribute('tabindex', '-1')
-      expect(within(contact).getByRole('link', { name: 'Contact CarShop' })).toHaveAttribute(
+      expect(within(contact).getByRole('link', { name: 'Contact DreamUP' })).toHaveAttribute(
         'href',
-        '/contact',
+        '/#contact',
       )
       expect(within(contact).queryByRole('list')).not.toBeInTheDocument()
       expect(getSocialLinksMock).toHaveBeenCalledTimes(1)
     })
 
-    it('com links sociais configurados: exibe "Follow CarShop" (h3) dentro de #contact', async () => {
+    it('com links sociais configurados: exibe "Follow DreamUP" (h3) dentro de #contact', async () => {
       getWorksMock.mockResolvedValue([])
       getSocialLinksMock.mockReturnValue([
         { href: 'https://instagram.com/example', label: 'Instagram' },
@@ -630,7 +731,7 @@ describe('HomePage (public)', () => {
       expect(contact).not.toBeNull()
       if (!contact) return
       expect(
-        within(contact).getByRole('heading', { level: 3, name: 'Follow CarShop' }),
+        within(contact).getByRole('heading', { level: 3, name: 'Follow DreamUP' }),
       ).toBeInTheDocument()
       expect(
         within(contact).getByRole('link', { name: 'Instagram (opens in a new tab)' }),
@@ -661,9 +762,20 @@ describe('HomePage (public)', () => {
         expect(link).toHaveAttribute('href', '/#contact')
       }
     })
+
+    it('nenhum link da Home envia para a página /contact (CARSHOP-162)', async () => {
+      getWorksMock.mockResolvedValue(['1', '2', '3', '4', '5'].map((id) => makeWork(id)))
+      getSocialLinksMock.mockReturnValue([
+        { href: 'https://instagram.com/example', label: 'Instagram' },
+      ])
+      const { container } = await renderHome()
+
+      expect(container.querySelector('a[href="/contact"]')).toBeNull()
+      expect(container.textContent ?? '').not.toMatch(/contact page/i)
+    })
   })
 
-  it('renderiza #process com o conteúdo aprovado, antes de #contact (CARSHOP-168)', async () => {
+  it('renderiza #process com o conteúdo aprovado, entre #services e #about (CARSHOP-162/168)', async () => {
     getWorksMock.mockResolvedValue(['1', '2', '3', '4', '5'].map((id) => makeWork(id)))
     const { container } = await renderHome()
 
@@ -680,7 +792,8 @@ describe('HomePage (public)', () => {
       'The work happens at our shop',
       'Pick up at the shop',
     ])
-    expect(process.nextElementSibling).toBe(container.querySelector('section#contact'))
+    expect(process.previousElementSibling).toBe(container.querySelector('section#services'))
+    expect(process.nextElementSibling).toBe(container.querySelector('section#about'))
   })
 
   it('não usa copy proibida nem strings de estado em pt-BR', async () => {
@@ -908,7 +1021,7 @@ describe('HomePage (public)', () => {
       return container.querySelector<HTMLElement>('section#reviews')
     }
 
-    it('com reviews: renderiza #reviews entre "Our Work" e o CTA final', async () => {
+    it('com reviews: renderiza #reviews entre #about e #contact', async () => {
       getWorksMock.mockResolvedValue(works)
       getWorkCommentsMock.mockImplementation(async (workId) =>
         workId === '2' ? [makeComment('c1', '2', '2026-06-05T12:00:00.000Z')] : [],
@@ -920,12 +1033,21 @@ describe('HomePage (public)', () => {
       )
       expect(labelledBy).toEqual([
         'home-hero-heading',
-        'services-heading',
         'our-work-heading',
+        'services-heading',
+        'home-process-heading',
         'home-about-heading',
         'reviews-heading',
-        'home-process-heading',
         'home-contact-heading',
+      ])
+      expect(Array.from(container.querySelectorAll('section')).map((item) => item.id)).toEqual([
+        'hero',
+        'our-work',
+        'services',
+        'process',
+        'about',
+        'reviews',
+        'contact',
       ])
 
       const section = getReviewsSection(container)
@@ -1005,6 +1127,32 @@ describe('HomePage (public)', () => {
       expectDegradedHome()
     })
 
+    it('só comentários não aprovados (PENDING/HIDDEN): #reviews ausente e nenhum conteúdo exposto (CARSHOP-162)', async () => {
+      getWorksMock.mockResolvedValue(works)
+      getWorkCommentsMock.mockImplementation(async (workId) =>
+        workId === '2'
+          ? [
+              { ...makeComment('pending', '2', '2026-06-01T00:00:00.000Z'), status: 'PENDING' },
+              { ...makeComment('hidden', '2', '2026-06-02T00:00:00.000Z'), status: 'HIDDEN' },
+            ]
+          : [],
+      )
+      const { container } = await renderHome()
+
+      expect(getReviewsSection(container)).toBeNull()
+      expect(container.querySelector('#reviews')).toBeNull()
+      expect(container.textContent ?? '').not.toContain('Great job pending')
+      expect(container.textContent ?? '').not.toContain('Great job hidden')
+      expect(Array.from(container.querySelectorAll('section')).map((item) => item.id)).toEqual([
+        'hero',
+        'our-work',
+        'services',
+        'process',
+        'about',
+        'contact',
+      ])
+    })
+
     it('#reviews renderiza mesmo quando "Our Work" é omitida', async () => {
       const noCover = [makeWork('1', { hasCover: false })]
       getWorksMock.mockResolvedValue(noCover)
@@ -1020,10 +1168,18 @@ describe('HomePage (public)', () => {
       expect(labelledBy).toEqual([
         'home-hero-heading',
         'services-heading',
+        'home-process-heading',
         'home-about-heading',
         'reviews-heading',
-        'home-process-heading',
         'home-contact-heading',
+      ])
+      expect(Array.from(container.querySelectorAll('section')).map((item) => item.id)).toEqual([
+        'hero',
+        'services',
+        'process',
+        'about',
+        'reviews',
+        'contact',
       ])
     })
   })

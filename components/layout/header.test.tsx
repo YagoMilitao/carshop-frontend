@@ -13,7 +13,7 @@ describe("Header", () => {
   it("renderiza o link para a home com o nome da marca", () => {
     render(<Header />);
 
-    const brandLink = screen.getByRole("link", { name: "CarShop" });
+    const brandLink = screen.getByRole("link", { name: "DreamUP Auto Interiors" });
     expect(brandLink).toHaveAttribute("href", "/");
   });
 

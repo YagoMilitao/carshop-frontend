@@ -9,6 +9,7 @@ import {
   HomeHeroLayout,
   type HeroMediaCandidate,
 } from "./home-hero-layout"
+import { HOME_SECTION_IDS } from "../_lib/home-anchors"
 
 type HomeHeroProps = {
   hero: HomeHeroContent | null
@@ -68,7 +69,11 @@ export function HomeHero({
     .join("\n")
 
   return (
-    <PageSection spacing="compact" aria-labelledby="home-hero-heading">
+    <PageSection
+      spacing="compact"
+      id={HOME_SECTION_IDS.hero}
+      aria-labelledby="home-hero-heading"
+    >
       <HomeHeroLayout key={candidatesKey} candidates={candidates}>
         <h1
           id="home-hero-heading"

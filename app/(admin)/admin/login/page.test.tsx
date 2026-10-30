@@ -57,7 +57,7 @@ describe("AdminLoginPage", () => {
     expect(screen.getByRole("heading", { name: "Entrar no painel admin" })).toBeInTheDocument();
   });
 
-  it("renderiza o formulário dentro de um card com a marca 'CarShop Admin' e h1 'Entrar no painel admin'", () => {
+  it("renderiza o formulário dentro de um card com a marca 'DreamUP Admin' e h1 'Entrar no painel admin'", () => {
     const { container } = render(<AdminLoginPage />);
 
     const heading = screen.getByRole("heading", {
@@ -68,7 +68,7 @@ describe("AdminLoginPage", () => {
     expect(card).not.toBeNull();
     expect(card).toContainElement(heading);
     expect(card).toContainElement(screen.getByLabelText("E-mail"));
-    expect(card).toHaveTextContent("CarShop Admin");
+    expect(card).toHaveTextContent("DreamUP Admin");
     expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getByLabelText("E-mail")).toHaveAttribute("aria-invalid", "false");
     expect(screen.getByLabelText("Senha")).toHaveAttribute("aria-invalid", "false");
@@ -85,7 +85,7 @@ describe("AdminLoginPage", () => {
     expect(status).toHaveTextContent("Carregando formulário de login...");
     expect(screen.getByRole("main")).toBeInTheDocument();
     expect(container.querySelector('[data-slot="card"]')).toHaveTextContent(
-      "CarShop Admin",
+      "DreamUP Admin",
     );
     expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(0);
     expect(screen.queryByRole("heading")).not.toBeInTheDocument();

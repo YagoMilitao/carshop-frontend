@@ -7,7 +7,7 @@ import { HomeCtaActions } from '../_components/home-cta-actions'
 import { ContactFollowLinks } from '@/components/contact/contact-follow-links'
 
 const description =
-  'Contact CarShop about automotive upholstery, restoration and custom interior work.'
+  'Contact DreamUP Auto Interiors about automotive upholstery, restoration and custom interior work.'
 
 export const metadata: Metadata = {
   title: 'Contact',

@@ -30,7 +30,7 @@ describe('HomeProcess', () => {
     const items = within(getSection(container)).getAllByRole('listitem')
 
     const expected = [
-      ['Request a quote', 'Reach out through our contact page or social channels and tell us about your vehicle and what you have in mind.'],
+      ['Request a quote', 'Reach out through our contact section or social channels and tell us about your vehicle and what you have in mind.'],
       ['We get in touch', 'Our team contacts you to talk through your project.'],
       ['The work happens at our shop', 'Your vehicle stays with us while the interior is done.'],
       ['Pick up at the shop', 'Your vehicle is ready for pickup at our shop.'],
