@@ -106,4 +106,20 @@ describe('FinalCta (#contact)', () => {
     expect(text).not.toMatch(/\bfree\b|coming soon|built to last/i)
     expect(within(section).queryByRole('img')).not.toBeInTheDocument()
   })
+
+  describe('workTarget (CARSHOP-165)', () => {
+    it.each([
+      ['portfolio', '/portfolio'],
+      ['home-section', '/#our-work'],
+    ] as const)('workTarget="%s" → "View Our Work" aponta para %s', (workTarget, href) => {
+      const { container } = render(<FinalCta socialLinks={[]} workTarget={workTarget} />)
+      const section = getContactSection(container)
+
+      expect(within(section).getByRole('link', { name: 'View Our Work' })).toHaveAttribute(
+        'href',
+        href,
+      )
+      expect(within(section).queryByText(/get a quote/i)).not.toBeInTheDocument()
+    })
+  })
 })

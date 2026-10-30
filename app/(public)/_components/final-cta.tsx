@@ -6,10 +6,11 @@ import { CONTACT_SECTION_ID } from "@/components/contact/contact-anchor"
 import { ContactSectionFocus } from "@/components/contact/contact-section-focus"
 import type { SocialLink } from "@/lib/social-links"
 import { cn } from "@/lib/utils"
-import { HomeCtaActions } from "./home-cta-actions"
+import { HomeCtaActions, type HomeCtaWorkTarget } from "./home-cta-actions"
 
 type FinalCtaProps = {
   socialLinks: readonly SocialLink[]
+  workTarget?: HomeCtaWorkTarget
 }
 
 /**
@@ -23,7 +24,10 @@ type FinalCtaProps = {
  * direta) e `ContactAnchorLink` na mesma página. Ordem do DOM = leitura no mobile (sem CSS
  * `order`).
  */
-export function FinalCta({ socialLinks }: Readonly<FinalCtaProps>) {
+export function FinalCta({
+  socialLinks,
+  workTarget,
+}: Readonly<FinalCtaProps>) {
   const hasSocialLinks = socialLinks.length > 0
 
   return (
@@ -51,7 +55,7 @@ export function FinalCta({ socialLinks }: Readonly<FinalCtaProps>) {
             Ready to transform your interior?
           </h2>
           <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
-            <HomeCtaActions showQuoteLink={false} />
+            <HomeCtaActions showQuoteLink={false} workTarget={workTarget} />
             <Link
               href="/contact"
               className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg text-nav text-foreground outline-hidden hover:text-primary focus-visible:ring-3 focus-visible:ring-focus-ring"

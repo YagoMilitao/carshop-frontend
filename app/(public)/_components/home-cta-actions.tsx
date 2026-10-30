@@ -1,6 +1,15 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ContactAnchorLink } from "@/components/contact/contact-anchor-link"
+import { SectionAnchorLink } from "@/components/layout/section-anchor-link"
+import { OUR_WORK_SECTION_ID } from "../_lib/home-anchors"
+
+/**
+ * Destino de "View Our Work": `"portfolio"` → `/portfolio`;
+ * `"home-section"` → `/#our-work` (CARSHOP-165), usado na Home só quando a
+ * seção "Our Work" é renderizada.
+ */
+export type HomeCtaWorkTarget = "portfolio" | "home-section"
 
 type HomeCtaActionsProps = {
   /**
@@ -8,6 +17,7 @@ type HomeCtaActionsProps = {
    * `#contact`, onde o link apontaria para a seção atual.
    */
   showQuoteLink?: boolean
+  workTarget?: HomeCtaWorkTarget
 }
 
 /**
@@ -20,11 +30,18 @@ type HomeCtaActionsProps = {
  */
 export function HomeCtaActions({
   showQuoteLink = true,
+  workTarget = "portfolio",
 }: Readonly<HomeCtaActionsProps>) {
   return (
     <div className="flex flex-wrap items-center gap-4">
       <Button asChild size="lg" className="h-11 px-6">
-        <Link href="/portfolio">View Our Work</Link>
+        {workTarget === "home-section" ? (
+          <SectionAnchorLink sectionId={OUR_WORK_SECTION_ID}>
+            View Our Work
+          </SectionAnchorLink>
+        ) : (
+          <Link href="/portfolio">View Our Work</Link>
+        )}
       </Button>
       {showQuoteLink && (
         <Button asChild variant="outline" size="lg" className="h-11 px-6">

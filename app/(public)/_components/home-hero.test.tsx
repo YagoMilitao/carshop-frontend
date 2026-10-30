@@ -278,4 +278,28 @@ describe('HomeHero', () => {
       }
     })
   })
+
+  describe('workTarget (CARSHOP-165)', () => {
+    it('sem workTarget, "View Our Work" mantém /portfolio', () => {
+      render(<HomeHero hero={null} />)
+
+      expect(screen.getByRole('link', { name: 'View Our Work' })).toHaveAttribute(
+        'href',
+        '/portfolio',
+      )
+    })
+
+    it.each([
+      ['portfolio', '/portfolio'],
+      ['home-section', '/#our-work'],
+    ] as const)('workTarget="%s" → "View Our Work" aponta para %s', (workTarget, href) => {
+      render(<HomeHero hero={makeHero()} featured={[makeFeatured('2')]} workTarget={workTarget} />)
+
+      expect(screen.getByRole('link', { name: 'View Our Work' })).toHaveAttribute('href', href)
+      expect(screen.getByRole('link', { name: 'Get a Quote' })).toHaveAttribute(
+        'href',
+        '/#contact',
+      )
+    })
+  })
 })
