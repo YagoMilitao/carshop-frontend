@@ -1,6 +1,6 @@
-import Link from "next/link"
 import { LuArrowRight } from "react-icons/lu"
 import { PageSection } from "@/components/layout/page-section"
+import { ContactAnchorLink } from "@/components/contact/contact-anchor-link"
 import { ContactFollowLinks } from "@/components/contact/contact-follow-links"
 import { CONTACT_SECTION_ID } from "@/components/contact/contact-anchor"
 import { ContactSectionFocus } from "@/components/contact/contact-section-focus"
@@ -16,8 +16,9 @@ type FinalCtaProps = {
 /**
  * Seção `#contact` da Home (CARSHOP-171): fechamento do funil, sempre
  * presente e independente da API de works. Usa apenas canais reais — links
- * sociais configurados no ambiente e a página `/contact`; sem formulário
- * nem dados de contato inventados.
+ * sociais configurados no ambiente; sem formulário nem dados de contato
+ * inventados. "Contact DreamUP" aponta para a própria âncora `/#contact`
+ * (CARSHOP-162), mantendo o visitante na Home single-page.
  *
  * `tabIndex={-1}` permite mover o foco para a seção ao navegar para
  * `/#contact`: `ContactSectionFocus` na chegada (troca de rota ou carga
@@ -56,13 +57,12 @@ export function FinalCta({
           </h2>
           <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
             <HomeCtaActions showQuoteLink={false} workTarget={workTarget} />
-            <Link
-              href="/contact"
+            <ContactAnchorLink
               className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg text-nav text-foreground outline-hidden hover:text-primary focus-visible:ring-3 focus-visible:ring-focus-ring"
             >
-              Contact CarShop
+              Contact DreamUP
               <LuArrowRight aria-hidden="true" className="size-4 shrink-0" />
-            </Link>
+            </ContactAnchorLink>
           </div>
         </div>
 

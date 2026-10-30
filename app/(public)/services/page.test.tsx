@@ -159,7 +159,7 @@ describe('ServicesPage (public)', () => {
   it('define metadata sem "under construction"', async () => {
     const { metadata } = await import('./page')
     const description =
-      'Upholstery · Restoration · Custom Work — services shown through real CarShop projects.'
+      'Upholstery · Restoration · Custom Work — services shown through real DreamUP projects.'
 
     expect(metadata.title).toBe('Services')
     expect(metadata.description).toBe(description)

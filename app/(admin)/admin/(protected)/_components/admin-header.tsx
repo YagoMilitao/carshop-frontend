@@ -13,7 +13,7 @@ export function AdminHeader() {
       <div className="flex items-center gap-2 lg:hidden">
         <AdminMobileNav />
         <span className="text-body-lg font-semibold text-foreground">
-          CarShop Admin
+          DreamUP Admin
         </span>
       </div>
       <AdminAccountMenu />

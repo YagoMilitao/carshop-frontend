@@ -3,6 +3,7 @@ import { LuArrowRight } from "react-icons/lu"
 import { PageSection } from "@/components/layout/page-section"
 import { formatCommentDate } from "../_lib/format-comment-date"
 import type { HomeReview } from "../_lib/select-home-reviews"
+import { HOME_SECTION_IDS } from "../_lib/home-anchors"
 
 type HomeReviewsProps = {
   reviews: readonly HomeReview[]
@@ -24,7 +25,7 @@ export function HomeReviews({ reviews }: Readonly<HomeReviewsProps>) {
     <PageSection
       spacing="standard"
       container="page"
-      id="reviews"
+      id={HOME_SECTION_IDS.reviews}
       aria-labelledby="reviews-heading"
       className="bg-surface-warm"
     >

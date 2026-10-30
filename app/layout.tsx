@@ -22,12 +22,12 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   metadataBase: new URL(clientEnv.NEXT_PUBLIC_SITE_URL),
   title: {
-    default: 'CarShop',
-    template: '%s | CarShop',
+    default: 'DreamUP Auto Interiors',
+    template: '%s | DreamUP Auto Interiors',
   },
-  description: 'CarShop — automotive upholstery services.',
+  description: 'DreamUP Auto Interiors — automotive upholstery services.',
   openGraph: {
-    siteName: 'CarShop',
+    siteName: 'DreamUP Auto Interiors',
     locale: 'en_US',
     type: 'website',
   },

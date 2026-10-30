@@ -21,9 +21,9 @@ export function Footer() {
         className="flex flex-col gap-6 py-8 md:flex-row md:items-start md:justify-between"
       >
         <div>
-          <p className="text-nav text-foreground">CarShop</p>
+          <p className="text-nav text-foreground">DreamUP Auto Interiors</p>
           <p className="mt-1 text-body-sm text-muted-foreground">
-            &copy; {currentYear} CarShop. Todos os direitos reservados.
+            &copy; {currentYear} DreamUP Auto Interiors. Todos os direitos reservados.
           </p>
         </div>
 

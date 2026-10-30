@@ -63,7 +63,7 @@ describe('ContactPage (public)', () => {
     getSocialLinksMock.mockReturnValue([])
     await renderContact()
 
-    expect(screen.queryByRole('heading', { name: 'Follow CarShop' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Follow DreamUP' })).not.toBeInTheDocument()
   })
 
   it('exibe a seção social quando há links configurados', async () => {
@@ -74,7 +74,7 @@ describe('ContactPage (public)', () => {
     await renderContact()
 
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Follow CarShop' }),
+      screen.getByRole('heading', { level: 2, name: 'Follow DreamUP' }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('link', { name: 'Instagram (opens in a new tab)' }),
@@ -106,7 +106,7 @@ describe('ContactPage (public)', () => {
   it('define metadata sem "under construction"', async () => {
     const { metadata } = await import('./page')
     const description =
-      'Contact CarShop about automotive upholstery, restoration and custom interior work.'
+      'Contact DreamUP Auto Interiors about automotive upholstery, restoration and custom interior work.'
 
     expect(metadata.title).toBe('Contact')
     expect(metadata.description).toBe(description)

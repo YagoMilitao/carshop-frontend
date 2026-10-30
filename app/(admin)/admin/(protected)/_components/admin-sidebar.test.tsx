@@ -25,10 +25,10 @@ describe("AdminSidebar", () => {
     expect(links[3]).toHaveTextContent("Imagem da Home");
   });
 
-  it("exibe a marca 'CarShop Admin' e não lista 'Novo trabalho'", () => {
+  it("exibe a marca 'DreamUP Admin' e não lista 'Novo trabalho'", () => {
     render(<AdminSidebar />);
 
-    expect(screen.getByText("CarShop Admin")).toBeInTheDocument();
+    expect(screen.getByText("DreamUP Admin")).toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Novo trabalho" }),
     ).not.toBeInTheDocument();

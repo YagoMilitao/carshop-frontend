@@ -77,7 +77,7 @@ function LoginForm() {
       <Card className="w-full max-w-sm">
         <CardHeader className="gap-2">
           <p className="text-body-sm font-semibold text-muted-foreground">
-            CarShop Admin
+            DreamUP Admin
           </p>
           <h1 className="text-heading-3 text-foreground">
             Entrar no painel admin
@@ -150,7 +150,7 @@ function LoginFormSkeleton() {
       <Card className="w-full max-w-sm">
         <CardHeader className="gap-2">
           <p className="text-body-sm font-semibold text-muted-foreground">
-            CarShop Admin
+            DreamUP Admin
           </p>
           <output aria-busy="true" className="sr-only">
             Carregando formulário de login...

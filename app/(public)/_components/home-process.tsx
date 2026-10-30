@@ -1,4 +1,5 @@
 import { PageSection } from "@/components/layout/page-section"
+import { HOME_SECTION_IDS } from "../_lib/home-anchors"
 
 export type HomeProcessStep = { title: string; description?: string }
 
@@ -13,7 +14,7 @@ export const HOME_PROCESS_CONTENT: HomeProcessContent = {
   steps: [
     {
       title: "Request a quote",
-      description: "Reach out through our contact page or social channels and tell us about your vehicle and what you have in mind.",
+      description: "Reach out through our contact section or social channels and tell us about your vehicle and what you have in mind.",
     },
     {
       title: "We get in touch",
@@ -51,7 +52,7 @@ export function HomeProcess({
   return (
     <PageSection
       spacing="standard"
-      id="process"
+      id={HOME_SECTION_IDS.process}
       aria-labelledby="home-process-heading"
       className="border-t border-border"
     >

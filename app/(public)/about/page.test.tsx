@@ -70,7 +70,7 @@ describe('AboutPage (public)', () => {
 
     const headings = screen.getAllByRole('heading', { level: 1 })
     expect(headings).toHaveLength(1)
-    expect(headings[0]).toHaveTextContent('About CarShop')
+    expect(headings[0]).toHaveTextContent('About DreamUP')
     expect(
       screen.getByText('Automotive upholstery, restoration and custom interior work.'),
     ).toBeInTheDocument()
@@ -124,7 +124,7 @@ describe('AboutPage (public)', () => {
     const { container } = await renderAbout()
 
     expect(container.querySelector('figure')).toBeNull()
-    expect(screen.getByRole('heading', { level: 1, name: 'About CarShop' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'About DreamUP' })).toBeInTheDocument()
     expectExploreLinks()
     expect(consoleErrorSpy).toHaveBeenCalled()
   })
@@ -142,7 +142,7 @@ describe('AboutPage (public)', () => {
   it('define metadata sem "under construction"', async () => {
     const { metadata } = await import('./page')
     const description =
-      'About CarShop — automotive upholstery, restoration and custom interior work.'
+      'About DreamUP Auto Interiors — automotive upholstery, restoration and custom interior work.'
 
     expect(metadata.title).toBe('About')
     expect(metadata.description).toBe(description)

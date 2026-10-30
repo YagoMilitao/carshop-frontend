@@ -13,7 +13,7 @@ export function Header() {
           href="/"
           className="rounded-lg text-heading-4 text-foreground outline-hidden focus-visible:ring-3 focus-visible:ring-focus-ring"
         >
-          CarShop
+          DreamUP Auto Interiors
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">

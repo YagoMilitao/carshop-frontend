@@ -1,5 +1,5 @@
 export const PORTFOLIO_INTRO =
-  "Upholstery, restoration and custom interior projects by CarShop."
+  "Upholstery, restoration and custom interior projects by DreamUP Auto Interiors."
 
 /** Cabeçalho da listagem, compartilhado por `page` e `error`. */
 export function PortfolioHeader() {

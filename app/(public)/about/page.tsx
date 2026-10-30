@@ -9,7 +9,7 @@ import { WorkImageThumb } from '@/components/gallery/work-image-thumb'
 import { selectAboutImage } from './_lib/select-about-image'
 
 const description =
-  'About CarShop — automotive upholstery, restoration and custom interior work.'
+  'About DreamUP Auto Interiors — automotive upholstery, restoration and custom interior work.'
 
 export const metadata: Metadata = {
   title: 'About',
@@ -48,7 +48,7 @@ export default async function AboutPage() {
       >
         <div className="flex flex-col gap-6">
           <h1 id="about-heading" className="text-display-lg text-foreground">
-            About CarShop
+            About DreamUP
           </h1>
           {/* Ponto de inserção da história aprovada do negócio (pendente). */}
           <p className="text-body-lg text-secondary-foreground">
@@ -99,7 +99,7 @@ export default async function AboutPage() {
         spacing="standard"
         container="reading"
         className="border-t border-border"
-        aria-label="Explore CarShop"
+        aria-label="Explore DreamUP"
       >
         <ul className="flex flex-col gap-2 sm:flex-row sm:gap-10">
           <li>

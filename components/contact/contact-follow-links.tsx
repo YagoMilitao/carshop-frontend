@@ -24,7 +24,7 @@ export function ContactFollowLinks({
       className="flex flex-col gap-4 border-t border-border pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8"
     >
       <Heading id="contact-follow-heading" className="text-heading-4 text-foreground">
-        Follow CarShop
+        Follow DreamUP
       </Heading>
       <ul className="flex flex-col">
         {links.map((link) => (

@@ -37,7 +37,7 @@ describe('PortfolioError — conteúdo do estado', () => {
     expect(document.body.textContent).not.toMatch(/Tentar novamente|Não foi possível|Ocorreu um erro/)
     expect(toastErrorMock).not.toHaveBeenCalledWith(expect.stringMatching(/Não foi possível/))
     expect(
-      screen.getByText('Upholstery, restoration and custom interior projects by CarShop.'),
+      screen.getByText('Upholstery, restoration and custom interior projects by DreamUP Auto Interiors.'),
     ).toBeInTheDocument()
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
   })

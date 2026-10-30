@@ -4,6 +4,7 @@ import { PageSection } from "@/components/layout/page-section"
 import { WorkImageThumb } from "@/components/gallery/work-image-thumb"
 import { cn } from "@/lib/utils"
 import type { HomeWork } from "../_lib/select-home-works"
+import { HOME_SECTION_IDS } from "../_lib/home-anchors"
 
 type HomeAboutDifferentiator = { title: string; description?: string }
 
@@ -53,7 +54,7 @@ export function HomeAbout({
   return (
     <PageSection
       spacing="standard"
-      id="about"
+      id={HOME_SECTION_IDS.about}
       aria-labelledby="home-about-heading"
       className="border-t border-border"
     >

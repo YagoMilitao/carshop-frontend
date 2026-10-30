@@ -2,6 +2,7 @@ import { LuArrowRight } from "react-icons/lu"
 import { PageSection } from "@/components/layout/page-section"
 import { ContactAnchorLink } from "@/components/contact/contact-anchor-link"
 import type { ServiceCategory } from "../_lib/group-works-by-category"
+import { HOME_SECTION_IDS } from "../_lib/home-anchors"
 
 /**
  * Pilares da tagline publicada no Hero ("Upholstery · Restoration · Custom
@@ -32,7 +33,7 @@ export function HomeServices({ categories }: Readonly<HomeServicesProps>) {
   return (
     <PageSection
       spacing="standard"
-      id="services"
+      id={HOME_SECTION_IDS.services}
       aria-labelledby="services-heading"
       className="border-t border-border"
     >
@@ -92,7 +93,7 @@ export function HomeServices({ categories }: Readonly<HomeServicesProps>) {
         <ContactAnchorLink
           className="inline-flex min-h-11 w-fit items-center gap-2 self-start rounded-lg text-nav text-foreground outline-hidden hover:text-primary focus-visible:ring-3 focus-visible:ring-focus-ring lg:col-span-4 lg:col-start-1 lg:row-start-2"
         >
-          Contact CarShop
+          Contact DreamUP
           <LuArrowRight aria-hidden="true" className="size-4 shrink-0" />
         </ContactAnchorLink>
       </div>

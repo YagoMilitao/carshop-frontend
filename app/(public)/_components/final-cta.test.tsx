@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import type { SocialLink } from '@/lib/social-links'
 import { FinalCta } from './final-cta'
 
@@ -44,7 +44,7 @@ describe('FinalCta (#contact)', () => {
     })
   })
 
-  it('"View Our Work" → /portfolio e "Contact CarShop" → /contact; sem "Get a Quote"', () => {
+  it('"View Our Work" → /portfolio e "Contact DreamUP" → /#contact; sem "Get a Quote"', () => {
     const { container } = render(<FinalCta socialLinks={socialLinks} />)
     const section = getContactSection(container)
 
@@ -52,11 +52,21 @@ describe('FinalCta (#contact)', () => {
       'href',
       '/portfolio',
     )
-    const contact = within(section).getByRole('link', { name: 'Contact CarShop' })
-    expect(contact).toHaveAttribute('href', '/contact')
+    const contact = within(section).getByRole('link', { name: 'Contact DreamUP' })
+    expect(contact).toHaveAttribute('href', '/#contact')
     expect(contact).toHaveClass('min-h-11')
+    expect(container.querySelector('a[href="/contact"]')).toBeNull()
     expect(within(section).queryByText(/get a quote/i)).not.toBeInTheDocument()
     expect(within(section).queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('clique em "Contact DreamUP" mantém o foco na própria section#contact (CARSHOP-162)', () => {
+    const { container } = render(<FinalCta socialLinks={[]} />)
+    const section = getContactSection(container)
+
+    fireEvent.click(within(section).getByRole('link', { name: 'Contact DreamUP' }))
+
+    expect(section).toHaveFocus()
   })
 
   it('com links sociais: lista com links externos seguros, h3 e layout em duas colunas', () => {
@@ -64,7 +74,7 @@ describe('FinalCta (#contact)', () => {
     const section = getContactSection(container)
 
     expect(
-      within(section).getByRole('heading', { level: 3, name: 'Follow CarShop' }),
+      within(section).getByRole('heading', { level: 3, name: 'Follow DreamUP' }),
     ).toBeInTheDocument()
     expect(within(section).getByRole('list')).toBeInTheDocument()
 
@@ -86,7 +96,7 @@ describe('FinalCta (#contact)', () => {
 
     expect(within(section).queryByRole('list')).not.toBeInTheDocument()
     expect(within(section).queryByRole('heading', { level: 3 })).not.toBeInTheDocument()
-    expect(within(section).queryByText('Follow CarShop')).not.toBeInTheDocument()
+    expect(within(section).queryByText('Follow DreamUP')).not.toBeInTheDocument()
 
     const main = screen.getByRole('heading', { level: 2 }).parentElement
     expect(main).toHaveClass('max-w-4xl')

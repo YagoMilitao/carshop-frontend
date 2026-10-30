@@ -7,7 +7,7 @@ import { groupWorksByCategory } from '@/app/(public)/_lib/group-works-by-categor
 import { ServiceCategoryRow } from './_components/service-category-row'
 
 const description =
-  'Upholstery · Restoration · Custom Work — services shown through real CarShop projects.'
+  'Upholstery · Restoration · Custom Work — services shown through real DreamUP projects.'
 
 export const metadata: Metadata = {
   title: 'Services',

@@ -350,7 +350,7 @@ describe('ProjectDetailsPage', () => {
       params: Promise.resolve({ slug: baseWork.slug }),
     })
 
-    expect(metadata.title).toBe(`${baseWork.title} — CarShop`)
+    expect(metadata.title).toBe(`${baseWork.title} — DreamUP Auto Interiors`)
     expect(metadata.openGraph).toMatchObject({
       type: 'article',
       images: [{ url: baseWork.images[0].url, alt: baseWork.images[0].alt }],

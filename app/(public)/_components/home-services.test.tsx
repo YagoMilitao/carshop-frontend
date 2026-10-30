@@ -116,19 +116,19 @@ describe('HomeServices', () => {
     expect(within(section).getByRole('heading', { level: 2, name: 'Services' })).toBeInTheDocument()
     expect(within(section).queryByText('Project categories')).not.toBeInTheDocument()
     expect(section.querySelector('ul')).toBeNull()
-    expect(within(section).getByRole('link', { name: 'Contact CarShop' })).toHaveAttribute(
+    expect(within(section).getByRole('link', { name: 'Contact DreamUP' })).toHaveAttribute(
       'href',
       '/#contact',
     )
   })
 
-  it('CTA "Contact CarShop" aponta para /#contact e não há "Get a Quote"', () => {
+  it('CTA "Contact DreamUP" aponta para /#contact e não há "Get a Quote"', () => {
     const { container } = renderServices(makeCategories(['bancos']))
     const section = getSection(container)
 
     const links = within(section).getAllByRole('link')
     expect(links).toHaveLength(1)
-    expect(links[0]).toHaveAccessibleName('Contact CarShop')
+    expect(links[0]).toHaveAccessibleName('Contact DreamUP')
     expect(links[0]).toHaveAttribute('href', '/#contact')
     expect(within(section).queryByText(/get a quote/i)).not.toBeInTheDocument()
     expect(within(section).queryByRole('button')).not.toBeInTheDocument()
@@ -141,7 +141,7 @@ describe('HomeServices', () => {
     const heading = within(section).getByRole('heading', { level: 2 })
     const pillars = section.querySelector('ol')
     const evidence = within(section).getByRole('list', { name: 'Project categories' })
-    const cta = within(section).getByRole('link', { name: 'Contact CarShop' })
+    const cta = within(section).getByRole('link', { name: 'Contact DreamUP' })
 
     const ordered = [heading, pillars, evidence, cta]
     for (let index = 1; index < ordered.length; index += 1) {

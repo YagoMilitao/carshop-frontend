@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     canonical: new URL("/", clientEnv.NEXT_PUBLIC_SITE_URL).toString(),
   },
   openGraph: {
-    title: "CarShop",
+    title: "DreamUP Auto Interiors",
     description,
   },
 }
@@ -74,14 +74,16 @@ export default async function HomePage() {
   const hasOurWork = featured.length >= 1
   const workTarget = hasOurWork ? "home-section" : "portfolio"
 
+  // Ordem single-page (CARSHOP-162): evidência do trabalho logo após o Hero,
+  // depois serviços, processo, quem somos, prova social e fechamento.
   return (
     <>
       <HomeHero hero={hero} featured={featured} workTarget={workTarget} />
-      <HomeServices categories={groupWorksByCategory(works)} />
       {hasOurWork && <FeaturedWorks featured={featured} />}
+      <HomeServices categories={groupWorksByCategory(works)} />
+      <HomeProcess />
       <HomeAbout image={aboutImage} />
       <HomeReviews reviews={reviews} />
-      <HomeProcess />
       <FinalCta socialLinks={socialLinks} workTarget={workTarget} />
     </>
   )

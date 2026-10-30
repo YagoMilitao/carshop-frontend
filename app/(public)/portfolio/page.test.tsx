@@ -23,7 +23,7 @@ vi.mock('sonner', () => ({
   },
 }))
 
-const INTRO = 'Upholstery, restoration and custom interior projects by CarShop.'
+const INTRO = 'Upholstery, restoration and custom interior projects by DreamUP Auto Interiors.'
 const ERROR_MESSAGE =
   "We couldn't load the portfolio right now. Please try again in a few moments."
 const LEAD_SIZES =

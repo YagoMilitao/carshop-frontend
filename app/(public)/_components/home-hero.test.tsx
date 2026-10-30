@@ -89,6 +89,15 @@ describe('HomeHero', () => {
     )
   })
 
+  it('expõe a âncora estável section#hero rotulada pelo h1 (CARSHOP-162), sem tabIndex', () => {
+    const { container } = render(<HomeHero hero={null} />)
+
+    const section = container.querySelector('section#hero')
+    expect(section).not.toBeNull()
+    expect(section).toHaveAttribute('aria-labelledby', 'home-hero-heading')
+    expect(section).not.toHaveAttribute('tabindex')
+  })
+
   it('com hero: imagem com preload (não lazy) e sizes do hero', () => {
     render(<HomeHero hero={makeHero()} />)
 
