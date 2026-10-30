@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { LuArrowRight } from "react-icons/lu"
 import { PageSection } from "@/components/layout/page-section"
+import { OUR_WORK_SECTION_ID } from "../_lib/home-anchors"
 import type { HomeWork } from "../_lib/select-home-works"
 import { ProjectPreview } from "./project-preview"
 
@@ -18,6 +19,9 @@ type FeaturedWorksProps = {
  * "Our Work": composição dominante + apoio (não grid uniforme). No `lg`, o
  * primeiro projeto ocupa 8 colunas e os demais empilham nas 4 restantes;
  * no `md`, o dominante ocupa a largura total e os de apoio ficam 2 a 2.
+ *
+ * `#our-work` (CARSHOP-165) é o destino de "View Our Work" na Home;
+ * `tabIndex={-1}` permite que `SectionAnchorLink` mova o foco para a seção.
  */
 export function FeaturedWorks({ featured }: Readonly<FeaturedWorksProps>) {
   const [dominant, ...supporting] = featured
@@ -27,7 +31,13 @@ export function FeaturedWorks({ featured }: Readonly<FeaturedWorksProps>) {
   }
 
   return (
-    <PageSection spacing="editorial" aria-labelledby="our-work-heading">
+    <PageSection
+      spacing="editorial"
+      id={OUR_WORK_SECTION_ID}
+      tabIndex={-1}
+      aria-labelledby="our-work-heading"
+      className="outline-hidden"
+    >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <h2 id="our-work-heading" className="text-heading-2 text-foreground">
           Our Work

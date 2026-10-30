@@ -4,7 +4,7 @@ import type {
   HomeHeroContent,
   HomeWork,
 } from "../_lib/select-home-works"
-import { HomeCtaActions } from "./home-cta-actions"
+import { HomeCtaActions, type HomeCtaWorkTarget } from "./home-cta-actions"
 import {
   HomeHeroLayout,
   type HeroMediaCandidate,
@@ -13,6 +13,7 @@ import {
 type HomeHeroProps = {
   hero: HomeHeroContent | null
   featured?: readonly HomeWork[]
+  workTarget?: HomeCtaWorkTarget
 }
 
 /**
@@ -59,6 +60,7 @@ function createMediaCandidates(
 export function HomeHero({
   hero,
   featured = [],
+  workTarget,
 }: Readonly<HomeHeroProps>) {
   const candidates = createMediaCandidates(hero, featured)
   const candidatesKey = candidates
@@ -78,7 +80,7 @@ export function HomeHero({
           Upholstery · Restoration · Custom Work
         </p>
         <div className="pt-2">
-          <HomeCtaActions />
+          <HomeCtaActions workTarget={workTarget} />
         </div>
       </HomeHeroLayout>
     </PageSection>

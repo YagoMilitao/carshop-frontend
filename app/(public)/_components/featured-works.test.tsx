@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import type { Work, WorkImage } from '@/lib/api/works'
 import type { HomeWork } from '../_lib/select-home-works'
+import { OUR_WORK_SECTION_ID } from '../_lib/home-anchors'
 import { FeaturedWorks } from './featured-works'
 
 const DOMINANT_SIZES = '(min-width: 1280px) 750px, (min-width: 1024px) 66vw, 100vw'
@@ -105,6 +106,25 @@ describe('FeaturedWorks', () => {
       'aria-labelledby',
       'our-work-heading',
     )
+  })
+
+  it('section#our-work é focável programaticamente (tabIndex=-1) e rotulada pelo h2 (CARSHOP-165)', () => {
+    const { container } = render(<FeaturedWorks featured={[makeItem('1'), makeItem('2')]} />)
+
+    const section = container.querySelector<HTMLElement>('section#our-work')
+    expect(section).not.toBeNull()
+    expect(container.querySelectorAll('#our-work')).toHaveLength(1)
+    expect(section).toHaveAttribute('tabindex', '-1')
+    expect(section).toHaveAttribute('aria-labelledby', 'our-work-heading')
+    expect(screen.getByRole('region', { name: 'Our Work' })).toBe(section)
+    expect(screen.getByRole('link', { name: 'View all projects' })).toHaveAttribute(
+      'href',
+      '/portfolio',
+    )
+  })
+
+  it('OUR_WORK_SECTION_ID é "our-work"', () => {
+    expect(OUR_WORK_SECTION_ID).toBe('our-work')
   })
 
   it('regressão CARSHOP-145: previews da Home seguem 4:3, h3 text-heading-3 e sem descrição', () => {

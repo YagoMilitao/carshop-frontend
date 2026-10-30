@@ -69,15 +69,20 @@ export default async function HomePage() {
   // bloco de canais quando nenhum link social está configurado.
   const socialLinks = getSocialLinks()
 
+  // "View Our Work" (Hero e `#contact`) aponta para `#our-work` só quando a
+  // seção existe; sem featured, cai para `/portfolio` (CARSHOP-165).
+  const hasOurWork = featured.length >= 1
+  const workTarget = hasOurWork ? "home-section" : "portfolio"
+
   return (
     <>
-      <HomeHero hero={hero} featured={featured} />
+      <HomeHero hero={hero} featured={featured} workTarget={workTarget} />
       <HomeServices categories={groupWorksByCategory(works)} />
-      {featured.length >= 1 && <FeaturedWorks featured={featured} />}
+      {hasOurWork && <FeaturedWorks featured={featured} />}
       <HomeAbout image={aboutImage} />
       <HomeReviews reviews={reviews} />
       <HomeProcess />
-      <FinalCta socialLinks={socialLinks} />
+      <FinalCta socialLinks={socialLinks} workTarget={workTarget} />
     </>
   )
 }

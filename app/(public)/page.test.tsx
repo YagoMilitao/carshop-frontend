@@ -196,14 +196,14 @@ describe('HomePage (public)', () => {
       expect(screen.getByAltText('Work 2')).toBeInTheDocument()
     })
 
-    it('renderiza os CTAs: "View Our Work" para /portfolio e "Get a Quote" (Hero) para /#contact', async () => {
+    it('renderiza os CTAs: "View Our Work" para /#our-work e "Get a Quote" (Hero) para /#contact', async () => {
       getWorksMock.mockResolvedValue(works)
       await renderHome()
 
       const viewOurWork = screen.getAllByRole('link', { name: 'View Our Work' })
       expect(viewOurWork).toHaveLength(2)
       for (const link of viewOurWork) {
-        expect(link).toHaveAttribute('href', '/portfolio')
+        expect(link).toHaveAttribute('href', '/#our-work')
       }
 
       // Só o Hero exibe "Get a Quote"; dentro de `#contact` ele é omitido.
@@ -452,6 +452,151 @@ describe('HomePage (public)', () => {
       expect(about.querySelector('img')).toBeNull()
       expect(about.querySelector('figure')).toBeNull()
       expect(getWorksMock).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('#our-work e destino de "View Our Work" (CARSHOP-165)', () => {
+    function getOurWorkSection(): HTMLElement | null {
+      return document.querySelector<HTMLElement>('section#our-work')
+    }
+
+    function getHeroSection(): HTMLElement | null {
+      return document.querySelector<HTMLElement>('section[aria-labelledby="home-hero-heading"]')
+    }
+
+    function expectViewOurWorkHrefs(href: string) {
+      const hero = getHeroSection()
+      const contact = getContactSection()
+      expect(hero).not.toBeNull()
+      expect(contact).not.toBeNull()
+      if (!hero || !contact) return
+      expect(within(hero).getByRole('link', { name: 'View Our Work' })).toHaveAttribute(
+        'href',
+        href,
+      )
+      expect(within(contact).getByRole('link', { name: 'View Our Work' })).toHaveAttribute(
+        'href',
+        href,
+      )
+      expect(screen.getAllByRole('link', { name: 'View Our Work' })).toHaveLength(2)
+    }
+
+    it('com featured: Hero e #contact apontam para /#our-work e section#our-work existe, focável', async () => {
+      getWorksMock.mockResolvedValue(['1', '2', '3', '4', '5'].map((id) => makeWork(id)))
+      const { container } = await renderHome()
+
+      const ourWork = getOurWorkSection()
+      expect(ourWork).not.toBeNull()
+      expect(container.querySelectorAll('#our-work')).toHaveLength(1)
+      expect(ourWork).toHaveAttribute('tabindex', '-1')
+      expect(ourWork).toHaveAttribute('aria-labelledby', 'our-work-heading')
+      expectViewOurWorkHrefs('/#our-work')
+
+      // "View all projects" segue para /portfolio.
+      expect(screen.getByRole('link', { name: 'View all projects' })).toHaveAttribute(
+        'href',
+        '/portfolio',
+      )
+    })
+
+    it('com featured: clique em "View Our Work" (Hero e #contact) move o foco para #our-work', async () => {
+      getWorksMock.mockResolvedValue(['1', '2', '3'].map((id) => makeWork(id)))
+      await renderHome()
+
+      const ourWork = getOurWorkSection()
+      const hero = getHeroSection()
+      const contact = getContactSection()
+      if (!ourWork || !hero || !contact) throw new Error('seções não montadas')
+
+      fireEvent.click(within(hero).getByRole('link', { name: 'View Our Work' }))
+      expect(ourWork).toHaveFocus()
+
+      ourWork.blur()
+      fireEvent.click(within(contact).getByRole('link', { name: 'View Our Work' }))
+      expect(ourWork).toHaveFocus()
+    })
+
+    it('#our-work fica depois de #services e antes de #about', async () => {
+      getWorksMock.mockResolvedValue(['1', '2', '3', '4', '5'].map((id) => makeWork(id)))
+      const { container } = await renderHome()
+
+      const ids = Array.from(container.querySelectorAll('section'))
+        .map((section) => section.id)
+        .filter((id) => id !== '')
+      const services = ids.indexOf('services')
+      const ourWork = ids.indexOf('our-work')
+      const about = ids.indexOf('about')
+      expect(services).toBeGreaterThanOrEqual(0)
+      expect(ourWork).toBe(services + 1)
+      expect(about).toBe(ourWork + 1)
+    })
+
+    it('com uma única capa (featured vazio): ambos → /portfolio e sem #our-work', async () => {
+      getWorksMock.mockResolvedValue([makeWork('1')])
+      await renderHome()
+
+      expect(getOurWorkSection()).toBeNull()
+      expect(document.querySelector('#our-work')).toBeNull()
+      expectViewOurWorkHrefs('/portfolio')
+    })
+
+    it('sem works com capa: ambos → /portfolio e sem #our-work', async () => {
+      getWorksMock.mockResolvedValue([
+        makeWork('1', { hasCover: false }),
+        makeWork('2', { hasCover: false }),
+      ])
+      const { container } = await renderHome()
+
+      expect(getOurWorkSection()).toBeNull()
+      expect(container.querySelector('a[href*="#our-work"]')).toBeNull()
+      expectViewOurWorkHrefs('/portfolio')
+    })
+
+    it('com lista vazia: ambos → /portfolio e sem #our-work', async () => {
+      getWorksMock.mockResolvedValue([])
+      const { container } = await renderHome()
+
+      expect(getOurWorkSection()).toBeNull()
+      expect(container.querySelector('a[href*="#our-work"]')).toBeNull()
+      expectViewOurWorkHrefs('/portfolio')
+    })
+
+    it('quando getWorks() falha: ambos → /portfolio e sem #our-work', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      getWorksMock.mockRejectedValue(new Error('backend indisponível'))
+      const { container } = await renderHome()
+
+      expect(getOurWorkSection()).toBeNull()
+      expect(container.querySelector('a[href*="#our-work"]')).toBeNull()
+      expectViewOurWorkHrefs('/portfolio')
+    })
+
+    it('imagem do Admin com o único work com capa: featured vazio → /portfolio e sem #our-work', async () => {
+      getWorksMock.mockResolvedValue([makeWork('3')])
+      getHomeImageMock.mockResolvedValue({
+        workId: '3',
+        imageId: 'home-img',
+        url: 'https://res.cloudinary.com/demo/home.jpg',
+        alt: 'Imagem escolhida no Admin',
+      })
+      await renderHome()
+
+      expect(getOurWorkSection()).toBeNull()
+      expectViewOurWorkHrefs('/portfolio')
+    })
+
+    it('imagem do Admin + 1 outro work com capa: featured com 1 item → /#our-work', async () => {
+      getWorksMock.mockResolvedValue([makeWork('1'), makeWork('3')])
+      getHomeImageMock.mockResolvedValue({
+        workId: '3',
+        imageId: 'home-img',
+        url: 'https://res.cloudinary.com/demo/home.jpg',
+        alt: 'Imagem escolhida no Admin',
+      })
+      await renderHome()
+
+      expect(getOurWorkSection()).not.toBeNull()
+      expectViewOurWorkHrefs('/#our-work')
     })
   })
 
